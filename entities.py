@@ -1,0 +1,54 @@
+class Interface:
+    def __init__(self, interface_name: str, device_id: int, port_id: int, ip_address: str, mac_address: str, trunk: bool):
+        self.interface_name = interface_name
+        self.device_id = device_id
+        self.port_id = port_id
+        self.ip_address = ip_address
+        self.mac_address = mac_address
+        self.trunk = trunk
+
+    def __str__(self):
+        return f"{self.device_id}"
+
+
+class Relation:
+    def __init__(self, interface1: Interface, interface2: Interface):
+        self.interface1 = interface1
+        self.interface2 = interface2
+
+    def __str__(self):
+        return f"{self.interface1} -- {self.interface2}"
+
+    def __eq__(self, other):
+        return sorted((self.interface1.device_id, self.interface2.device_id)) == sorted((other.interface1.device_id, other.interface2.device_id))
+
+
+class RelationsContainer:
+    def __init__(self):
+        self.relations = []
+
+    def __str__(self):
+        result = ""
+        for relation in self.relations:
+            result += f"{str(relation)}\n"
+
+        return result
+
+    def add(self, relation: Relation):
+        unique = True
+        for existing_relation in self.relations:
+            if relation == existing_relation:
+                unique = False
+                break
+
+        if unique:
+            self.relations.append(relation)
+
+
+class Device:
+    def __init__(self, device_id, name):
+        self.device_id = device_id
+        self.name = name
+
+    def __str__(self):
+        return f"{self.device_id} [label=\"{self.name}\", shape=circle]\n"
