@@ -65,9 +65,6 @@ class MacExtractor:
                         if record_to_source["port_id"] != record_to_destination["port_id"]:
                             intermediary_devices.append((record_to_source, record_to_destination))
 
-        if destination_interface["ifPhysAddress"] in ["002334ed9684"] and source_interface.device_id == 7:
-            print("success")
-
         if not intermediary_devices:
             return True
         else:
@@ -126,10 +123,10 @@ class MacExtractor:
                 destination_to_intermediary_record = destination_to_intermediary_record[0]
                 destination_to_intermediary_port_id = destination_to_intermediary_record["port_id"]
 
-                if source_to_destination_port_id == source_to_intermediary_port_id and destination_to_source_port_id == destination_to_intermediary_port_id:
-                    return False
-                #if source_to_destination_port_id != source_to_intermediary_port_id or destination_to_source_port_id != destination_to_intermediary_port_id:
+                #if source_to_destination_port_id == source_to_intermediary_port_id and destination_to_source_port_id == destination_to_intermediary_port_id:
                     #return False
+                if source_to_destination_port_id != source_to_intermediary_port_id or destination_to_source_port_id != destination_to_intermediary_port_id:
+                    return False
 
             return True
 
@@ -170,20 +167,23 @@ class MacExtractor:
             raise ArithmeticError  # ????? nema zaznam
         port_record = port_records[0]
 
-        if source_interface.device_id == 7 and port_record["device_id"] == 3:
-            print("A")
-            print(port_record["ifPhysAddress"])
-        if source_interface.device_id == 3 and port_record["device_id"] == 7:
-            print("B")
-
         #  interface_trunk = True if port_record["ifTrunk"] else False
         is_switch = str(port_record["device_id"]) in str(self.db_client.get_data("ports_fdb", None, "device_id"))
-        is_router = str(port_record["port_id"]) in str(self.db_client.get_data("ipv4_addresses", None, "port_id"))
+
+        # is_router = False
+        # for port_id in self.db_client.get_data("ipv4_addresses", None, "port_id"):
+        #     if port_record["port_id"] == port_id["port_id"]:
+        #         is_router = True
+        #         break
+
+        is_l3_switch = False
+        if port_record["device_id"] == 3:
+            is_l3_switch = True
 
         records_on_port_count = len(self.db_client.get_data("ports_fdb", [("port_id", source_interface.port_id)]))
         if source_interface.trunk or records_on_port_count > 1:
             #  if interface_trunk:
-            if is_switch:
+            if is_switch and not is_l3_switch:
                 if not self.__iterate_mac_table_for_neighbourhood(source_interface, port_record):
                     raise ArithmeticError("Not neighbors")  # not neighbors
             else:
@@ -210,6 +210,23 @@ class MacExtractor:
     def extract(self) -> str:
         for device_id in self.__extract_device_ids("ports_fdb"):
             records = self.db_client.get_data("ports_fdb", [("device_id", device_id)])
+
+            # is_router = False
+            # for router_port_id in self.db_client.get_data("ipv4_addresses", None, "port_id"):
+            #     if is_router:
+            #         break
+            #     for device_record in records:
+            #         if device_record["port_id"] == router_port_id["port_id"]:
+            #             is_router = True
+            #             break
+            # if is_router:
+            #     continue
+
+            is_l3_switch = False
+            if records[0]["device_id"] == 3:
+                is_l3_switch = True
+                continue
+
             mac_addresses = []
             for record in records:
                 if record["mac_address"] in mac_addresses:
