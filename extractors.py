@@ -38,124 +38,35 @@ class MacExtractor:
         return Interface(interface_name, device_id, port_id, interface_ip_address, interface_mac_address,
                          interface_trunk)
 
-    def __iterate_mac_table_for_neighbourhood(self, source_interface: Interface, destination_interface: dict) -> bool:
-        """Iterates through MAC table of a switch to check if given MAC address is a direct neighbour of this switch.
+    def __is_directly_connected(self, source_interface: Interface, destination_interface: dict) -> bool:
+        """Checks whether device is directly connected or not.
         :param source_interface: Interface object of source interface
         :param destination_interface: record of destination interface from table 'ports'
         :return: bool if devices are neighbors
         """
-        if not self.db_client.get_data("ports_fdb", [("device_id", destination_interface["device_id"]), ("mac_address", source_interface.mac_address)]):
-            return False
-
-        #if "virtual" in str(destination_interface["ifType"]).lower() or "vlan" in str(destination_interface["ifAlias"]).lower():  # skip virtual interfaces
-            #return False
-
-        intermediary_devices = []
-
-        for device_id in self.__extract_device_ids("ports_fdb"):
-            records_to_source = self.db_client.get_data("ports_fdb", [("mac_address", source_interface.mac_address),
-                                                                      ("device_id", device_id)])
-            records_to_destination = self.db_client.get_data("ports_fdb",
-                                                             [("mac_address", destination_interface["ifPhysAddress"]),
-                                                              ("device_id", device_id)])
-
-            if records_to_source and records_to_destination:
-                for record_to_source in records_to_source:
-                    for record_to_destination in records_to_destination:
-                        if record_to_source["port_id"] != record_to_destination["port_id"]:
-                            intermediary_devices.append((record_to_source, record_to_destination))
-
-        if not intermediary_devices:
-            return True
-        else:
-            for intermediary_data in intermediary_devices:
-                #  source device mac table
-                source_to_destination_record = self.db_client.get_data("ports_fdb",
-                                                                       [("device_id", source_interface.device_id), (
-                                                                           "mac_address",
-                                                                           destination_interface[
-                                                                               "ifPhysAddress"])])[0]
-                source_to_destination_port_id = source_to_destination_record["port_id"]
-                source_intermediary_fdb_record = intermediary_data[0]
-                source_intermediary_ports_record = self.db_client.get_data("ports",
-                                                                           [("device_id",
-                                                                             source_intermediary_fdb_record[
-                                                                                 "device_id"]), (
-                                                                                "port_id",
-                                                                                source_intermediary_fdb_record[
-                                                                                    "port_id"])])[0]
-                source_to_intermediary_record = self.db_client.get_data("ports_fdb",
-                                                                        [("device_id",
-                                                                          source_interface.device_id), (
-                                                                             "mac_address",
-                                                                             source_intermediary_ports_record[
-                                                                                 "ifPhysAddress"])])
-                if not source_to_intermediary_record:  # (path to) intermediary is behind (or through) destination device
-                    continue
-                source_to_intermediary_record = source_to_intermediary_record[0]
-                source_to_intermediary_port_id = source_to_intermediary_record["port_id"]
-
-                #  destination device mac table
-                destination_to_source_record = self.db_client.get_data("ports_fdb",
-                                                                       [("device_id",
-                                                                         destination_interface["device_id"]), (
-                                                                            "mac_address",
-                                                                            source_interface.mac_address)])[0]
-                destination_to_source_port_id = destination_to_source_record["port_id"]
-                destination_intermediary_fdb_record = intermediary_data[1]
-                destination_intermediary_ports_record = self.db_client.get_data("ports",
-                                                                                [("device_id",
-                                                                                  destination_intermediary_fdb_record[
-                                                                                      "device_id"]),
-                                                                                 (
-                                                                                     "port_id",
-                                                                                     destination_intermediary_fdb_record[
-                                                                                         "port_id"])])[0]
-                destination_to_intermediary_record = self.db_client.get_data("ports_fdb",
-                                                                             [("device_id",
-                                                                               destination_interface["device_id"]),
-                                                                              (
-                                                                                  "mac_address",
-                                                                                  destination_intermediary_ports_record[
-                                                                                      "ifPhysAddress"])])
-                if not destination_to_intermediary_record:  # (path to) intermediary is behind (or through) source device
-                    continue
-                destination_to_intermediary_record = destination_to_intermediary_record[0]
-                destination_to_intermediary_port_id = destination_to_intermediary_record["port_id"]
-
-                #if source_to_destination_port_id == source_to_intermediary_port_id and destination_to_source_port_id == destination_to_intermediary_port_id:
-                    #return False
-                if source_to_destination_port_id != source_to_intermediary_port_id or destination_to_source_port_id != destination_to_intermediary_port_id:
-                    return False
-
-            return True
-
-    def __is_router_directly_connected(self, source_interface: Interface, destination_interface: dict) -> bool:
-        """Checks whether router is directly connected or not.
-        :param source_interface: Interface object of source interface
-        :param destination_interface: record of destination interface from table 'ports'
-        :return: bool if devices are neighbors
-        """
-        router_fdb_records = self.db_client.get_data("ports_fdb", [(
+        device_fdb_records = self.db_client.get_data("ports_fdb", [(
             "mac_address", destination_interface["ifPhysAddress"])])
 
         index_to_pop = -1
-        for index, record in enumerate(router_fdb_records):
+        for index, record in enumerate(device_fdb_records):
             if record["device_id"] == source_interface.device_id:
                 index_to_pop = index
                 break
-        source_to_router_fdb_record = router_fdb_records.pop(index_to_pop)
-        source_to_router_port_id = source_to_router_fdb_record["port_id"]
+        source_to_device_fdb_record = device_fdb_records.pop(index_to_pop)
+        source_to_device_port_id = source_to_device_fdb_record["port_id"]
 
-        for record in router_fdb_records:
+        for record in device_fdb_records:
             intermediate_device_id = record["device_id"]
-            ports_mac_addresses = self.db_client.get_data("ports", [("device_id", intermediate_device_id)],
-                                                          "ifPhysAddress")
-            for mac_address in ports_mac_addresses:
+            intermediary_port_records = self.db_client.get_data("ports", [("device_id", intermediate_device_id)])
+            for intermediary_port_record in intermediary_port_records:
+                if intermediary_port_record["ifType"] == "propVirtual":
+                    continue
+                if intermediary_port_record["port_id"] == record["port_id"]:
+                    continue
                 fdb_records = self.db_client.get_data("ports_fdb", [("device_id", source_interface.device_id), (
-                    "mac_address", mac_address["ifPhysAddress"])])
+                    "mac_address", intermediary_port_record["ifPhysAddress"])])
                 for fdb_record in fdb_records:
-                    if fdb_record["port_id"] == source_to_router_port_id:
+                    if fdb_record["port_id"] == source_to_device_port_id:
                         return False
 
         return True
@@ -165,33 +76,16 @@ class MacExtractor:
         port_records = self.db_client.get_data("ports", [("ifPhysAddress", port_mac_address)])
         if not port_records:
             raise ArithmeticError  # ????? nema zaznam
-        port_record = port_records[0]
 
-        #  interface_trunk = True if port_record["ifTrunk"] else False
-        is_switch = str(port_record["device_id"]) in str(self.db_client.get_data("ports_fdb", None, "device_id"))
+        valid_port_record = None
+        for port_record in port_records:
+            if self.__is_directly_connected(source_interface, port_record):
+                valid_port_record = port_record
+                break
 
-        # is_router = False
-        # for port_id in self.db_client.get_data("ipv4_addresses", None, "port_id"):
-        #     if port_record["port_id"] == port_id["port_id"]:
-        #         is_router = True
-        #         break
-
-        is_l3_switch = False
-        if port_record["device_id"] == 3:
-            is_l3_switch = True
-
-        records_on_port_count = len(self.db_client.get_data("ports_fdb", [("port_id", source_interface.port_id)]))
-        if source_interface.trunk or records_on_port_count > 1:
-            #  if interface_trunk:
-            if is_switch and not is_l3_switch:
-                if not self.__iterate_mac_table_for_neighbourhood(source_interface, port_record):
-                    raise ArithmeticError("Not neighbors")  # not neighbors
-            else:
-                if not self.__is_router_directly_connected(source_interface, port_record):
-                    raise ArithmeticError("Not neighbors")  # not directly connected
-
-        else:  # directly connected PC
-            pass
+        if not valid_port_record:
+            raise ArithmeticError("Not neighbors")  # not directly connected
+        port_record = valid_port_record
 
         port_id = port_record["port_id"]
         interface_name = port_record["ifName"]
@@ -210,22 +104,6 @@ class MacExtractor:
     def extract(self) -> str:
         for device_id in self.__extract_device_ids("ports_fdb"):
             records = self.db_client.get_data("ports_fdb", [("device_id", device_id)])
-
-            # is_router = False
-            # for router_port_id in self.db_client.get_data("ipv4_addresses", None, "port_id"):
-            #     if is_router:
-            #         break
-            #     for device_record in records:
-            #         if device_record["port_id"] == router_port_id["port_id"]:
-            #             is_router = True
-            #             break
-            # if is_router:
-            #     continue
-
-            is_l3_switch = False
-            if records[0]["device_id"] == 3:
-                is_l3_switch = True
-                continue
 
             mac_addresses = []
             for record in records:
