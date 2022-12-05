@@ -3,41 +3,49 @@ from entities import RelationsContainer, Interface, Relation, Device
 from ipaddress import IPv4Network, IPv4Address
 
 
-def extract_device_ids(db_client: MariaDBClient, table: str):
-    device_ids = []
-
-    records = db_client.get_data(table, None, "device_id")
-    for record in records:
-        device_id = record["device_id"]
-        if device_id not in device_ids:
-            device_ids.append(device_id)
-            yield device_id
-
-
-def get_source_interface(db_client: MariaDBClient, record: dict) -> Interface:
-    device_id = record["device_id"]
-    port_id = record["port_id"]
-    if port_id == 0:
-        #  TODO: opytat sa - port id 0 nepatri nikomu?
-        raise ArithmeticError
-
-    ports_table_data = db_client.get_data("ports", [("port_id", port_id)])[0]
-    interface_trunk = False if not ports_table_data["ifTrunk"] else True
-    interface_name = ports_table_data["ifName"]
-    interface_mac_address = ports_table_data["ifPhysAddress"]
-    interface_ip_address = db_client.get_data("ipv4_addresses", [("port_id", port_id)], "ipv4_address")
-    if interface_ip_address:  # some interfaces don't have ip address TODO: ipv4_addresses table ???
-        interface_ip_address = interface_ip_address[0]["ipv4_address"]
-    else:
-        interface_ip_address = None
-
-    return Interface(interface_name, device_id, port_id, interface_ip_address, interface_mac_address,
-                     interface_trunk)
-
-
-class MacExtractor:
+class Extractor:
     def __init__(self, db_client: MariaDBClient):
         self.db_client = db_client
+
+    def extract_device_ids(self, table: str):
+        device_ids = []
+
+        records = self.db_client.get_data(table, None, "device_id")
+        for record in records:
+            device_id = record["device_id"]
+            if device_id not in device_ids:
+                device_ids.append(device_id)
+                yield device_id
+
+    def get_source_interface(self, record: dict) -> Interface:
+        device_id = record["device_id"]
+        port_id = record["port_id"]
+        if port_id == 0:
+            raise ArithmeticError
+
+        ports_table_data = self.db_client.get_data("ports", [("port_id", port_id)])[0]
+        interface_trunk = False if not ports_table_data["ifTrunk"] else True
+        interface_name = ports_table_data["ifName"]
+        interface_mac_address = ports_table_data["ifPhysAddress"]
+        interface_ip_address = self.db_client.get_data("ipv4_addresses", [("port_id", port_id)], "ipv4_address")
+        if interface_ip_address:  # some interfaces don't have ip address
+            interface_ip_address = interface_ip_address[0]["ipv4_address"]
+        else:
+            interface_ip_address = None
+
+        return Interface(interface_name, device_id, port_id, interface_ip_address, interface_mac_address,
+                         interface_trunk)
+
+    def get_destination_interface(self, record: dict, source_interface: Interface) -> Interface:
+        raise NotImplementedError
+
+    def extract(self):
+        raise NotImplementedError
+
+
+class MacExtractor(Extractor):
+    def __init__(self, db_client: MariaDBClient):
+        super().__init__(db_client)
 
         self.relations = RelationsContainer()
 
@@ -74,7 +82,7 @@ class MacExtractor:
 
         return True
 
-    def __get_destination_interface(self, record: dict, source_interface: Interface) -> Interface:
+    def get_destination_interface(self, record: dict, source_interface: Interface) -> Interface:
         port_mac_address = record["mac_address"]
         port_records = self.db_client.get_data("ports", [("ifPhysAddress", port_mac_address)])
         if not port_records:
@@ -105,7 +113,7 @@ class MacExtractor:
         return Interface(interface_name, device_id, port_id, port_ip_address, mac_address, trunk)
 
     def extract(self) -> str:
-        for device_id in extract_device_ids(self.db_client, "ports_fdb"):
+        for device_id in self.extract_device_ids("ports_fdb"):
             records = self.db_client.get_data("ports_fdb", [("device_id", device_id)])
 
             mac_addresses = []
@@ -114,8 +122,8 @@ class MacExtractor:
                     continue
                 mac_addresses.append(record["mac_address"])
                 try:
-                    source_interface = get_source_interface(self.db_client, record)
-                    destination_interface = self.__get_destination_interface(record, source_interface)
+                    source_interface = self.get_source_interface(record)
+                    destination_interface = self.get_destination_interface(record, source_interface)
                 except ArithmeticError:
                     continue
 
@@ -124,13 +132,13 @@ class MacExtractor:
         return str(self.relations)
 
 
-class IPExtractor:
+class IPExtractor(Extractor):
     def __init__(self, db_client: MariaDBClient):
-        self.db_client = db_client
+        super().__init__(db_client)
 
         self.relations = RelationsContainer()
 
-    def __get_destination_interface(self, record: dict, source_interface: Interface):
+    def get_destination_interface(self, record: dict, source_interface: Interface) -> Interface:
         destination_interface_network = record["inetCidrRouteDest"]
         destination_interface_network_prefix = record["inetCidrRoutePfxLen"]
         destination_network_obj = IPv4Network(f"{destination_interface_network}/{destination_interface_network_prefix}")
@@ -152,7 +160,7 @@ class IPExtractor:
 
         if len(network_devices) != 2:  # intermediary devices exist, not neighbours
             raise ArithmeticError("More or less than two devices on network - no direct connection between source and destination")
-        #print(destination_network_obj)
+
         #print(f"{network_devices} both -> source {source_interface.ip_address}")
         network_devices.remove(source_interface.ip_address)
         destination_interface_ip = network_devices[0]
@@ -160,30 +168,30 @@ class IPExtractor:
         destination_interface_record = self.db_client.get_data("ipv4_addresses", [("ipv4_address", destination_interface_ip)])
         if not destination_interface_record:
             raise ArithmeticError("Has no interface?")
-        #print(f"super - {destination_interface_ip}")
 
         destination_interface_port_id = destination_interface_record[0]["port_id"]
         port_record = self.db_client.get_data("ports", [("port_id", destination_interface_port_id)])[0]
+        if "virtual" in port_record["ifType"].lower():
+            raise ArithmeticError("Virtual interface as destination")
         port_id = port_record["port_id"]
         interface_name = port_record["ifName"]
         device_id = port_record["device_id"]
         trunk = port_record["ifTrunk"]
         mac_address = port_record["ifPhysAddress"]
         port_ip_address = destination_interface_ip
-        #print(device_id)
 
         return Interface(interface_name, device_id, port_id, port_ip_address, mac_address, trunk)
 
     def extract(self):
-        for device_id in extract_device_ids(self.db_client, "route"):
+        for device_id in self.extract_device_ids("route"):
             records = self.db_client.get_data("route", [("device_id", device_id), ("inetCidrRouteDestType", "ipv4")])
 
             for record in records:
                 try:
-                    source_interface = get_source_interface(self.db_client, record)
+                    source_interface = self.get_source_interface(record)
                     if not source_interface.ip_address: #or source_interface.ip_address in ["0.0.0.0", "127.0.0.1"]:
                         continue
-                    destination_interface = self.__get_destination_interface(record, source_interface)
+                    destination_interface = self.get_destination_interface(record, source_interface)
                 except ArithmeticError:
                     continue
 
