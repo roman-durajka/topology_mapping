@@ -13,7 +13,4 @@ virtualne rozhrania mozu byt zaznacene ako fyzicke rozhrania
 
 
 to ask:
-l3 switches
-port_id = 0
-arp table
-using ifNames ? virtual,vlan
+ip adresa .1.99 na fortigate a .1.1 na sw11 - rozlisenie iba na zaklade ifType=virtual
