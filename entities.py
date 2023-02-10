@@ -34,6 +34,16 @@ class RelationsContainer:
 
         return result
 
+    def __iter__(self):
+        self.index = 0
+        return self
+
+    def __next__(self):
+        if self.index == len(self.relations):
+            return StopIteration
+        self.index += 1
+        return self.relations[self.index - 1]
+
     def add(self, relation: Relation):
         unique = True
         for existing_relation in self.relations:
@@ -46,9 +56,10 @@ class RelationsContainer:
 
 
 class Device:
-    def __init__(self, device_id, name):
+    def __init__(self, device_id, name, os):
         self.device_id = device_id
         self.name = name
+        self.os = os
 
     def __str__(self):
-        return f"{self.device_id} [label=\"{self.name}\", shape=circle]\n"
+        return f"{self.device_id} [label=\"{self.name}\", shape={'box' if self.os=='ios' else 'oval'}]\n"
