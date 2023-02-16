@@ -20,7 +20,7 @@ class Relation:
         return f"{self.interface1} -- {self.interface2}"
 
     def __eq__(self, other):
-        return sorted((self.interface1.device_id, self.interface2.device_id)) == sorted((other.interface1.device_id, other.interface2.device_id))
+        return sorted((self.interface1.device_id, self.interface2.device_id)) == sorted((other.interface1.device_id, other.interface2.device_id)) and sorted((self.interface1.port_id, self.interface2.port_id)) == sorted((other.interface1.port_id, other.interface2.port_id))
 
 
 class RelationsContainer:
