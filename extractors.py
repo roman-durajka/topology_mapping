@@ -110,7 +110,6 @@ class MacExtractor(Extractor):
                             return False
 
                         source_to_intermediary_threat = True
-                        return False
                         break
 
                 if not destination_to_intermediary_threat:
@@ -147,6 +146,9 @@ class MacExtractor(Extractor):
         interface_name = port_record["ifName"]
         device_id = port_record["device_id"]
         trunk = port_record["ifTrunk"]
+        virtual = "virtual" in port_record["ifType"].lower()
+        if virtual:
+            raise ArithmeticError
         mac_address = port_record["ifPhysAddress"]
         port_ip_address = self.db_client.get_data("ipv4_addresses", [("port_id", port_id)])
 
@@ -255,17 +257,15 @@ class DPExtractor(Extractor):
         return self.get_source_interface(record["remote_device_id"], record["remote_port_id"])
 
     def extract(self) -> RelationsContainer:
-        for device_id in self.extract_device_ids("devices"):
-            records = self.db_client.get_data("links", [("local_device_id", device_id)])
+        records = self.db_client.get_data("links")
+        for record in records:
+            try:
+                source_interface = self.get_source_interface(record["local_device_id"], record["local_port_id"])
+                destination_interface = self.get_destination_interface(record, source_interface)
+            except ArithmeticError:
+                continue
 
-            for record in records:
-                try:
-                    source_interface = self.get_source_interface(record["local_device_id"], record["local_port_id"])
-                    destination_interface = self.get_destination_interface(record, source_interface)
-                except ArithmeticError:
-                    continue
-
-                self.relations.add(Relation(source_interface, destination_interface))
+            self.relations.add(Relation(source_interface, destination_interface))
 
         return self.relations
 
