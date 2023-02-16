@@ -84,8 +84,8 @@ class MacExtractor(Extractor):
             source_to_intermediary_threat = False
             destination_to_intermediary_threat = False
             for intermediary_port_record in intermediary_port_records:
-                if intermediary_port_record["ifType"] == "propVirtual":
-                    continue
+                # if intermediary_port_record["ifType"] == "propVirtual":
+                #     continue
                 if intermediary_port_record["port_id"] == record["port_id"]:
                     continue
 
@@ -110,6 +110,7 @@ class MacExtractor(Extractor):
                             return False
 
                         source_to_intermediary_threat = True
+                        return False
                         break
 
                 if not destination_to_intermediary_threat:
