@@ -1,14 +1,3 @@
-def get_background_label(name):
-    str = '<\n' \
-          '<table border="0" cellborder="0" cellpadding="0" cellspacing="0">\n'\
-          '    <tr>\n' \
-          f'        <td><font color="red"><b>{name.strip()}</b></font></td>\n' \
-          '    </tr>\n' \
-          '</table>>'
-
-    return str
-
-
 class Interface:
     def __init__(self, interface_name: str, device_id: int, port_id: int, ip_address: str, mac_address: str,
                  trunk: bool):
@@ -19,17 +8,11 @@ class Interface:
         self.mac_address = mac_address
         self.trunk = trunk
 
-    def __str__(self):
-        return f"{self.device_id}"
-
 
 class Relation:
     def __init__(self, interface1: Interface, interface2: Interface):
         self.interface1 = interface1
         self.interface2 = interface2
-
-    def __str__(self):
-        return f'{self.interface1} -- {self.interface2} [labeldistance=0, taillabel={get_background_label(self.interface1.interface_name)}, headlabel={get_background_label(self.interface2.interface_name)}]'
 
     def __eq__(self, other):
         return sorted((self.interface1.device_id, self.interface2.device_id)) == sorted(
@@ -41,13 +24,6 @@ class Relation:
 class RelationsContainer:
     def __init__(self):
         self.relations = []
-
-    def __str__(self):
-        result = ""
-        for relation in self.relations:
-            result += f"{str(relation)}\n"
-
-        return result
 
     def __iter__(self):
         self.index = 0
@@ -75,8 +51,3 @@ class Device:
         self.device_id = device_id
         self.name = name
         self.os = os
-
-    def __str__(self):
-        if "sw" in self.name:
-            return f"{self.device_id} [label=\"{self.name}\", shape=rectangle, image=\"l2_switch.png\", imagescale=true]\n"
-        return f"{self.device_id} [label=\"{self.name}\", shape=circle, image=\"router.png\", imagescale=true]\n"

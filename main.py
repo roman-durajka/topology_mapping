@@ -24,24 +24,6 @@ def main():
     json = topology_generator.generate_json(devices, relations)
     topology_generator.generate_js_file(json)
 
-    # relations_str = f"{relations}"
-    #
-    # file_to_write = open("graph_example.dot", "w")
-    # file_to_write.write("graph G {\n")
-    # file_to_write.write("overlap=false\n")
-    # file_to_write.write("splines=false\n")
-    # file_to_write.write("K=0.50\n")
-    # file_to_write.write("start=1\n")
-    # file_to_write.write("nodesep=0.78\n")
-    #
-    # file_to_write.write(devices)
-    # file_to_write.write("\n")
-    # file_to_write.write(relations_str)
-    #
-    # file_to_write.write("}")
-    #
-    # file_to_write.close()
-
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':

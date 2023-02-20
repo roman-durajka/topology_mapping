@@ -274,7 +274,7 @@ class DeviceExtractor:
     def __init__(self, db_client: MariaDBClient):
         self.db_client = db_client
 
-    def extract(self) -> str:
+    def extract(self) -> list:
         devices = []
         records = self.db_client.get_data("devices", None, "device_id", "sysName", "os")
         for record in records:
@@ -282,8 +282,3 @@ class DeviceExtractor:
             devices.append(device)
 
         return devices
-        # result = ""
-        # for device in devices:
-        #     result += f"{str(device)}"
-        #
-        # return result
