@@ -1,5 +1,17 @@
+def get_background_label(name):
+    str = '<\n' \
+          '<table border="0" cellborder="0" cellpadding="0" cellspacing="0">\n'\
+          '    <tr>\n' \
+          f'        <td><font color="red"><b>{name.strip()}</b></font></td>\n' \
+          '    </tr>\n' \
+          '</table>>'
+
+    return str
+
+
 class Interface:
-    def __init__(self, interface_name: str, device_id: int, port_id: int, ip_address: str, mac_address: str, trunk: bool):
+    def __init__(self, interface_name: str, device_id: int, port_id: int, ip_address: str, mac_address: str,
+                 trunk: bool):
         self.interface_name = interface_name
         self.device_id = device_id
         self.port_id = port_id
@@ -17,10 +29,13 @@ class Relation:
         self.interface2 = interface2
 
     def __str__(self):
-        return f"{self.interface1} -- {self.interface2}"
+        return f'{self.interface1} -- {self.interface2} [labeldistance=0, taillabel={get_background_label(self.interface1.interface_name)}, headlabel={get_background_label(self.interface2.interface_name)}]'
 
     def __eq__(self, other):
-        return sorted((self.interface1.device_id, self.interface2.device_id)) == sorted((other.interface1.device_id, other.interface2.device_id)) and sorted((self.interface1.port_id, self.interface2.port_id)) == sorted((other.interface1.port_id, other.interface2.port_id))
+        return sorted((self.interface1.device_id, self.interface2.device_id)) == sorted(
+            (other.interface1.device_id, other.interface2.device_id)) and sorted(
+            (self.interface1.port_id, self.interface2.port_id)) == sorted(
+            (other.interface1.port_id, other.interface2.port_id))
 
 
 class RelationsContainer:
@@ -40,7 +55,7 @@ class RelationsContainer:
 
     def __next__(self):
         if self.index == len(self.relations):
-            return StopIteration
+            raise StopIteration
         self.index += 1
         return self.relations[self.index - 1]
 
@@ -62,4 +77,6 @@ class Device:
         self.os = os
 
     def __str__(self):
-        return f"{self.device_id} [label=\"{self.name}\", shape={'box' if self.os=='ios' else 'oval'}]\n"
+        if "sw" in self.name:
+            return f"{self.device_id} [label=\"{self.name}\", shape=rectangle, image=\"l2_switch.png\", imagescale=true]\n"
+        return f"{self.device_id} [label=\"{self.name}\", shape=circle, image=\"router.png\", imagescale=true]\n"

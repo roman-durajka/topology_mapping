@@ -55,10 +55,10 @@ class Extractor:
 
 
 class MacExtractor(Extractor):
-    def __init__(self, db_client: MariaDBClient):
+    def __init__(self, db_client: MariaDBClient, relations: RelationsContainer):
         super().__init__(db_client)
 
-        self.relations = RelationsContainer()
+        self.relations = relations
 
     def __is_directly_connected(self, source_interface: Interface, destination_interface: dict) -> bool:
         """Checks whether device is directly connected or not.
@@ -281,8 +281,9 @@ class DeviceExtractor:
             device = Device(record["device_id"], record["sysName"], record["os"])
             devices.append(device)
 
-        result = ""
-        for device in devices:
-            result += f"{str(device)}"
-
-        return result
+        return devices
+        # result = ""
+        # for device in devices:
+        #     result += f"{str(device)}"
+        #
+        # return result
