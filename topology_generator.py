@@ -3,7 +3,7 @@ import json
 
 
 def generate_json(devices: list, relations: RelationsContainer, paths: list):
-    output = {"nodes": [], "links": []}
+    output = {"nodes": [], "links": [], "paths": []}
 
     for device in devices:
         device_to_add = {"id": device.device_id,
@@ -11,12 +11,14 @@ def generate_json(devices: list, relations: RelationsContainer, paths: list):
                          "icon": device.device_type,
                          "type": device.device_type,
                          "os": device.os,
-                         "model": device.model}
+                         "model": device.model,
+                         "cost": 0}
 
+        interfaces = {}
         for key, value in device.interfaces.items():
             interface_string = f"{value['status']}/{value['ip_address']}/{value['mac_address']}"
-            device_attr = {value["name"]: interface_string}
-            device_to_add.update(device_attr)
+            interfaces.update({value["name"]: interface_string})
+        device_to_add.update({"interfaces": interfaces})
 
         output["nodes"].append(device_to_add)
 
@@ -32,9 +34,10 @@ def generate_json(devices: list, relations: RelationsContainer, paths: list):
         output["links"].append(relation_to_add)
 
     index = len(relations)
-    colors = ["red", "blue", "green", "yellow", "pink", "pink", "pink", "pink", "pink"]
     for path in paths:
-        color = colors.pop(0)
+        color = path["color"]
+        cost = path["cost"]
+        first_relation = True
         for relation in path["relations"]:
             relation_to_add = {"id": index,
                                "source": relation.interface1.device_id,
@@ -47,16 +50,22 @@ def generate_json(devices: list, relations: RelationsContainer, paths: list):
                                "width": 2,
                                "dotted": True}
 
+            if first_relation:
+                relation_to_add["labelText"] = cost
+                relation_to_add["labelTextColor"] = color
+                first_relation = False
+                output["paths"].append({"color": color, "cost": cost})
+
             output["links"].append(relation_to_add)
 
             for device in output["nodes"]:
                 if relation.interface1.device_id == device["id"]\
                         or relation.interface2.device_id == device["id"]:
                     if "cost" in device:
-                        if device["cost"] < path["cost"]:
-                            device["cost"] = path["cost"]
+                        if device["cost"] < cost:
+                            device["cost"] = cost
                     else:
-                        device["cost"] = path["cost"]
+                        device["cost"] = cost
 
             index += 1
 

@@ -180,7 +180,7 @@ class Path:
 
         return {"source_port_id": source_port_id, "destination_port_id": destination_port_id, "network": new_network}
 
-    def get_path(self, source: str, destination: str, cost: int, color: str) -> dict:
+    def get_path(self, source: str, destination: str) -> RelationsContainer:
         """Returns new RelationsContainer containing only relations that belong to path from source to destination.
         Source and destination must be IP_addresses/mask of devices or interfaces. For example 192.168.1.1/24."""
         path = RelationsContainer()
@@ -257,7 +257,7 @@ class Path:
                 local_destination_port_id = new_network["destination_port_id"]
             local_source_port_id = new_network["source_port_id"]
 
-        return {"relations": path, "cost": cost}
+        return path
 
 
 def main(source, destination, value):

@@ -23,12 +23,13 @@ def main():
         relations = ip_extractor.extract()
 
     path = Path(db_client, devices, relations)
-    input = [{"source": "192.168.1.10/24", "destination": "192.168.1.1/24", "cost": 10, "color": "yellow"},
-             {"source": "192.168.1.10/24", "destination": "192.168.1.1/24", "cost": 20, "color": "red"}]
+    input = [{"source": "192.168.1.10/24", "destination": "192.168.1.1/24", "cost": 10, "color": "green"},
+             {"source": "192.168.1.10/24", "destination": "192.168.1.1/24", "cost": 99, "color": "orange"}]
     paths = []
     for item in input:
-        single_path = path.get_path(item["source"], item["destination"], item["cost"], item["color"])
-        paths.append(single_path)
+        single_path = path.get_path(item["source"], item["destination"])
+        path_dict = {"relations": single_path, "color": item["color"], "cost": item["cost"]}
+        paths.append(path_dict)
 
     json = topology_generator.generate_json(devices, relations, paths)
     topology_generator.generate_js_file(json)

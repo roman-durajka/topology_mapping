@@ -5,23 +5,32 @@ nx.define('NodeTooltipExtension', nx.ui.Component, {
             node: {
                 set: function (value) {
                     let data = value.model().getData();
-                    let new_data = {}
+                    let node_data = {};
+                    let if_data = {};
 
                     for (const [key, value] of Object.entries(data)) {
                         if (ILLEGAL_ATTRIBUTES.indexOf(key) === -1) {
-                            new_data[key] = value;
+                            if (key === "interfaces") {
+                                for (const [if_key, if_value] of Object.entries(value)) {
+                                    if_data[if_key] = if_value;
+                                }
+                            } else {
+                                node_data[key] = value;
+                            }
                         }
                     }
 
-                    this.view('list').set('items', new nx.data.Dictionary(new_data));
+                    this.view('list').set('items', new nx.data.Dictionary(node_data));
+                    this.view('if-list').set('items', new nx.data.Dictionary(if_data));
                     this.title("Device description");
+                    console.log(new nx.data.Dictionary(node_data))
                 }
             },
             topology: {},
             title: {}
         },
         view: {
-            props: {"style": "width: 400px;"},
+            props: {"style": "width: 450px;"},
             content: [
                 {
                     name: 'header',
@@ -64,11 +73,51 @@ nx.define('NodeTooltipExtension', nx.ui.Component, {
                                         {
                                             tag: 'span',
                                             content: '{value}'
-                                        }
+                                        },
                                     ]
-
                                 }
                             }
+                        }, {
+                            name: "if",
+                            tag: 'ul',
+                            props: {
+                                'class': 'n-list-wrap',
+                                    tag: 'li',
+                                    content: [
+                                        {
+                                            tag: 'label',
+                                            content: 'interfaces'
+                                        },
+                                        {
+                                            tag: 'span',
+                                            content: '(status/ip/mac)'
+                                        },
+                                        {
+                                            name: 'if-list',
+                                            tag: 'ul',
+                                            props: {
+                                                'class': 'n-list-wrap',
+                                                template: {
+                                                    tag: 'li',
+                                                    props: {
+                                                        'class': 'n-list-item-i li-indent',
+                                                        role: 'listitem'
+                                                    },
+                                                    content: [
+                                                        {
+                                                            tag: 'label',
+                                                            content: '  {key}'
+                                                        },
+                                                        {
+                                                            tag: 'span',
+                                                            content: '{value}'
+                                                        },
+                                                    ]
+                                                }
+                                            }
+                                        },
+                                    ]
+                                }
                         }
                     ]
                 }
