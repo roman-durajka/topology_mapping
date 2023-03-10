@@ -88,3 +88,60 @@
     shell.start();
 })(nx);
 
+
+function buildTable() {
+    //gather data
+    //if data found, build table
+
+    if (!topologyData.paths) {
+        return;
+    }
+
+    let path;
+
+    let mainTableElement = document.querySelector("#table");
+
+    let table = document.createElement("table");
+    table.classList.add("table-structure");
+
+    let thead = document.createElement("thead")
+    let tr1 = document.createElement("tr")
+    let th1 = document.createElement("th")
+    th1.classList.add("table-header");
+    let th2 = document.createElement("th")
+    th2.innerHTML = "Cost";
+    th2.classList.add("table-header");
+    tr1.appendChild(th1);
+    tr1.appendChild(th2);
+    thead.appendChild(tr1);
+
+    let tbody = document.createElement("tbody");
+    for (path of topologyData.paths) {
+        let tr2 = document.createElement("tr");
+
+        let td1 = document.createElement("td");
+        td1.classList.add("table-column1");
+        let td2 = document.createElement("td");
+        td2.classList.add("table-column2");
+
+        let span = document.createElement("span");
+        span.innerHTML = "_ _ _ _"
+        span.style.color = path.color;
+        td1.appendChild(span);
+
+        td2.innerHTML = path.cost;
+
+        tr2.appendChild(td1);
+        tr2.appendChild(td2);
+
+        tbody.appendChild(tr2);
+    }
+
+    table.appendChild(thead);
+    table.appendChild(tbody);
+
+    mainTableElement.appendChild(table);
+}
+
+buildTable();
+
