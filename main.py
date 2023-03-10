@@ -1,5 +1,6 @@
 import topology_generator
 from extractors import MacExtractor, IPExtractor, DeviceExtractor, DPExtractor
+from path import Path
 from modules.clients import MariaDBClient
 import entities
 import sys
@@ -21,8 +22,17 @@ def main():
         ip_extractor = IPExtractor(db_client, mac_relations)
         relations = ip_extractor.extract()
 
-    json = topology_generator.generate_json(devices, relations)
+    path = Path(db_client, devices, relations)
+    input = [{"source": "192.168.1.10/24", "destination": "192.168.1.1/24", "cost": 10, "color": "yellow"},
+             {"source": "192.168.1.10/24", "destination": "192.168.1.1/24", "cost": 20, "color": "red"}]
+    paths = []
+    for item in input:
+        single_path = path.get_path(item["source"], item["destination"], item["cost"], item["color"])
+        paths.append(single_path)
+
+    json = topology_generator.generate_json(devices, relations, paths)
     topology_generator.generate_js_file(json)
+    topology_generator.generate_json_file(json)
 
 
 # Press the green button in the gutter to run the script.

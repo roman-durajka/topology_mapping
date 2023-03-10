@@ -1,5 +1,6 @@
 from modules.clients import MariaDBClient
 from entities import RelationsContainer, Interface, Relation, Device
+from modules.exceptions import UndefinedDeviceType
 from ipaddress import IPv4Network, IPv4Address
 
 
@@ -112,7 +113,9 @@ class MacExtractor(Extractor):
         trunk = port_record["ifTrunk"]
         virtual = "virtual" in port_record["ifType"].lower()
         if virtual:
-            raise ArithmeticError
+            # path algorithm
+            pass
+            #raise ArithmeticError
         mac_address = port_record["ifPhysAddress"]
         port_ip_address = self.db_client.get_data("ipv4_addresses", [("port_id", port_id)])
 
@@ -139,6 +142,8 @@ class MacExtractor(Extractor):
                     continue
 
                 self.relations.add(Relation(source_interface, destination_interface))
+
+
 
         return self.relations
 
@@ -182,7 +187,9 @@ class IPExtractor(Extractor):
         destination_interface_port_id = destination_interface_record[0]["port_id"]
         port_record = self.db_client.get_data("ports", [("port_id", destination_interface_port_id)])[0]
         if "virtual" in port_record["ifType"].lower():
-            raise ArithmeticError("Virtual interface as destination")
+            # path algorithm
+            pass
+            #raise ArithmeticError("Virtual interface as destination")
         port_id = port_record["port_id"]
         interface_name = port_record["ifName"]
         device_id = port_record["device_id"]
@@ -231,15 +238,59 @@ class DPExtractor(Extractor):
         return self.relations
 
 
+HOST_OPERATING_SYSTEMS = ["linux", "windows"]
+
+
 class DeviceExtractor:
     def __init__(self, db_client: MariaDBClient):
         self.db_client = db_client
 
+    def __get_device_type(self, device_id: int, os: str) -> str:
+        if os in HOST_OPERATING_SYSTEMS:
+            return "host"
+
+        mac_records = self.db_client.get_data("ports_fdb", [("device_id", device_id)])
+        has_switching_capabilities = True if mac_records else False
+        route_records = self.db_client.get_data("route", [("device_id", device_id)])
+        has_routing_capabilities = True if route_records else False
+
+        if has_routing_capabilities and has_switching_capabilities:
+            return "l3sw"
+
+        if has_routing_capabilities:
+            return "router"
+
+        if has_switching_capabilities:
+            return "switch"
+
+        raise UndefinedDeviceType("Could not define device type!")
+
+    def __get_interfaces(self, device_id: int):
+        interfaces = {}
+        ports = self.db_client.get_data("ports", [("device_id", device_id), ("ifOperStatus", "up")])
+        for port_record in ports:
+            interface_data = {"status": port_record["ifOperStatus"], "name": port_record["ifName"], "mac_address": "none", "ip_address": "none"}
+            mac_address = port_record["ifPhysAddress"]
+            if mac_address:
+                interface_data["mac_address"] = mac_address
+            ip_address_record = self.db_client.get_data("ipv4_addresses", [("port_id", port_record["port_id"])])
+            if ip_address_record:
+                ip_address = ip_address_record[0]["ipv4_address"]
+                interface_data["ip_address"] = ip_address
+
+            port_id = port_record["port_id"]
+            interfaces[port_id] = interface_data
+
+        return interfaces
+
     def extract(self) -> list:
         devices = []
-        records = self.db_client.get_data("devices", None, "device_id", "sysName", "os")
+        records = self.db_client.get_data("devices")
         for record in records:
-            device = Device(record["device_id"], record["sysName"], record["os"])
+            device_type = self.__get_device_type(record["device_id"], record["os"])
+            interfaces = self.__get_interfaces(record["device_id"])
+
+            device = Device(record["device_id"], record["sysName"], record["os"], record["hardware"], device_type, interfaces)
             devices.append(device)
 
         return devices
