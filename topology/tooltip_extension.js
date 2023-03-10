@@ -1,9 +1,19 @@
+let ILLEGAL_ATTRIBUTES = ["id", "index", "weight", "x", "y", "px", "py", "icon"]
+
 nx.define('NodeTooltipExtension', nx.ui.Component, {
         properties: {
             node: {
                 set: function (value) {
                     let data = value.model().getData();
-                    this.view('list').set('items', new nx.data.Dictionary({"Name:": data.name}));
+                    let new_data = {}
+
+                    for (const [key, value] of Object.entries(data)) {
+                        if (ILLEGAL_ATTRIBUTES.indexOf(key) === -1) {
+                            new_data[key] = value;
+                        }
+                    }
+
+                    this.view('list').set('items', new nx.data.Dictionary(new_data));
                     this.title("Device description");
                 }
             },
@@ -11,7 +21,7 @@ nx.define('NodeTooltipExtension', nx.ui.Component, {
             title: {}
         },
         view: {
-            props: {"style": "width: 200px;"},
+            props: {"style": "width: 400px;"},
             content: [
                 {
                     name: 'header',
@@ -78,7 +88,9 @@ nx.define("LinkTooltipExtension", nx.ui.Component, {
                 set: function (value) {
                     let data = value.model().getData();
                     this.view('list').set('items', new nx.data.Dictionary({"Source interface:": data.srcIfName,
-                                                                            "Target interface:": data.tgtIfName}));
+                                                                            "Target interface:": data.tgtIfName,
+                                                                            "Source MAC": data.srcMac,
+                                                                            "Target MAC": data.tgtMac}));
                     this.title("Link description");
                 }
             },

@@ -30,6 +30,26 @@
             linkType: 'parallel',
             srcIfName: 'model.srcIfName',
             tgtIfName: 'model.tgtIfName',
+            labelText: 'model.labelText',
+            labelTextColor: 'model.labelTextColor',
+            color: function(model) {
+                if (model._data.color) {
+                    return model._data.color
+                }
+            },
+            width: function(model) {
+                if (model._data.width) {
+                    return model._data.width
+                }
+            },
+            dotted: function(model) {
+                if (model._data.dotted) {
+                    return model._data.dotted
+                }
+            },
+        },
+        linkSetConfig: {
+            collapsedRule: false,
         },
         // Display Node icon. Displays a dot if set to 'false'.
         showIcon: true,
@@ -47,10 +67,17 @@
     let Shell = nx.define(nx.ui.Application, {
         methods: {
             start: function () {
+                topology.registerIcon("database", "images/database.png", 40, 48);
+                topology.registerIcon("service", "images/service.png", 40, 48);
                 // Read topology data from variable
                 topology.data(topologyData);
+
                 // Attach it to the document
                 topology.attach(this);
+                let actionPanel = new ActionPanel();
+                actionPanel.topology = topology;
+
+                actionPanel.attach(this);
             }
         }
     });
@@ -60,3 +87,4 @@
     // Run the application
     shell.start();
 })(nx);
+

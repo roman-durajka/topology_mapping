@@ -7,3 +7,14 @@ fill: black;
 font-size: 7px;
 fill: black;
 }
+
+.link-labelText {
+font-size: 20px;
+text-shadow: 0 0 1px black, 0 0 1px black, 0 0 1px black, 0 0 1px black;
+font-family: 'Ubuntu', sans-serif;
+}
+
+.popover {
+    max-width: 1980px;
+    max-height: 1080px;
+}

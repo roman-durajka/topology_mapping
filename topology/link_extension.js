@@ -1,7 +1,22 @@
 nx.define('LinkExtension', nx.graphic.Topology.Link, {
     properties: {
         srcIfName: null,
-        tgtIfName: null
+        tgtIfName: null,
+        labelText: null,
+        labelTextColor: null,
+        linkSize: null,
+        dotted: {
+                set: function(inValue) {
+                    var lineEl = this.view('line');
+                    var value = this._processPropertyValue(inValue);
+                    if (value) {
+                        lineEl.dom().setStyle('stroke-dasharray', '3, 2');
+                    } else {
+						lineEl.dom().setStyle('stroke-dasharray', '');
+                    }
+                    this._dotted = value;
+                }
+            },
     },
     view: function(view) {
         view.content.push({
@@ -19,6 +34,12 @@ nx.define('LinkExtension', nx.graphic.Topology.Link, {
                 'class': 'target-link-label',
                 'alignment-baseline': 'text-after-edge',
                 'text-anchor': 'end'
+            }
+        }, {
+            name: 'labelText-attr',
+            type: 'nx.graphic.Text',
+            props: {
+                'class': 'link-labelText',
             }
         });
         return view;
@@ -46,6 +67,17 @@ nx.define('LinkExtension', nx.graphic.Topology.Link, {
                 label.set('text', this.tgtIfName());
                 label.set('transform', 'rotate(' + line.angle() + ' ' + position.x + ',' + position.y + ')');
                 label.setStyle('font-size', 12 * this.stageScale());
+            }
+            if (this.labelText()) {
+                position = line.center();
+                label = this.view('labelText-attr');
+                label.set('x', position.x + 5);
+                label.set('y', position.y + 20);
+                label.set('text', this.labelText());
+                label.setStyle('font-size', 12 * this.stageScale());
+                if (this.labelTextColor()) {
+                    label.setStyle("fill", this.labelTextColor());
+                }
             }
         }
     }
