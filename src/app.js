@@ -1,3 +1,4 @@
+
 (function (nx) {
     /**
      * NeXt UI based application
@@ -5,7 +6,7 @@
     // Initialize topology
     let topology = new nx.graphic.Topology({
         // View dimensions
-        width: 1400,
+        width: 1920,
         height: 800,
         // Dataprocessor is responsible for spreading
         // the Nodes across the view.
@@ -93,9 +94,9 @@ function buildTable() {
     //gather data
     //if data found, build table
 
-    if (!topologyData.paths) {
-        return;
-    }
+    // if (!topologyData.paths) {
+    //     return;
+    // }
 
     let path;
 
@@ -111,31 +112,40 @@ function buildTable() {
     let th2 = document.createElement("th")
     th2.innerHTML = "Cost";
     th2.classList.add("table-header");
+    let th3 = document.createElement("th")
+    th3.innerHTML = "Remove";
+    th3.classList.add("table-header");
     tr1.appendChild(th1);
     tr1.appendChild(th2);
+    tr1.appendChild(th3);
     thead.appendChild(tr1);
 
     let tbody = document.createElement("tbody");
-    for (path of topologyData.paths) {
-        let tr2 = document.createElement("tr");
+    tbody.id = "tableBody";
 
-        let td1 = document.createElement("td");
-        td1.classList.add("table-column1");
-        let td2 = document.createElement("td");
-        td2.classList.add("table-column2");
+    let tr2 = document.createElement("tr");
 
-        let span = document.createElement("span");
-        span.innerHTML = "_ _ _ _"
-        span.style.color = path.color;
-        td1.appendChild(span);
+    let td1 = document.createElement("td");
+    td1.classList.add("table-column1");
+    let td2 = document.createElement("td");
+    td2.classList.add("table-column2");
+    let td3 = document.createElement("td");
+    td3.classList.add("table-column3");
 
-        td2.innerHTML = path.cost;
+    let span = document.createElement("span");
+    span.innerHTML = "_______"
+    span.style.color = "lightblue";
+    td1.appendChild(span);
 
-        tr2.appendChild(td1);
-        tr2.appendChild(td2);
+    td2.innerHTML = "0";
 
-        tbody.appendChild(tr2);
-    }
+    td3.innerHTML = ""
+
+    tr2.appendChild(td1);
+    tr2.appendChild(td2);
+    tr2.appendChild(td3);
+
+    tbody.appendChild(tr2);
 
     table.appendChild(thead);
     table.appendChild(tbody);

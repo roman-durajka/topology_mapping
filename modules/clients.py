@@ -5,10 +5,10 @@ class MariaDBClient:
     def __init__(self):
         self.connection = mariadb.connect(
             user="root",
-            password="",
+            password="root",
             host="localhost",
             port=3306,
-            database="alghoritm"
+            database="relations"
         )
         self.cursor = self.connection.cursor()
 

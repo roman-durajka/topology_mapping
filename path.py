@@ -260,7 +260,7 @@ class Path:
         return path
 
 
-def main(source, destination, value):
+def main(source, destination, cost, color):
     db_client = MariaDBClient()
     device_extractor = DeviceExtractor(db_client)
     devices = device_extractor.extract()
@@ -270,18 +270,14 @@ def main(source, destination, value):
     relations = dp_extractor.extract()
 
     path = Path(db_client, devices, relations)
-    result = path.get_path(source, destination)
 
-    output = {"data": [], "pathID": 5}
+    single_path = path.get_path(source, destination)
+    path_dict = {"relations": single_path, "color": color, "cost": cost}
 
-    for index, relation in enumerate(result):
-        relation_to_add = {"id": index + 100,
-                           "source": relation.interface1.device_id,
-                           "target": relation.interface2.device_id,
-                           "srcMac": relation.interface1.mac_address,
-                           "tgtMac": relation.interface2.mac_address,
-                           "color": "red"}
+    json = topology_generator.generate_path_json(path_dict)
 
-        output["data"].append(relation_to_add)
+    # TODO: pridavanie cost zariadeniam
+    # TODO: odoberanie z topo
+    # TODO: tabulka
 
-    return output
+    return json

@@ -1,8 +1,10 @@
+import random
+
 from entities import RelationsContainer
 import json
 
 
-def generate_json(devices: list, relations: RelationsContainer, paths: list):
+def generate_json(devices: list, relations: RelationsContainer):
     output = {"nodes": [], "links": [], "paths": []}
 
     for device in devices:
@@ -33,47 +35,55 @@ def generate_json(devices: list, relations: RelationsContainer, paths: list):
 
         output["links"].append(relation_to_add)
 
-    index = len(relations)
-    for path in paths:
-        color = path["color"]
-        cost = path["cost"]
-        first_relation = True
-        for relation in path["relations"]:
-            relation_to_add = {"id": index,
-                               "source": relation.interface1.device_id,
-                               "target": relation.interface2.device_id,
-                               "srcIfName": relation.interface1.interface_name,
-                               "tgtIfName": relation.interface2.interface_name,
-                               "srcMac": relation.interface1.mac_address,
-                               "tgtMac": relation.interface2.mac_address,
-                               "color": color,
-                               "width": 2,
-                               "dotted": True}
+    return output
 
-            if first_relation:
-                relation_to_add["labelText"] = cost
-                relation_to_add["labelTextColor"] = color
-                first_relation = False
-                output["paths"].append({"color": color, "cost": cost})
 
-            output["links"].append(relation_to_add)
+def generate_path_json(path: dict):
+    output = {"paths": [], "links": [], "nodes": []}
 
-            for device in output["nodes"]:
-                if relation.interface1.device_id == device["id"]\
-                        or relation.interface2.device_id == device["id"]:
-                    if "cost" in device:
-                        if device["cost"] < cost:
-                            device["cost"] = cost
-                    else:
+    index = random.Random().randint(500, 50000)
+    color = path["color"]
+    cost = path["cost"]
+    first_relation = True
+    path_id = random.Random().randint(200, 50000)
+    for relation in path["relations"]:
+        relation_to_add = {"id": random.Random().randint(500, 10000),
+                           "source": relation.interface1.device_id,
+                           "target": relation.interface2.device_id,
+                           "srcIfName": relation.interface1.interface_name,
+                           "tgtIfName": relation.interface2.interface_name,
+                           "srcMac": relation.interface1.mac_address,
+                           "tgtMac": relation.interface2.mac_address,
+                           "color": color,
+                           "cost": cost,
+                           "width": 2,
+                           "dotted": True,
+                           "pathId": path_id}
+
+        if first_relation:
+            relation_to_add["labelText"] = cost
+            relation_to_add["labelTextColor"] = color
+            first_relation = False
+            output["paths"].append({"color": color, "cost": cost})
+
+        output["links"].append(relation_to_add)
+
+        for device in output["nodes"]:
+            if relation.interface1.device_id == device["id"] \
+                    or relation.interface2.device_id == device["id"]:
+                if "cost" in device:
+                    if device["cost"] < cost:
                         device["cost"] = cost
+                else:
+                    device["cost"] = cost
 
-            index += 1
+        index += 1
 
     return output
 
 
 def generate_js_file(topology_json: dict):
-    file_to_write = open("topology/data.js", "w")
+    file_to_write = open("src/data.js", "w")
     file_to_write.write(f"var topologyData={json.dumps(topology_json, indent=4, sort_keys=True)};")
     file_to_write.close()
 
