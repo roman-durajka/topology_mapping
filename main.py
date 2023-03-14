@@ -34,7 +34,7 @@ def main():
 
     json = topology_generator.generate_json(devices, relations)
     topology_generator.generate_js_file(json)
-    topology_generator.generate_json_file(json)
+    #topology_generator.generate_json_file(json)
 
 
 # Press the green button in the gutter to run the script.

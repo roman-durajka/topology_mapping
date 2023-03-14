@@ -68,8 +68,6 @@
     let Shell = nx.define(nx.ui.Application, {
         methods: {
             start: function () {
-                topology.registerIcon("database", "images/database.png", 40, 48);
-                topology.registerIcon("service", "images/service.png", 40, 48);
                 // Read topology data from variable
                 topology.data(topologyData);
 

@@ -1,10 +1,27 @@
 version: "3"
 
+
 services:
-    client:
+    flask:
         build: .
+        ports:
+         - "5000:5000"
+        depends_on:
+         - db
+    web:
         image: nginx
         ports:
-            - 8000:80
+         - 8000:80
         volumes:
-            - ./src:/usr/share/nginx/html
+         - ./src:/usr/share/nginx/html
+    db:
+        image: mariadb
+        environment:
+         - MYSQL_ROOT_PASSWORD=password
+         - MYSQL_DATABASE=relations
+         - MYSQL_USER=user
+         - MYSQL_PASSWORD=password
+        ports:
+         - "3306:3306"
+        volumes:
+         - ./mariadb_data:/var/lib/mysql

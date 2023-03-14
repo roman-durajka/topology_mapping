@@ -12,7 +12,7 @@ from ipaddress import IPv4Interface
 
 
 class Path:
-    def __init__(self, db_client: MariaDBClient, devices: list[Device], relations: RelationsContainer):
+    def __init__(self, db_client: MariaDBClient, devices: list, relations: RelationsContainer):
         self.db_client = db_client
 
         self.devices = devices

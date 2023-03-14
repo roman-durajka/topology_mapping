@@ -4,11 +4,11 @@ import mariadb
 class MariaDBClient:
     def __init__(self):
         self.connection = mariadb.connect(
-            user="root",
-            password="root",
-            host="localhost",
-            port=3306,
-            database="relations"
+            database="relations",
+            user="user",
+            password="password",
+            host="0.0.0.0",
+            port=3306
         )
         self.cursor = self.connection.cursor()
 
@@ -31,7 +31,7 @@ class MariaDBClient:
 
         return parsed_data
 
-    def get_data(self, table_name, queries: list[tuple] = None, *args):
+    def get_data(self, table_name, queries: list = None, *args):
         #  use args to specify which columns data to return
         statement = f"SELECT {','.join(args) if args else '*'} from {table_name}"
         if queries:
