@@ -7,8 +7,7 @@ class MariaDBClient:
             database="relations",
             user="user",
             password="password",
-            host="172.21.0.1",
-            port=3306
+            host="db_con"
         )
         self.cursor = self.connection.cursor()
 

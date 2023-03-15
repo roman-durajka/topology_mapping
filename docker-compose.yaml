@@ -3,19 +3,26 @@ version: "3"
 
 services:
     flask:
+        container_name: flask_con
         build: .
         ports:
          - "5000:5000"
         depends_on:
          - db
+        networks:
+         - inside_net
     web:
         image: nginx
+        container_name: web_con
         ports:
          - 8000:80
         volumes:
          - ./src:/usr/share/nginx/html
+        networks:
+         - inside_net
     db:
         image: mariadb
+        container_name: db_con
         environment:
          - MYSQL_ROOT_PASSWORD=password
          - MYSQL_DATABASE=relations
@@ -25,3 +32,11 @@ services:
          - "3306:3306"
         volumes:
          - ./mariadb_data:/var/lib/mysql
+        networks:
+         - inside_net
+
+networks:
+  inside_net:
+    driver: bridge
+    ipam:
+      driver: default
