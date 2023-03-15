@@ -77,7 +77,7 @@ nx.define("ActionPanel", nx.ui.Component, {
 						"cost": this.cost(),
 						"color": this.color()}
 
-			fetch("http://127.0.0.1:5000/path", {
+			fetch("http://localhost:5000/path", {
 				method: "POST",
 				headers: {
 					"Content-Type": "application/json",
