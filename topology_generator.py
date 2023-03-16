@@ -61,8 +61,6 @@ def generate_path_json(path: dict):
                            "pathId": path_id}
 
         if first_relation:
-            relation_to_add["labelText"] = cost
-            relation_to_add["labelTextColor"] = color
             first_relation = False
             output["paths"].append({"color": color, "cost": cost})
 

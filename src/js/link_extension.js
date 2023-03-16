@@ -73,8 +73,7 @@ nx.define('LinkExtension', nx.graphic.Topology.Link, {
                 rectangleSource.set('x', position.x);
                 rectangleSource.set('y', position.y - 5);
                 rectangleSource.set('transform', 'rotate(' + line.angle() + ' ' + position.x + ',' + position.y + ')');
-                rectangleSource.set('width', 4 * this.srcIfName().length)
-
+                rectangleSource.set('width', 4 * this.srcIfName().length);
                 label = this.view('source');
                 label.set('x', position.x);
                 label.set('y', position.y);
@@ -91,7 +90,7 @@ nx.define('LinkExtension', nx.graphic.Topology.Link, {
                 rectangleTarget.set('x', position.x - this.tgtIfName().length * 4);
                 rectangleTarget.set('y', position.y - 5);
                 rectangleTarget.set('transform', 'rotate(' + line.angle() + ' ' + position.x + ',' + position.y + ')');
-                rectangleTarget.set('width', 4 * this.tgtIfName().length)
+                rectangleTarget.set('width', 4 * this.tgtIfName().length);
 
                 label = this.view('target');
                 label.set('x', position.x);
@@ -103,8 +102,8 @@ nx.define('LinkExtension', nx.graphic.Topology.Link, {
             if (this.labelText()) {
                 position = line.center();
                 label = this.view('labelText-attr');
-                label.set('x', position.x + 5);
-                label.set('y', position.y + 20);
+                label.set('x', position.x);
+                label.set('y', position.y);
                 label.set('text', this.labelText());
                 label.setStyle('font-size', 12 * this.stageScale());
                 if (this.labelTextColor()) {
