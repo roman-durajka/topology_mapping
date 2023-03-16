@@ -19,7 +19,6 @@ class Path:
         self.relations = relations
 
     def __get_port_id(self, ip_address: str) -> int:
-        ip_address = ip_address.split("/")[0]
         records = self.db_client.get_data("ipv4_addresses", [("ipv4_address", ip_address)])
         if not records:
             raise NotFoundError("ERROR: No interfaces with given IP address were found...")
@@ -32,7 +31,6 @@ class Path:
         return port_id
 
     def __get_device_id_from_ip(self, ip_address: str) -> int:
-        ip_address = ip_address.split("/")[0]
         records = self.db_client.get_data("ipv4_addresses", [("ipv4_address", ip_address)])
         if not records:
             raise NotFoundError("ERROR: No interfaces with given IP address were found...")
@@ -59,6 +57,14 @@ class Path:
         if records:
             return True
         return False
+
+    def __get_target_network(self, ip_address):
+        ip_record = self.db_client.get_data("ipv4_addresses", [("ipv4_address", ip_address)])[0]
+        network_id = ip_record["ipv4_network_id"]
+        network_record = self.db_client.get_data("ipv4_networks", [("ipv4_network_id", network_id)])[0]
+        network = network_record["ipv4_network"]
+
+        return network
 
     def __get_network_id(self, network: str):
         network_record = self.db_client.get_data("ipv4_networks", [("ipv4_network", network)])[0]
@@ -182,7 +188,7 @@ class Path:
 
     def get_path(self, source: str, destination: str) -> RelationsContainer:
         """Returns new RelationsContainer containing only relations that belong to path from source to destination.
-        Source and destination must be IP_addresses/mask of devices or interfaces. For example 192.168.1.1/24."""
+        Source and destination must be in format 'ip_address' of devices or interfaces. For example 192.168.1.1."""
         path = RelationsContainer()
 
         source_port_id = self.__get_port_id(source)
@@ -194,13 +200,6 @@ class Path:
         # check whether devices are not in direct relation
         initial_relation = self.relations.find_by_port_id(source_port_id)
         if initial_relation:
-            # TODO: virtual switch interfaces with no relations
-            # treba dorobit:
-                # ak je source router interface, nemusi guessovat default gateway, staci prehladat routing table
-                # ak je source switch virtual interface, nema vztah
-                # ak je source router virtual interface, nema vztah
-            #raise
-
             initial_opposing_interface = initial_relation.get_opposing_interface(source_mac, source_port_id)
             path.add(initial_relation)
             if initial_opposing_interface.device_id == destination_device_id:
@@ -213,8 +212,9 @@ class Path:
 
         # check whether devices are in different networks
         same_network = False
-        source_network = IPv4Interface(source).network
-        destination_network = IPv4Interface(destination).network
+
+        source_network = self.__get_target_network(source)
+        destination_network = self.__get_target_network(destination)
 
         if source_network == destination_network:
             same_network = True
@@ -277,7 +277,5 @@ def main(source, destination, cost, color):
     json = topology_generator.generate_path_json(path_dict)
 
     # TODO: pridavanie cost zariadeniam
-    # TODO: odoberanie z topo
-    # TODO: tabulka
 
     return json
