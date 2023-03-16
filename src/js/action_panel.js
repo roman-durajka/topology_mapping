@@ -101,6 +101,7 @@ nx.define("ActionPanel", nx.ui.Component, {
 				            }
 			          })
 			          .catch((error) => {
+                    window.alert("ERROR: Could not create path. For detailed report check console or system runtime logs.");
 				            console.error("ERROR:", error);
 			          });
 		    },
