@@ -71,26 +71,27 @@ nx.define('LinkExtension', nx.graphic.Topology.Link, {
 
                 rectangleSource = this.view("rectangleSource");
                 rectangleSource.set('x', position.x);
-                rectangleSource.set('y', position.y - 5);
+                rectangleSource.set('y', position.y - 10 * this.stageScale());
                 rectangleSource.set('transform', 'rotate(' + line.angle() + ' ' + position.x + ',' + position.y + ')');
-                rectangleSource.set('width', 4 * this.srcIfName().length);
+                rectangleSource.set('width', this.srcIfName().length * this.stageScale() * 5);
+                rectangleSource.set('height', this.stageScale() * 10);
+
                 label = this.view('source');
                 label.set('x', position.x);
                 label.set('y', position.y);
                 label.set('text', this.srcIfName());
                 label.set('transform', 'rotate(' + line.angle() + ' ' + position.x + ',' + position.y + ')');
                 label.setStyle('font-size', 11 * this.stageScale());
-
-
             }
             if (this.tgtIfName()) {
                 position = line.end;
 
                 rectangleTarget = this.view("rectangleTarget");
-                rectangleTarget.set('x', position.x - this.tgtIfName().length * 4);
-                rectangleTarget.set('y', position.y - 5);
+                rectangleTarget.set('x', position.x - this.tgtIfName().length * this.stageScale() * 5.5);
+                rectangleTarget.set('y', position.y - 10 * this.stageScale());
                 rectangleTarget.set('transform', 'rotate(' + line.angle() + ' ' + position.x + ',' + position.y + ')');
-                rectangleTarget.set('width', 4 * this.tgtIfName().length);
+                rectangleTarget.set('width', this.tgtIfName().length * this.stageScale() * 6);
+                rectangleTarget.set('height', this.stageScale() * 10);
 
                 label = this.view('target');
                 label.set('x', position.x);

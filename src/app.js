@@ -103,16 +103,21 @@ function buildTable() {
     let table = document.createElement("table");
     table.classList.add("table-structure");
 
-    let thead = document.createElement("thead")
-    let tr1 = document.createElement("tr")
-    let th1 = document.createElement("th")
+    let thead = document.createElement("thead");
+    let tr1 = document.createElement("tr");
+    let th0 = document.createElement("th");
+    th0.innerHTML = "Name";
+    th0.classList.add("table-header");
+    let th1 = document.createElement("th");
+    th1.innerHTML = "Line";
     th1.classList.add("table-header");
-    let th2 = document.createElement("th")
+    let th2 = document.createElement("th");
     th2.innerHTML = "Cost";
     th2.classList.add("table-header");
-    let th3 = document.createElement("th")
+    let th3 = document.createElement("th");
     th3.innerHTML = "Remove";
     th3.classList.add("table-header");
+    tr1.appendChild(th0);
     tr1.appendChild(th1);
     tr1.appendChild(th2);
     tr1.appendChild(th3);
@@ -120,30 +125,6 @@ function buildTable() {
 
     let tbody = document.createElement("tbody");
     tbody.id = "tableBody";
-
-    let tr2 = document.createElement("tr");
-
-    let td1 = document.createElement("td");
-    td1.classList.add("table-column1");
-    let td2 = document.createElement("td");
-    td2.classList.add("table-column2");
-    let td3 = document.createElement("td");
-    td3.classList.add("table-column3");
-
-    let span = document.createElement("span");
-    span.innerHTML = "_______"
-    span.style.color = "lightblue";
-    td1.appendChild(span);
-
-    td2.innerHTML = "0";
-
-    td3.innerHTML = ""
-
-    tr2.appendChild(td1);
-    tr2.appendChild(td2);
-    tr2.appendChild(td3);
-
-    tbody.appendChild(tr2);
 
     table.appendChild(thead);
     table.appendChild(tbody);
