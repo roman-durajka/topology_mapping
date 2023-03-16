@@ -74,10 +74,8 @@ nx.define("ActionPanel", nx.ui.Component, {
 
 			      let data = {"source": this.sourceIpAddress(),
 						            "target": this.targetIpAddress(),
-						            "cost": this.cost(),
-						            "color": getColor(),
-                        "name": this.name(),
-                       };
+                        "color": getColor()
+						           };
 
 			      fetch("http://localhost:5000/path", {
 				        method: "POST",
@@ -99,7 +97,7 @@ nx.define("ActionPanel", nx.ui.Component, {
 				            if (data["links"].length >= 1) {
 					              let firstLink = data["links"][0];
 					              let linksLength = data["links"].length;
-					              addTableRecord(this.name(), firstLink["color"], firstLink["cost"], ids, topo);
+					              addTableRecord(this.name(), data["color"], this.cost(), ids, topo);
 				            }
 			          })
 			          .catch((error) => {

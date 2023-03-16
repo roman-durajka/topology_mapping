@@ -43,9 +43,6 @@ def generate_path_json(path: dict):
 
     index = random.Random().randint(500, 50000)
     color = path["color"]
-    cost = path["cost"]
-    first_relation = True
-    path_id = random.Random().randint(200, 50000)
     for relation in path["relations"]:
         relation_to_add = {"id": random.Random().randint(500, 10000),
                            "source": relation.interface1.device_id,
@@ -55,26 +52,10 @@ def generate_path_json(path: dict):
                            "srcMac": relation.interface1.mac_address,
                            "tgtMac": relation.interface2.mac_address,
                            "color": color,
-                           "asset-value": cost,
                            "width": 2,
-                           "dotted": True,
-                           "pathId": path_id}
-
-        if first_relation:
-            first_relation = False
-            output["paths"].append({"color": color, "cost": cost})
+                           "dotted": True}
 
         output["links"].append(relation_to_add)
-
-        for device in output["nodes"]:
-            if relation.interface1.device_id == device["id"] \
-                    or relation.interface2.device_id == device["id"]:
-                if "cost" in device:
-                    if device["cost"] < cost:
-                        device["cost"] = cost
-                else:
-                    device["cost"] = cost
-
         index += 1
 
     return output
