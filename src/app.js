@@ -112,7 +112,7 @@ function buildTable() {
     th1.innerHTML = "Line";
     th1.classList.add("table-header");
     let th2 = document.createElement("th");
-    th2.innerHTML = "Cost";
+    th2.innerHTML = "Asset-value";
     th2.classList.add("table-header");
     let th3 = document.createElement("th");
     th3.innerHTML = "Remove";

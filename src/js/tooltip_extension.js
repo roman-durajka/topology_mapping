@@ -23,7 +23,7 @@ nx.define('NodeTooltipExtension', nx.ui.Component, {
                     this.view('list').set('items', new nx.data.Dictionary(node_data));
                     this.view('if-list').set('items', new nx.data.Dictionary(if_data));
                     this.title("Device description");
-                    console.log(new nx.data.Dictionary(node_data))
+                    console.log(new nx.data.Dictionary(node_data));
                 }
             },
             topology: {},

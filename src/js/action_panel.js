@@ -44,7 +44,7 @@ nx.define("ActionPanel", nx.ui.Component, {
 					          },
 					          {
 						            "tag": "span",
-						            "content": " Cost: ",
+						            "content": " Asset-value: ",
 					          },
 					          {
 						            "tag": "input",

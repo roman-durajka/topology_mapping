@@ -14,7 +14,7 @@ def generate_json(devices: list, relations: RelationsContainer):
                          "type": device.device_type,
                          "os": device.os,
                          "model": device.model,
-                         "cost": 0}
+                         "asset-value": 0}
 
         interfaces = {}
         for key, value in device.interfaces.items():
@@ -55,7 +55,7 @@ def generate_path_json(path: dict):
                            "srcMac": relation.interface1.mac_address,
                            "tgtMac": relation.interface2.mac_address,
                            "color": color,
-                           "cost": cost,
+                           "asset-value": cost,
                            "width": 2,
                            "dotted": True,
                            "pathId": path_id}
