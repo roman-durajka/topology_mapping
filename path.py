@@ -260,7 +260,7 @@ class Path:
         return path
 
 
-def main(source, destination, color):
+def main(req_json):
     db_client = MariaDBClient()
     device_extractor = DeviceExtractor(db_client)
     devices = device_extractor.extract()
@@ -271,11 +271,16 @@ def main(source, destination, color):
 
     path = Path(db_client, devices, relations)
 
-    single_path = path.get_path(source, destination)
-    path_dict = {"relations": single_path, "color": color}
+    source = req_json["source"]
+    destination = req_json["target"]
+    color = req_json["color"]
+    starting_index = req_json["startingIndex"]
 
-    json = topology_generator.generate_path_json(path_dict)
+    single_path = path.get_path(source, destination)
+
+    json = topology_generator.generate_path_json(single_path, color, starting_index)
 
     # TODO: pridavanie cost zariadeniam
+    #TODO : nacitavanie zo suboru, nie opakovane vytvaranie topo
 
     return json

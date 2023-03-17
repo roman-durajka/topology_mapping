@@ -15,7 +15,7 @@ def signal():
 @app.route('/path', methods=['POST'])
 def get_path():
     req_json = request.json
-    path_json = path.main(req_json["source"], req_json["target"], req_json["color"])
+    path_json = path.main(req_json)
 
     return jsonify(path_json)
 

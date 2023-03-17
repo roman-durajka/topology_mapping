@@ -72,17 +72,21 @@ nx.define("ActionPanel", nx.ui.Component, {
 		    "addPath": function(sender, events){
 			      var topo = this.topology;
 
-			      let data = {"source": this.sourceIpAddress(),
+            // get number of links so the indexing can continue
+            let startIndex = topo.getLayer("links").links().length;
+
+			      let inputData = {"source": this.sourceIpAddress(),
 						            "target": this.targetIpAddress(),
-                        "color": getColor()
-						           };
+                        "color": getColor(),
+                        "startingIndex": startIndex
+                       };
 
 			      fetch("http://localhost:5000/path", {
 				        method: "POST",
 				        headers: {
 					          "Content-Type": "application/json",
 				        },
-			  	      body: JSON.stringify(data),
+			  	      body: JSON.stringify(inputData),
 			      })
 			          .then((response) => response.json())
 			          .then((data) => {
@@ -92,12 +96,13 @@ nx.define("ActionPanel", nx.ui.Component, {
 					              topo.addLink(
 						                data_json
 					              );
+
 					              ids.push(data_json["id"]);
 				            }
 				            if (data["links"].length >= 1) {
 					              let firstLink = data["links"][0];
 					              let linksLength = data["links"].length;
-					              addTableRecord(this.name(), data["color"], this.cost(), ids, topo);
+					              addTableRecord(this.name(), inputData["color"], this.cost(), ids, topo);
 				            }
 			          })
 			          .catch((error) => {
@@ -123,6 +128,7 @@ function addTableRecord(name, color, cost, ids, topo) {
 	  let td1 = document.createElement("td");
 	  let span = document.createElement("span");
     span.innerHTML = "_ _ _ _ _ _";
+    console.log(color);
 	  span.style.color = color;
     td1.appendChild(span);
 	  tr1.appendChild(td1);

@@ -38,13 +38,12 @@ def generate_json(devices: list, relations: RelationsContainer):
     return output
 
 
-def generate_path_json(path: dict):
+def generate_path_json(path, color, starting_index):
     output = {"paths": [], "links": [], "nodes": []}
 
-    index = random.Random().randint(500, 50000)
-    color = path["color"]
-    for relation in path["relations"]:
-        relation_to_add = {"id": random.Random().randint(500, 10000),
+    index = starting_index;
+    for relation in path:
+        relation_to_add = {"id": index,
                            "source": relation.interface1.device_id,
                            "target": relation.interface2.device_id,
                            "srcIfName": relation.interface1.interface_name,
