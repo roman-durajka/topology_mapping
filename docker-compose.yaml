@@ -11,6 +11,8 @@ services:
          - db
         networks:
          - inside_net
+        volumes:
+         - .:/src
     web:
         image: nginx
         container_name: web_con

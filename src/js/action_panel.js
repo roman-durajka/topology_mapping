@@ -62,13 +62,22 @@ nx.define("ActionPanel", nx.ui.Component, {
 						            "events": {
 							              "click": "{#addPath}"
 						            }
+					          },
+                    {
+						            "tag": "button",
+						            "content": " Draw topology ",
+						            "events": {
+                          	"click": "{#createTopology}"
+						            },
+                        "props": {
+                            "class": "t-button"
+                        }
 					          }
 				        ]
 			      }
 		    ]
 	  },
 	  methods: {
-		    // add random path
 		    "addPath": function(sender, events){
 			      var topo = this.topology;
 
@@ -110,7 +119,23 @@ nx.define("ActionPanel", nx.ui.Component, {
 				            console.error("ERROR:", error);
 			          });
 		    },
-	  }
+        "createTopology": function(sender, events) {
+			      var topo = this.topology;
+
+            fetch("http://localhost:5000/topology", {
+				        method: "GET"
+			      })
+                .then((response) => response.json())
+			          .then((data) => {
+                    topologyData = data["data"];
+                    topo.setData(topologyData);
+                })
+			          .catch((error) => {
+                    window.alert("ERROR: Could not create topology. For detailed report check console or system runtime logs.");
+				            console.error("ERROR:", error);
+			          });
+	      }
+    }
 });
 
 function addTableRecord(name, color, cost, ids, topo) {

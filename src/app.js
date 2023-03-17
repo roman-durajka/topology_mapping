@@ -35,17 +35,17 @@
             labelTextColor: 'model.labelTextColor',
             color: function(model) {
                 if (model._data.color) {
-                    return model._data.color
+                    return model._data.color;
                 }
             },
             width: function(model) {
                 if (model._data.width) {
-                    return model._data.width
+                    return model._data.width;
                 }
             },
             dotted: function(model) {
                 if (model._data.dotted) {
-                    return model._data.dotted
+                    return model._data.dotted;
                 }
             },
         },
@@ -68,14 +68,10 @@
     let Shell = nx.define(nx.ui.Application, {
         methods: {
             start: function () {
-                // Read topology data from variable
-                topology.data(topologyData);
-
                 // Attach it to the document
                 topology.attach(this);
                 let actionPanel = new ActionPanel();
                 actionPanel.topology = topology;
-
                 actionPanel.attach(this);
             }
         }
@@ -89,15 +85,6 @@
 
 
 function buildTable() {
-    //gather data
-    //if data found, build table
-
-    // if (!topologyData.paths) {
-    //     return;
-    // }
-
-    let path;
-
     let mainTableElement = document.querySelector("#table");
 
     let table = document.createElement("table");

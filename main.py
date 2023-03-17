@@ -24,10 +24,11 @@ def main():
 
     js_data_json = topology_generator.generate_js_data_json(devices, relations)
     path_data_json = topology_generator.generate_topology_data_json(devices, relations)
-    topology_generator.create_js_data_file(js_data_json, "src/data.json")
-    topology_generator.create_json_file(path_data_json, "data/topology_data.json")
+    # topology_generator.create_js_data_file(js_data_json, "./src/data.js")
+    topology_generator.create_json_file(path_data_json, "./data/topology_data.json")
+
+    return js_data_json
 
 
-# Press the green button in the gutter to run the script.
 if __name__ == '__main__':
     main()

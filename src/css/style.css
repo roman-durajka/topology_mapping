@@ -67,3 +67,8 @@ font-family: 'Ubuntu', sans-serif;
   margin-left: 35px;
   padding: 0;
 }
+
+.t-button {
+    float: right;
+    margin-right: 3p0x;
+}
