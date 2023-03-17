@@ -12,29 +12,20 @@ def main():
     devices = device_extractor.extract()
 
     relations = entities.RelationsContainer()
-    if sys.argv[1] == "dp":
-        dp_extractor = DPExtractor(db_client, relations)
-        relations = dp_extractor.extract()
-    elif sys.argv[1] == "algorithm":
+    if len(sys.argv) > 1 and sys.argv[1] == "custom":
         mac_extractor = MacExtractor(db_client, relations)
         mac_relations = mac_extractor.extract()
 
         ip_extractor = IPExtractor(db_client, mac_relations)
         relations = ip_extractor.extract()
+    else:
+        dp_extractor = DPExtractor(db_client, relations)
+        relations = dp_extractor.extract()
 
-    path = Path(db_client, devices, relations)
-    input = []
-    # input = [{"source": "192.168.1.10/24", "destination": "192.168.1.1/24", "cost": 10, "color": "green"},
-    #          {"source": "192.168.1.10/24", "destination": "192.168.1.1/24", "cost": 99, "color": "orange"}]
-    paths = []
-    for item in input:
-        single_path = path.get_path(item["source"], item["destination"])
-        path_dict = {"relations": single_path, "color": item["color"], "cost": item["cost"]}
-        paths.append(path_dict)
-
-    json = topology_generator.generate_json(devices, relations)
-    topology_generator.generate_js_file(json)
-    #topology_generator.generate_json_file(json)
+    js_data_json = topology_generator.generate_js_data_json(devices, relations)
+    path_data_json = topology_generator.generate_topology_data_json(devices, relations)
+    topology_generator.create_js_data_file(js_data_json, "src/data.json")
+    topology_generator.create_json_file(path_data_json, "data/topology_data.json")
 
 
 # Press the green button in the gutter to run the script.

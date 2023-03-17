@@ -4,9 +4,21 @@ class Interface:
         self.interface_name = interface_name
         self.device_id = device_id
         self.port_id = port_id
+
         self.ip_address = ip_address
         self.mac_address = mac_address
+
         self.trunk = trunk
+
+    def asdict(self):
+        return {
+            "interface_name": self.interface_name,
+            "device_id": self.device_id,
+            "port_id": self.port_id,
+            "ip_address": self.ip_address,
+            "mac_address": self.mac_address,
+            "trunk": self.trunk
+        }
 
 
 class Relation:
@@ -24,6 +36,12 @@ class Relation:
         if (mac_address and self.interface1.mac_address == mac_address) or (self.interface1.port_id == port_id):
             return self.interface2
         return self.interface1
+
+    def asdict(self):
+        return {
+            "interface1": self.interface1.asdict(),
+            "interface2": self.interface2.asdict()
+        }
 
 
 class RelationsContainer:
@@ -95,3 +113,58 @@ class Device:
         self.device_type = device_type
 
         self.interfaces = interfaces
+
+    def asdict(self):
+        return {
+            "device_id": self.device_id,
+            "name": self.name,
+            "os": self.os,
+            "model": self.model,
+            "device_type": self.device_type,
+            "interfaces": [{keyitem[0]: keyitem[1]} for keyitem in self.interfaces.items()]
+        }
+
+
+def load_entities(json: dict):
+    devices = []
+
+    for device_dict in json["devices"]:
+        new_device = Device(
+            device_dict["device_id"],
+            device_dict["name"],
+            device_dict["os"],
+            device_dict["model"],
+            device_dict["device_type"],
+            device_dict["interfaces"]
+        )
+        devices.append(new_device)
+
+    relations_container = RelationsContainer()
+
+    for relation_dict in json["relations"]:
+        if1_dict = relation_dict["interface1"]
+        if2_dict = relation_dict["interface2"]
+
+        if1 = Interface(
+            if1_dict["interface_name"],
+            if1_dict["device_id"],
+            if1_dict["port_id"],
+            if1_dict["ip_address"],
+            if1_dict["mac_address"],
+            if1_dict["trunk"]
+        )
+
+        if2 = Interface(
+            if2_dict["interface_name"],
+            if2_dict["device_id"],
+            if2_dict["port_id"],
+            if2_dict["ip_address"],
+            if2_dict["mac_address"],
+            if2_dict["trunk"]
+        )
+
+        if_relation = Relation(if1, if2)
+        relations_container.add(if_relation)
+
+    return devices, relations_container
+

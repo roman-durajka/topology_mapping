@@ -3,8 +3,9 @@ from extractors import MacExtractor, IPExtractor, DeviceExtractor, DPExtractor
 from modules.clients import MariaDBClient
 import entities
 import sys
+import json
 
-from entities import Device, RelationsContainer
+from entities import Device, RelationsContainer, load_entities
 from modules.clients import MariaDBClient
 from modules.exceptions import NotFoundError, MultipleOccurrences, PathNotFound
 
@@ -260,27 +261,27 @@ class Path:
         return path
 
 
+
 def main(req_json):
     db_client = MariaDBClient()
-    device_extractor = DeviceExtractor(db_client)
-    devices = device_extractor.extract()
 
-    relations = entities.RelationsContainer()
-    dp_extractor = DPExtractor(db_client, relations)
-    relations = dp_extractor.extract()
-
-    path = Path(db_client, devices, relations)
+    file_to_read = open("data/topology_data.json", "r")
+    file_data = file_to_read.read()
+    file_to_read.close()
+    json_data = json.loads(file_data)
+    devices, relations_container = load_entities(json_data)
 
     source = req_json["source"]
     destination = req_json["target"]
     color = req_json["color"]
     starting_index = req_json["startingIndex"]
 
-    single_path = path.get_path(source, destination)
+    path_obj = Path(db_client, devices, relations_container)
+    path = path_obj.get_path(source, destination)
 
-    json = topology_generator.generate_path_json(single_path, color, starting_index)
+    path_json = topology_generator.generate_js_path_data_json(path, color, starting_index)
 
     # TODO: pridavanie cost zariadeniam
-    #TODO : nacitavanie zo suboru, nie opakovane vytvaranie topo
 
-    return json
+    return path_json
+

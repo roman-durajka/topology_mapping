@@ -294,3 +294,4 @@ class DeviceExtractor:
             devices.append(device)
 
         return devices
+    

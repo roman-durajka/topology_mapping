@@ -4,8 +4,8 @@ from entities import RelationsContainer
 import json
 
 
-def generate_json(devices: list, relations: RelationsContainer):
-    output = {"nodes": [], "links": [], "paths": []}
+def generate_js_data_json(devices: list, relations: RelationsContainer):
+    output = {"nodes": [], "links": []}
 
     for device in devices:
         device_to_add = {"id": device.device_id,
@@ -37,11 +37,10 @@ def generate_json(devices: list, relations: RelationsContainer):
 
     return output
 
-
-def generate_path_json(path, color, starting_index):
+def generate_js_path_data_json(path: RelationsContainer, color: str, starting_index: int):
     output = {"paths": [], "links": [], "nodes": []}
 
-    index = starting_index;
+    index = starting_index
     for relation in path:
         relation_to_add = {"id": index,
                            "source": relation.interface1.device_id,
@@ -53,20 +52,28 @@ def generate_path_json(path, color, starting_index):
                            "color": color,
                            "width": 2,
                            "dotted": True}
-
         output["links"].append(relation_to_add)
         index += 1
 
     return output
 
+def generate_topology_data_json(devices: list, relations: RelationsContainer):
+    output = {
+        "devices": [device.asdict() for device in devices],
+        "relations": [relation.asdict() for relation in relations]
+    }
 
-def generate_js_file(topology_json: dict):
-    file_to_write = open("src/data.js", "w")
+    return output
+
+
+def create_json_file(topology_json: dict, filename: str):
+    file_to_write = open(filename, "w")
+    file_to_write.write(f"{json.dumps(topology_json, indent=4, sort_keys=True)}")
+    file_to_write.close()
+
+
+def create_js_data_file(topology_json: dict, filename: str):
+    file_to_write = open(filename, "w")
     file_to_write.write(f"var topologyData={json.dumps(topology_json, indent=4, sort_keys=True)};")
     file_to_write.close()
 
-
-def generate_json_file(topology_json: dict):
-    file_to_write = open("topology/topology_data.json", "w")
-    file_to_write.write(f"{json.dumps(topology_json, indent=4, sort_keys=True)};")
-    file_to_write.close()
