@@ -1,17 +1,17 @@
 .source-link-label {
-font-size: 7px;
-fill: black;
+    font-size: 7px;
+    fill: black;
 }
 
 .target-link-label {
-font-size: 7px;
-fill: black;
+    font-size: 7px;
+    fill: black;
 }
 
 .link-labelText {
-font-size: 20px;
-text-shadow: 0 0 1px black, 0 0 1px black, 0 0 1px black, 0 0 1px black;
-font-family: 'Ubuntu', sans-serif;
+    font-size: 20px;
+    text-shadow: 0 0 1px black, 0 0 1px black, 0 0 1px black, 0 0 1px black;
+    font-family: 'Ubuntu', sans-serif;
 }
 
 .popover {
@@ -25,50 +25,50 @@ font-family: 'Ubuntu', sans-serif;
 }
 
 .table-structure .table-header {
-    text-align:left;
-    vertical-align:top
+    text-align: left;
+    vertical-align: top
 }
 
 .table-structure .table-column2 {
-    text-align:center;
-    vertical-align:top
+    text-align: center;
+    vertical-align: top
 }
 
 .table-structure .table-column1 {
-    font-size:18px;
-    text-align:left;
-    vertical-align:top
+    font-size: 18px;
+    text-align: left;
+    vertical-align: top
 }
 
 .table-structure td {
-    border-color:black;
-    border-style:solid;
-    border-width:1px;
-    font-family:Arial, sans-serif;
-    font-size:14px;
-    overflow:hidden;
-    padding:10px 5px;
-    word-break:normal;
+    border-color: black;
+    border-style: solid;
+    border-width: 1px;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    overflow: hidden;
+    padding: 10px 5px;
+    word-break: normal;
 }
 
 .table-structure th {
-    border-color:black;
-    border-style:solid;
-    border-width:1px;
-    font-family:Arial, sans-serif;
-    font-size:14px;
+    border-color: black;
+    border-style: solid;
+    border-width: 1px;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
     font-weight: normal;
-    overflow:hidden;
-    padding:10px 5px;
-    word-break:normal;
+    overflow: hidden;
+    padding: 10px 5px;
+    word-break: normal;
 }
 
 .li-indent {
-  margin-left: 35px;
-  padding: 0;
+    margin-left: 35px;
+    padding: 0;
 }
 
 .t-button {
-    float: right;
-    margin-right: 3p0x;
+    margin-left: 4px;
+    color: red;
 }

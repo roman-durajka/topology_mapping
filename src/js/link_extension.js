@@ -6,62 +6,62 @@ nx.define('LinkExtension', nx.graphic.Topology.Link, {
         labelTextColor: null,
         linkSize: null,
         dotted: {
-                set: function(inValue) {
-                    var lineEl = this.view('line');
-                    var value = this._processPropertyValue(inValue);
-                    if (value) {
-                        lineEl.dom().setStyle('stroke-dasharray', '3, 2');
-                    } else {
-						lineEl.dom().setStyle('stroke-dasharray', '');
-                    }
-                    this._dotted = value;
+            set: function (inValue) {
+                let lineEl = this.view('line');
+                let value = this._processPropertyValue(inValue);
+                if (value) {
+                    lineEl.dom().setStyle('stroke-dasharray', '3, 2');
+                } else {
+                    lineEl.dom().setStyle('stroke-dasharray', '');
                 }
-            },
-    },
-    view: function(view) {
-        view.content.push(
-            {
-            name: 'rectangleSource',
-            type: 'nx.graphic.Rect',
-            props: {
-                height: 6,
-                fill: 'white'
+                this._dotted = value;
             }
         },
+    },
+    view: function (view) {
+        view.content.push(
             {
-            name: 'rectangleTarget',
-            type: 'nx.graphic.Rect',
-            props: {
-                height: 6,
-                fill: 'white'
-            }
-        },{
-            name: 'source',
-            type: 'nx.graphic.Text',
-            props: {
-                'class': 'source-link-label',
-                'alignment-baseline': 'text-after-edge',
-                'text-anchor': 'start'
-            }
-        }, {
-            name: 'target',
-            type: 'nx.graphic.Text',
-            props: {
-                'class': 'target-link-label',
-                'alignment-baseline': 'text-after-edge',
-                'text-anchor': 'end'
-            }
-        }, {
-            name: 'labelText-attr',
-            type: 'nx.graphic.Text',
-            props: {
-                'class': 'link-labelText',
-            }
-        });
+                name: 'rectangleSource',
+                type: 'nx.graphic.Rect',
+                props: {
+                    height: 6,
+                    fill: 'white'
+                }
+            },
+            {
+                name: 'rectangleTarget',
+                type: 'nx.graphic.Rect',
+                props: {
+                    height: 6,
+                    fill: 'white'
+                }
+            }, {
+                name: 'source',
+                type: 'nx.graphic.Text',
+                props: {
+                    'class': 'source-link-label',
+                    'alignment-baseline': 'text-after-edge',
+                    'text-anchor': 'start'
+                }
+            }, {
+                name: 'target',
+                type: 'nx.graphic.Text',
+                props: {
+                    'class': 'target-link-label',
+                    'alignment-baseline': 'text-after-edge',
+                    'text-anchor': 'end'
+                }
+            }, {
+                name: 'labelText-attr',
+                type: 'nx.graphic.Text',
+                props: {
+                    'class': 'link-labelText',
+                }
+            });
         return view;
     },
     methods: {
-        update: function() {
+        update: function () {
             this.inherited();
             let label, position, rectangleSource, rectangleTarget;
             let line = this.line();

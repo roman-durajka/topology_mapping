@@ -1,49 +1,30 @@
-
 (function (nx) {
-    /**
-     * NeXt UI based application
-     */
-    // Initialize topology
-    let topology = new nx.graphic.Topology({
-        // View dimensions
+    config = {
         width: 1920,
         height: 800,
-        // Dataprocessor is responsible for spreading
-        // the Nodes across the view.
-        // 'force' data processor spreads the Nodes so
-        // they would be as distant from each other
-        // as possible. Follow social distancing and stay healthy.
-        // 'quick' dataprocessor picks random positions
-        // for the Nodes.
         dataProcessor: 'force',
-        // Node and Link identity key attribute name
         identityKey: 'id',
-        // Node settings
         nodeConfig: {
             label: 'model.name',
-            iconType:'model.icon',
+            iconType: 'model.icon',
         },
-        // Link settings
         linkConfig: {
-            // Display Links as curves in case of
-            // multiple links between Node Pairs.
-            // Set to 'parallel' to use parallel links.
             linkType: 'parallel',
             srcIfName: 'model.srcIfName',
             tgtIfName: 'model.tgtIfName',
             labelText: 'model.labelText',
             labelTextColor: 'model.labelTextColor',
-            color: function(model) {
+            color: function (model) {
                 if (model._data.color) {
                     return model._data.color;
                 }
             },
-            width: function(model) {
+            width: function (model) {
                 if (model._data.width) {
                     return model._data.width;
                 }
             },
-            dotted: function(model) {
+            dotted: function (model) {
                 if (model._data.dotted) {
                     return model._data.dotted;
                 }
@@ -52,24 +33,24 @@
         linkSetConfig: {
             collapsedRule: false,
         },
-        // Display Node icon. Displays a dot if set to 'false'.
         showIcon: true,
-        // Hide navigation
         showNavigation: false,
-        // Link extension to add interface labels
+        // link extension to add interface labels
         linkInstanceClass: "LinkExtension",
-        // Tooltip extensions to add custom descriptions
+        // tooltip extensions to add custom descriptions
         tooltipManagerConfig: {
             nodeTooltipContentClass: 'NodeTooltipExtension',
             linkTooltipContentClass: 'LinkTooltipExtension',
-},
-    });
+        },
+    };
 
-    let Shell = nx.define(nx.ui.Application, {
+    let topology = new nx.graphic.Topology(config);
+
+    let App = nx.define(nx.ui.Application, {
         methods: {
             start: function () {
-                // Attach it to the document
                 topology.attach(this);
+
                 let actionPanel = new ActionPanel();
                 actionPanel.topology = topology;
                 actionPanel.attach(this);
@@ -77,10 +58,8 @@
         }
     });
 
-    // Create an application instance
-    let shell = new Shell();
-    // Run the application
-    shell.start();
+    let app = new App();
+    app.start();
 })(nx);
 
 
@@ -120,4 +99,3 @@ function buildTable() {
 }
 
 buildTable();
-
