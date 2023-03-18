@@ -1,4 +1,4 @@
-let ILLEGAL_ATTRIBUTES = ["id", "index", "weight", "x", "y", "px", "py", "icon"]
+let ILLEGAL_ATTRIBUTES = ["id", "index", "weight", "x", "y", "px", "py", "icon", "asset-values"]
 
 nx.define('NodeTooltipExtension', nx.ui.Component, {
         properties: {

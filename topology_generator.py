@@ -14,7 +14,8 @@ def generate_js_data_json(devices: list, relations: RelationsContainer):
                          "type": device.device_type,
                          "os": device.os,
                          "model": device.model,
-                         "asset-value": 0}
+                         "asset-value": 0,
+                         "asset-values": [0]}
 
         interfaces = {}
         for key, value in device.interfaces.items():
@@ -37,8 +38,9 @@ def generate_js_data_json(devices: list, relations: RelationsContainer):
 
     return output
 
+
 def generate_js_path_data_json(path: RelationsContainer, color: str, starting_index: int):
-    output = {"paths": [], "links": [], "nodes": []}
+    output = {"links": [], "nodes": []}
 
     index = starting_index
     for relation in path:
@@ -55,7 +57,13 @@ def generate_js_path_data_json(path: RelationsContainer, color: str, starting_in
         output["links"].append(relation_to_add)
         index += 1
 
+        for device_id in [relation.interface1.device_id,
+                          relation.interface2.device_id]:
+            if device_id not in output["nodes"]:
+                output["nodes"].append(device_id)
+
     return output
+
 
 def generate_topology_data_json(devices: list, relations: RelationsContainer):
     output = {
