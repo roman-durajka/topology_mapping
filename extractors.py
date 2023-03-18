@@ -2,16 +2,22 @@ from modules.clients import MariaDBClient
 from entities import RelationsContainer, Interface, Relation, Device
 from modules.exceptions import UndefinedDeviceType
 from ipaddress import IPv4Network, IPv4Address
+from modules.exceptions import NotFoundError, DifferentNetworksError, VirtualInterfaceFound
 
 
 class Extractor:
+    """Base class for extracting interfaces meant to be overriden."""
     def __init__(self, db_client: MariaDBClient):
         self.db_client = db_client
 
-    def extract_device_ids(self, table: str):
+    def extract_device_ids(self, table_name: str):
+        """
+        Extracts all device ids from database table.
+        :param table_name: name of database table
+        """
         device_ids = []
 
-        records = self.db_client.get_data(table, None, "device_id")
+        records = self.db_client.get_data(table_name, None, "device_id")
         for record in records:
             device_id = record["device_id"]
             if device_id not in device_ids:
@@ -19,6 +25,10 @@ class Extractor:
                 yield device_id
 
     def extract_vlan_ids(self, table: str):
+        """
+        Extracts all vlan ids from database table
+        :param table: name of database table
+        """
         vlan_ids = []
 
         records = self.db_client.get_data(table, None, "vlan_id")
@@ -29,12 +39,18 @@ class Extractor:
                 yield vlan_id
 
     def get_source_interface(self, device_id: int, port_id: int) -> Interface:
+        """
+        Gathers all available data about source interface and returns its object.
+        :param device_id: id of device to which interface belongs
+        :param port_id: id of interface
+        :return: source interface object
+        """
         if port_id == 0:
-            raise ArithmeticError
+            raise NotFoundError
 
         ports_table_data = self.db_client.get_data("ports", [("port_id", port_id), ("ifOperStatus", "up")])
         if not ports_table_data:
-            raise ArithmeticError
+            raise NotFoundError
         ports_table_data = ports_table_data[0]
         interface_trunk = False if not ports_table_data["ifTrunk"] else True
         interface_name = ports_table_data["ifName"]
@@ -56,13 +72,14 @@ class Extractor:
 
 
 class MacExtractor(Extractor):
+    """Class for extracting interfaces based on MAC tables and records."""
     def __init__(self, db_client: MariaDBClient, relations: RelationsContainer):
         super().__init__(db_client)
-
         self.relations = relations
 
     def __is_directly_connected(self, source_interface: Interface, destination_interface: dict) -> bool:
-        """Checks whether device is directly connected or not.
+        """
+        Checks whether device is directly connected or not.
         :param source_interface: Interface object of source interface
         :param destination_interface: record of destination interface from table 'ports'
         :return: bool if devices are neighbors
@@ -92,30 +109,35 @@ class MacExtractor(Extractor):
         return True
 
     def get_destination_interface(self, record: dict, source_interface: Interface) -> Interface:
+        """
+        Determines whether device found in given record is a direct neighbor to source interface. If there are multiple
+        interfaces found under record MAC address, then it scans all of them. Uses custom algorithm to determine
+        relationship based on MAC table records.
+        :param record: single MAC table record
+        :param source_interface: source Interface object
+        :return: destination Interface object
+        """
         port_mac_address = record["mac_address"]
         port_records = self.db_client.get_data("ports", [("ifPhysAddress", port_mac_address), ("ifOperStatus", "up")])
         if not port_records:
-            raise ArithmeticError  # ????? nema zaznam
+            raise NotFoundError
 
         valid_port_record = None
         for port_record in port_records:
+            if "virtual" in port_record["ifType"].lower():  # skip virtual interfaces
+                continue
             if self.__is_directly_connected(source_interface, port_record):
                 valid_port_record = port_record
                 break
 
         if not valid_port_record:
-            raise ArithmeticError("Not neighbors")  # not directly connected
+            raise NotFoundError  # direct neighbor not found
         port_record = valid_port_record
 
         port_id = port_record["port_id"]
         interface_name = port_record["ifName"]
         device_id = port_record["device_id"]
         trunk = port_record["ifTrunk"]
-        virtual = "virtual" in port_record["ifType"].lower()
-        if virtual:
-            # path algorithm
-            pass
-            #raise ArithmeticError
         mac_address = port_record["ifPhysAddress"]
         port_ip_address = self.db_client.get_data("ipv4_addresses", [("port_id", port_id)])
 
@@ -127,6 +149,10 @@ class MacExtractor(Extractor):
         return Interface(interface_name, device_id, port_id, port_ip_address, mac_address, trunk)
 
     def extract(self) -> RelationsContainer:
+        """
+        Extracts all available relations based on MAC table records.
+        :return: RelationsContainer object containing found relations
+        """
         for device_id in self.extract_device_ids("ports_fdb"):
             records = self.db_client.get_data("ports_fdb", [("device_id", device_id)])
 
@@ -138,33 +164,38 @@ class MacExtractor(Extractor):
                 try:
                     source_interface = self.get_source_interface(record["device_id"], record["port_id"])
                     destination_interface = self.get_destination_interface(record, source_interface)
-                except ArithmeticError:
+                except NotFoundError:
                     continue
 
                 self.relations.add(Relation(source_interface, destination_interface))
-
-
 
         return self.relations
 
 
 class IPExtractor(Extractor):
+    """Class for extracting interfaces based on IP (routing) tables and records."""
     def __init__(self, db_client: MariaDBClient, relations: RelationsContainer):
         super().__init__(db_client)
-
         self.relations = relations
 
     def get_destination_interface(self, record: dict, source_interface: Interface) -> Interface:
+        """
+        Determines whether device found in given record is a direct neighbor to source interface. Uses custom algorithm
+        to determine relationship based on IP table records.
+        :param record: single IP (routing) table record
+        :param source_interface: source Interface object
+        :return: destination Interface object
+        """
         destination_interface_network = record["inetCidrRouteDest"]
         destination_interface_network_prefix = record["inetCidrRoutePfxLen"]
         destination_network_obj = IPv4Network(f"{destination_interface_network}/{destination_interface_network_prefix}")
         source_interface_obj = IPv4Address(source_interface.ip_address)
         if source_interface_obj not in destination_network_obj:
-            raise ArithmeticError("Different networks")
+            raise DifferentNetworksError
 
         source_interface_nexthop = record["inetCidrRouteNextHop"]
         if source_interface_nexthop == source_interface.ip_address:
-            raise ArithmeticError
+            raise NotFoundError
 
         network_devices = []
         ipv4_addresses_records = self.db_client.get_data("ipv4_addresses", [])
@@ -174,22 +205,20 @@ class IPExtractor(Extractor):
             if ip_address_obj in destination_network_obj:
                 network_devices.append(ip_address)
 
-        if len(network_devices) != 2:  # intermediary devices exist, not neighbours
-            raise ArithmeticError("More or less than two devices on network - no direct connection between source and destination")
+        if len(network_devices) != 2:  # intermediary devices exist
+            raise NotFoundError
 
         network_devices.remove(source_interface.ip_address)
         destination_interface_ip = network_devices[0]
 
         destination_interface_record = self.db_client.get_data("ipv4_addresses", [("ipv4_address", destination_interface_ip)])
         if not destination_interface_record:
-            raise ArithmeticError("Has no interface?")
+            raise NotFoundError  # destination has no interface record
 
         destination_interface_port_id = destination_interface_record[0]["port_id"]
         port_record = self.db_client.get_data("ports", [("port_id", destination_interface_port_id)])[0]
         if "virtual" in port_record["ifType"].lower():
-            # path algorithm
-            pass
-            #raise ArithmeticError("Virtual interface as destination")
+            raise VirtualInterfaceFound
         port_id = port_record["port_id"]
         interface_name = port_record["ifName"]
         device_id = port_record["device_id"]
@@ -200,14 +229,18 @@ class IPExtractor(Extractor):
         return Interface(interface_name, device_id, port_id, port_ip_address, mac_address, trunk)
 
     def extract(self) -> RelationsContainer:
+        """
+        Extracts all available relations based on IP (routing) table records.
+        :return: RelationsContainer object containing found relations
+        """
         records = self.db_client.get_data("route", [("inetCidrRouteDestType", "ipv4")])
         for record in records:
             try:
                 source_interface = self.get_source_interface(record["device_id"], record["port_id"])
-                if not source_interface.ip_address: #or source_interface.ip_address in ["0.0.0.0", "127.0.0.1"]:
+                if not source_interface.ip_address or source_interface.ip_address in ["0.0.0.0", "127.0.0.1"]:
                     continue
                 destination_interface = self.get_destination_interface(record, source_interface)
-            except ArithmeticError:
+            except (NotFoundError, VirtualInterfaceFound, DifferentNetworksError):
                 continue
 
             self.relations.add(Relation(source_interface, destination_interface))
@@ -216,15 +249,26 @@ class IPExtractor(Extractor):
 
 
 class DPExtractor(Extractor):
+    """Class for extracting interfaces based on discovery protocols (DP) tables and records."""
     def __init__(self, db_client: MariaDBClient, relations: RelationsContainer):
         super().__init__(db_client)
-
         self.relations = relations
 
     def get_destination_interface(self, record: dict, source_interface: Interface) -> Interface:
+        """
+        Determines whether device found in given record is a direct neighbor to source interface based on discovery
+        protocols (LLDP, CDP) data.
+        :param record: single DP (discovery protocols) table record
+        :param source_interface: source Interface object
+        :return: destination Interface object
+        """
         return self.get_source_interface(record["remote_device_id"], record["remote_port_id"])
 
     def extract(self) -> RelationsContainer:
+        """
+        Extracts all available relations based on DP (discovery protocols) table records.
+        :return: RelationsContainer object containing found relations
+        """
         records = self.db_client.get_data("links")
         for record in records:
             try:
@@ -242,10 +286,18 @@ HOST_OPERATING_SYSTEMS = ["linux", "windows"]
 
 
 class DeviceExtractor:
+    """Class for extracting data about devices (nodes)."""
     def __init__(self, db_client: MariaDBClient):
         self.db_client = db_client
 
     def __get_device_type(self, device_id: int, os: str) -> str:
+        """
+        Determines and returns device type (router, switch, host, l3 switch) based on their operating system and
+        routing/switching capabilities.
+        :param device_id: id of device
+        :param os: device operating system
+        :return: string device type
+        """
         if os in HOST_OPERATING_SYSTEMS:
             return "host"
 
@@ -265,7 +317,12 @@ class DeviceExtractor:
 
         raise UndefinedDeviceType("Could not define device type!")
 
-    def __get_interfaces(self, device_id: int):
+    def __get_interfaces(self, device_id: int) -> dict:
+        """
+        Gathers and returns all UP interfaces of given device.
+        :param device_id: id of device
+        :return: dict of interfaces in format {device_id: data}
+        """
         interfaces = {}
         ports = self.db_client.get_data("ports", [("device_id", device_id), ("ifOperStatus", "up")])
         for port_record in ports:
@@ -284,6 +341,10 @@ class DeviceExtractor:
         return interfaces
 
     def extract(self) -> list:
+        """
+        Extracts data for all devices.
+        :return: list containing found devices
+        """
         devices = []
         records = self.db_client.get_data("devices")
         for record in records:

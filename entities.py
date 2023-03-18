@@ -1,4 +1,9 @@
+import typing
+
+
 class Interface:
+    """Class representing interface on real device."""
+
     def __init__(self, interface_name: str, device_id: int, port_id: int, ip_address: str, mac_address: str,
                  trunk: bool):
         self.interface_name = interface_name
@@ -10,7 +15,11 @@ class Interface:
 
         self.trunk = trunk
 
-    def asdict(self):
+    def asdict(self) -> dict:
+        """
+        Returns object attributes as dictionary.
+        :return: dict
+        """
         return {
             "interface_name": self.interface_name,
             "device_id": self.device_id,
@@ -22,6 +31,8 @@ class Interface:
 
 
 class Relation:
+    """Class representing relation between two interfaces."""
+
     def __init__(self, interface1: Interface, interface2: Interface):
         self.interface1 = interface1
         self.interface2 = interface2
@@ -32,12 +43,22 @@ class Relation:
             (self.interface1.port_id, self.interface2.port_id)) == sorted(
             (other.interface1.port_id, other.interface2.port_id))
 
-    def get_opposing_interface(self, mac_address: str, port_id: int):
+    def get_opposing_interface(self, mac_address: str, port_id: int) -> Interface:
+        """
+        Returns interface opposing to known interface (or its data).
+        :param mac_address: mac address of known interface
+        :param port_id: interface id of know interface
+        :return: Interface object of opposing interface
+        """
         if (mac_address and self.interface1.mac_address == mac_address) or (self.interface1.port_id == port_id):
             return self.interface2
         return self.interface1
 
-    def asdict(self):
+    def asdict(self) -> dict:
+        """
+        Returns object attributes as dictionary.
+        :return: dict
+        """
         return {
             "interface1": self.interface1.asdict(),
             "interface2": self.interface2.asdict()
@@ -45,6 +66,8 @@ class Relation:
 
 
 class RelationsContainer:
+    """Class representing a container of interfaces. Has methods to make working with lots of interfaces easier."""
+
     def __init__(self):
         self.relations = []
 
@@ -62,6 +85,10 @@ class RelationsContainer:
         return len(self.relations)
 
     def add(self, relation: Relation):
+        """
+        Adds relation if it's unique.
+        :param relation: Relation object to add
+        """
         unique = True
         for existing_relation in self.relations:
             if relation == existing_relation:
@@ -71,7 +98,13 @@ class RelationsContainer:
         if unique:
             self.relations.append(relation)
 
-    def find(self, mac_address: str, port_id: int):
+    def find(self, mac_address: str, port_id: int) -> Relation:
+        """
+        Finds and returns relation based on MAC address or interface id.
+        :param mac_address: MAC address of interface
+        :param port_id: id of interface
+        :return: found Relation object, None if not found
+        """
         criteria = mac_address
         if not mac_address:
             criteria = port_id
@@ -85,26 +118,13 @@ class RelationsContainer:
             if criteria in to_compare:
                 found_relation = relation
                 break
-        return found_relation
 
-    def find_by_port_id(self, port_id: int) -> Relation:
-        found_relation = None
-        for relation in self.relations:
-            if port_id in [relation.interface1.port_id, relation.interface2.port_id]:
-                found_relation = relation
-                break
-        return found_relation
-
-    def find_by_mac(self, mac_address: str) -> Relation:
-        found_relation = None
-        for relation in self.relations:
-            if mac_address in [relation.interface1.mac_address, relation.interface2.mac_address]:
-                found_relation = relation
-                break
         return found_relation
 
 
 class Device:
+    """Class representing real device."""
+
     def __init__(self, device_id, name, os, model, device_type, interfaces):
         self.device_id = device_id
         self.name = name
@@ -114,7 +134,11 @@ class Device:
 
         self.interfaces = interfaces
 
-    def asdict(self):
+    def asdict(self) -> dict:
+        """
+        Returns object attributes as dictionary.
+        :return: dict
+        """
         return {
             "device_id": self.device_id,
             "name": self.name,
@@ -125,7 +149,10 @@ class Device:
         }
 
 
-def load_entities(json: dict):
+def load_entities(json: dict) -> typing.Tuple[list, RelationsContainer]:
+    """
+    Loads data from json into appropriate objects.
+    """
     devices = []
 
     for device_dict in json["devices"]:
@@ -167,4 +194,3 @@ def load_entities(json: dict):
         relations_container.add(if_relation)
 
     return devices, relations_container
-

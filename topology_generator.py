@@ -1,10 +1,14 @@
-import random
-
 from entities import RelationsContainer
 import json
 
 
-def generate_js_data_json(devices: list, relations: RelationsContainer):
+def generate_js_data_json(devices: list, relations: RelationsContainer) -> dict:
+    """
+    Generates output used by javascript code to create and load topology.
+    :param devices: devices to be used in topology as nodes
+    :param relations: relations to be used in topology as links
+    :return: dict
+    """
     output = {"nodes": [], "links": []}
 
     for device in devices:
@@ -39,7 +43,14 @@ def generate_js_data_json(devices: list, relations: RelationsContainer):
     return output
 
 
-def generate_js_path_data_json(path: RelationsContainer, color: str, starting_index: int):
+def generate_js_path_data_json(path: RelationsContainer, color: str, starting_index: int) -> dict:
+    """
+    Generates output used by javascript code to create path.
+    :param path: RelationsContainer object containing relations that represent path
+    :param color: color of path to be drawn in
+    :param starting_index: index to start with, can't overlap with already existing links/relations in topology
+    :return: dict
+    """
     output = {"links": [], "nodes": []}
 
     index = starting_index
@@ -65,7 +76,13 @@ def generate_js_path_data_json(path: RelationsContainer, color: str, starting_in
     return output
 
 
-def generate_topology_data_json(devices: list, relations: RelationsContainer):
+def generate_topology_data_json(devices: list, relations: RelationsContainer) -> dict:
+    """
+    Generates output used by path algorithm to create path.
+    :param devices: devices in path
+    :param relations: relations/links in path
+    :return: dict
+    """
     output = {
         "devices": [device.asdict() for device in devices],
         "relations": [relation.asdict() for relation in relations]
@@ -75,13 +92,22 @@ def generate_topology_data_json(devices: list, relations: RelationsContainer):
 
 
 def create_json_file(topology_json: dict, filename: str):
+    """
+    Generates file in json format.
+    :param topology_json: data in json format to be written into file
+    :param filename: name of file
+    """
     file_to_write = open(filename, "w")
     file_to_write.write(f"{json.dumps(topology_json, indent=4, sort_keys=True)}")
     file_to_write.close()
 
 
 def create_js_data_file(topology_json: dict, filename: str):
+    """
+    Generates file in js format. Data are written to a variable in js language.
+    :param topology_json: data in json format to be written into file/js variable
+    :param filename: name of file
+    """
     file_to_write = open(filename, "w")
     file_to_write.write(f"var topologyData={json.dumps(topology_json, indent=4, sort_keys=True)};")
     file_to_write.close()
-

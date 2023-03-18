@@ -2,6 +2,7 @@ import mariadb
 
 
 class MariaDBClient:
+    """Client to establish connection with MariaDB database and offer basic statement actions."""
     def __init__(self):
         self.connection = mariadb.connect(
             database="relations",
@@ -12,6 +13,12 @@ class MariaDBClient:
         self.cursor = self.connection.cursor()
 
     def __parse_cursor_data(self, table_name, *args):
+        """
+        Parses cursor data.
+        :param table_name: name of table to query
+        :param args: optional to specify column names
+        :return:
+        """
         parsed_data = []
         records = [record for record in self.cursor]
 
@@ -31,7 +38,13 @@ class MariaDBClient:
         return parsed_data
 
     def get_data(self, table_name, queries: list = None, *args):
-        #  use args to specify which columns data to return
+        """
+        Parses and returns data from database based on table name, column names and queries.
+        :param table_name: name of table
+        :param queries: list of tuples to query only specific data, fe. [("color", "red)] -> color has to be red
+        :param args: optional args to specify which columns data to return
+        :return:
+        """
         statement = f"SELECT {','.join(args) if args else '*'} from {table_name}"
         if queries:
             statement += f" WHERE"

@@ -12,3 +12,11 @@ class PathNotFound(Exception):
 
 class UndefinedDeviceType(Exception):
     pass
+
+
+class DifferentNetworksError(Exception):
+    pass
+
+
+class VirtualInterfaceFound(Exception):
+    pass

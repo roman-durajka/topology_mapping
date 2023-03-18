@@ -10,11 +10,19 @@ CORS(app)
 
 @app.route('/', methods=['GET'])
 def signal():
+    """
+    Endpoint to check app status.
+    :return: str
+    """
     return "It's working!"
 
 
 @app.route('/path', methods=['POST'])
 def get_path():
+    """
+    Endpoint to create and return path based on POST data.
+    :return: data in json format and status code
+    """
     req_json = request.json
     path_json = path.main(req_json)
 
@@ -23,6 +31,10 @@ def get_path():
 
 @app.route('/topology', methods=['GET'])
 def create_topology():
+    """
+    Endpoint to create and return topology data to be drawn in js app.
+    :return: data in json format and status code
+    """
     js_data = main.main()
 
     return jsonify({"status": "success", "data": js_data}), 200
