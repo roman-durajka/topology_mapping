@@ -1,5 +1,5 @@
 from modules.clients import MariaDBClient
-from entities import RelationsContainer, Interface, Relation, Device
+from modules.entities import RelationsContainer, Interface, Relation, Device
 from modules.exceptions import UndefinedDeviceType
 from ipaddress import IPv4Network, IPv4Address
 from modules.exceptions import NotFoundError, DifferentNetworksError, VirtualInterfaceFound

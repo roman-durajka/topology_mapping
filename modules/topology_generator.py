@@ -1,4 +1,4 @@
-from entities import RelationsContainer
+from modules.entities import RelationsContainer
 import json
 
 

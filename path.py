@@ -1,5 +1,5 @@
-import topology_generator
-from entities import RelationsContainer, load_entities
+from modules import topology_generator
+from modules.entities import RelationsContainer, load_entities
 from modules.clients import MariaDBClient
 from modules.exceptions import NotFoundError, MultipleOccurrences, PathNotFound
 
