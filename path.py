@@ -64,8 +64,13 @@ class Path:
         :param device_id: id of device
         :return: bool
         """
-        records = self.db_client.get_data("ports_fdb", [("device_id", device_id)])
-        if records:
+        port_records = self.db_client.get_data("ports", [("device_id", device_id)])
+        port_ids = []
+        for port_record in port_records:
+            port_ids.append(port_record["port_id"])
+
+        mac_records = self.db_client.get_data("mac_table", [("port_id", port_ids)])
+        if mac_records:
             return True
         return False
 
@@ -78,7 +83,7 @@ class Path:
         ip_record = self.db_client.get_data("ipv4_addresses", [("ipv4_address", ip_address)])[0]
         network_id = ip_record["ipv4_network_id"]
         network_record = self.db_client.get_data("ipv4_networks", [("ipv4_network_id", network_id)])[0]
-        network = network_record["ipv4_network"]
+        network = network_record["network_address"]
 
         return network
 
@@ -88,7 +93,7 @@ class Path:
         :param network: network address to get id of
         :return: id of network
         """
-        network_record = self.db_client.get_data("ipv4_networks", [("ipv4_network", network)])[0]
+        network_record = self.db_client.get_data("ipv4_networks", [("network_address", network)])[0]
         network_id = network_record["ipv4_network_id"]
 
         return network_id
@@ -103,9 +108,15 @@ class Path:
         algorithm
         :return:
         """
-        route_records = self.db_client.get_data("route", [("device_id", device_id), ("inetCidrRouteDest", "0.0.0.0")])
+        ports_ids = []
+        ports_records = self.db_client.get_data("ports", [("device_id", device_id)])
+        for port_record in ports_records:
+            ports_ids.append(port_record["port_id"])
+        ports_ids = list(set(ports_ids))
+
+        route_records = self.db_client.get_data("route", [("port_id", ports_ids), ("destination", "0.0.0.0")])
         if route_records:
-            nexthop = route_records[0]["inetCidrRouteNextHop"]
+            nexthop = route_records[0]["nexthop"]
             nexthop_addresses_records = self.db_client.get_data("ipv4_addresses", [("ipv4_address", nexthop)])
             if nexthop_addresses_records:
                 port_id = nexthop_addresses_records[0]["port_id"]
@@ -131,7 +142,7 @@ class Path:
         :param port_id: id of interface
         :return: MAC address
         """
-        return self.db_client.get_data("ports", [("port_id", port_id)])[0]["ifPhysAddress"]
+        return self.db_client.get_data("ports", [("port_id", port_id)])[0]["mac_address"]
 
     def __get_device_id_from_port(self, port_id: int) -> int:
         """
@@ -159,10 +170,10 @@ class Path:
         if source_port_id == destination_port_id:  # device could already be default gateway
             return
 
-        destination_mac = self.db_client.get_data("ports", [("port_id", destination_port_id)])[0]["ifPhysAddress"]
-        source_mac = self.db_client.get_data("ports", [("port_id", source_port_id)])[0]["ifPhysAddress"]
+        destination_mac = self.db_client.get_data("ports", [("port_id", destination_port_id)])[0]["mac_address"]
+        source_mac = self.db_client.get_data("ports", [("port_id", source_port_id)])[0]["mac_address"]
 
-        source_vlan = self.db_client.get_data("ports", [("port_id", source_port_id)])[0]["ifVlan"]
+        source_vlan = self.db_client.get_data("ports", [("port_id", source_port_id)])[0]["vlan_id"]
 
         # if source is host, find initial relation and continue algorithm with neighboring switch data
         initial_relation = self.relations.find(source_mac, source_port_id)
@@ -194,10 +205,8 @@ class Path:
             else:
                 args.append(("port_id", destination_port_id))
             if source_vlan:
-                mac_record_vlan = self.db_client.get_data("vlans", [("device_id", opposing_device_id),
-                                                                ("vlan_vlan", source_vlan)])[0]["vlan_id"]
-                args.append(("vlan_id", mac_record_vlan))
-            mac_records = self.db_client.get_data("ports_fdb", args)
+                args.append(("vlan_id", source_vlan))
+            mac_records = self.db_client.get_data("mac_table", args)
 
             if not mac_records:
                 raise PathNotFound("Could not find path - mac table does not have needed record")
@@ -227,14 +236,19 @@ class Path:
         :param device_id: device id of router on which routing records should be searched
         :return: dict containing new network and source/destination interface ids in this network
         """
-        destination_network = destination_network.split("/")[0]
-        destination_record = self.db_client.get_data("route", [("inetCidrRouteDest", destination_network), ("device_id", device_id)])
+        ports_ids = []
+        ports_records = self.db_client.get_data("ports", [("device_id", device_id)])
+        for port_record in ports_records:
+            ports_ids.append(port_record["port_id"])
+        ports_ids = list(set(ports_ids))
+
+        destination_record = self.db_client.get_data("route", [("destination", destination_network), ("port_id", ports_ids)])
         if not destination_record:
             raise PathNotFound("Could not find path - routing table does not have needed record")
         destination_record = destination_record[0]
 
         source_port_id = destination_record["port_id"]
-        nexthop = destination_record["inetCidrRouteNextHop"]
+        nexthop = destination_record["nexthop"]
         destination_port_id = None
 
         if nexthop == "0.0.0.0":
@@ -320,9 +334,9 @@ class Path:
 
             # update local variables so algorithm can continue in new network
             local_destination_device_id = self.db_client.get_data("ports", [("port_id", local_destination_port_id)])[0]["device_id"]
-            new_network = self.__get_new_network(str(destination_network), local_destination_device_id)
+            new_network = self.__get_new_network(destination_network, local_destination_device_id)
             current_network = new_network["network"]
-            if current_network == str(destination_network).split("/")[0]:
+            if current_network == destination_network:
                 same_network = True
                 local_destination_port_id = destination_port_id
             else:
