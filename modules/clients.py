@@ -6,7 +6,7 @@ class MariaDBClient:
     def __init__(self):
         self.connection = mariadb.connect(
             database="relations",
-            user="root",
+            user="user",
             password="password",
             host="db_con"
         )
