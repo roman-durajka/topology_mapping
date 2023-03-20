@@ -190,19 +190,19 @@ class IPExtractor(Extractor):
         :param source_interface: source Interface object
         :return: destination Interface object
         """
-        destination_interface_network = record["inetCidrRouteDest"]
-        destination_interface_network_prefix = record["inetCidrRoutePfxLen"]
+        destination_interface_network = record["destination"]
+        destination_interface_network_prefix = record["destination_prefixlen"]
         destination_network_obj = IPv4Network(f"{destination_interface_network}/{destination_interface_network_prefix}")
         source_interface_obj = IPv4Address(source_interface.ip_address)
         if source_interface_obj not in destination_network_obj:
             raise DifferentNetworksError
 
-        source_interface_nexthop = record["inetCidrRouteNextHop"]
+        source_interface_nexthop = record["nexthop"]
         if source_interface_nexthop == source_interface.ip_address:
             raise NotFoundError
 
         network_devices = []
-        ipv4_addresses_records = self.db_client.get_data("ipv4_addresses", [])
+        ipv4_addresses_records = self.db_client.get_data("ipv4_addresses")
         for record in ipv4_addresses_records:
             ip_address = record["ipv4_address"]
             ip_address_obj = IPv4Address(ip_address)
@@ -221,13 +221,13 @@ class IPExtractor(Extractor):
 
         destination_interface_port_id = destination_interface_record[0]["port_id"]
         port_record = self.db_client.get_data("ports", [("port_id", destination_interface_port_id)])[0]
-        if "virtual" in port_record["ifType"].lower():
+        if "virtual" in port_record["if_type"].lower():
             raise VirtualInterfaceFound
         port_id = port_record["port_id"]
-        interface_name = port_record["ifName"]
+        interface_name = port_record["if_name"]
         device_id = port_record["device_id"]
-        trunk = port_record["ifTrunk"]
-        mac_address = port_record["ifPhysAddress"]
+        trunk = port_record["is_trunk"]
+        mac_address = port_record["mac_address"]
         port_ip_address = destination_interface_ip
 
         return Interface(interface_name, device_id, port_id, port_ip_address, mac_address, trunk)
@@ -237,10 +237,11 @@ class IPExtractor(Extractor):
         Extracts all available relations based on IP (routing) table records.
         :return: RelationsContainer object containing found relations
         """
-        records = self.db_client.get_data("route", [("inetCidrRouteDestType", "ipv4")])
+        records = self.db_client.get_data("route")
         for record in records:
             try:
-                source_interface = self.get_source_interface(record["device_id"], record["port_id"])
+                device_id = self.db_client.get_data("ports", [("port_id", record["port_id"])])[0]["device_id"]
+                source_interface = self.get_source_interface(device_id, record["port_id"])
                 if not source_interface.ip_address or source_interface.ip_address in ["0.0.0.0", "127.0.0.1"]:
                     continue
                 destination_interface = self.get_destination_interface(record, source_interface)
