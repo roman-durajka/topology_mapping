@@ -246,7 +246,7 @@ class IPExtractor(Extractor):
         Extracts all available relations based on IP (routing) table records.
         :return: RelationsContainer object containing found relations
         """
-        records = self.db_client.get_data("route")
+        records = self.db_client.get_data("routing_table")
         for record in records:
             try:
                 device_id = self.db_client.get_data("ports", [("port_id", record["port_id"])])[0]["device_id"]
@@ -285,7 +285,7 @@ class DPExtractor(Extractor):
         Extracts all available relations based on DP (discovery protocols) table records.
         :return: RelationsContainer object containing found relations
         """
-        records = self.db_client.get_data("links")
+        records = self.db_client.get_data("neighbors")
         for record in records:
             try:
                 local_port_id = record["local_port_id"]

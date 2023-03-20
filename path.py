@@ -108,13 +108,9 @@ class Path:
         algorithm
         :return:
         """
-        ports_ids = []
-        ports_records = self.db_client.get_data("ports", [("device_id", device_id)])
-        for port_record in ports_records:
-            ports_ids.append(port_record["port_id"])
-        ports_ids = list(set(ports_ids))
+        ports_ids = self.__get_port_ids_from_device_id(device_id)
 
-        route_records = self.db_client.get_data("route", [("port_id", ports_ids), ("destination", "0.0.0.0")])
+        route_records = self.db_client.get_data("routing_table", [("port_id", ports_ids), ("destination", "0.0.0.0")])
         if route_records:
             nexthop = route_records[0]["nexthop"]
             nexthop_addresses_records = self.db_client.get_data("ipv4_addresses", [("ipv4_address", nexthop)])
@@ -199,7 +195,8 @@ class Path:
 
         # start algorithm based on MAC tables
         while True:
-            args = [("device_id", opposing_device_id), ]
+            ports_ids = self.__get_port_ids_from_device_id(opposing_device_id)
+            args = [("port_id", ports_ids)]
             if destination_mac:
                 args.append(("mac_address", destination_mac))
             else:
@@ -228,6 +225,20 @@ class Path:
 
             opposing_device_id = self.db_client.get_data("ports", [("port_id", local_destination_port_id)])[0]["device_id"]
 
+    def __get_port_ids_from_device_id(self, device_id: int) -> list:
+        """
+        Returns ids of all ports that belong to given device.
+        :param device_id: id of device
+        :return: list of port ids
+        """
+        ports_ids = []
+        ports_records = self.db_client.get_data("ports", [("device_id", device_id)])
+        for port_record in ports_records:
+            ports_ids.append(port_record["port_id"])
+        ports_ids = list(set(ports_ids))
+
+        return ports_ids
+
     def __get_new_network(self, destination_network: str, device_id: int) -> dict:
         """
         Find and return first network between device and destination network based on routing table records. If
@@ -236,13 +247,9 @@ class Path:
         :param device_id: device id of router on which routing records should be searched
         :return: dict containing new network and source/destination interface ids in this network
         """
-        ports_ids = []
-        ports_records = self.db_client.get_data("ports", [("device_id", device_id)])
-        for port_record in ports_records:
-            ports_ids.append(port_record["port_id"])
-        ports_ids = list(set(ports_ids))
+        ports_ids = self.__get_port_ids_from_device_id(device_id)
 
-        destination_record = self.db_client.get_data("route", [("destination", destination_network), ("port_id", ports_ids)])
+        destination_record = self.db_client.get_data("routing_table", [("destination", destination_network), ("port_id", ports_ids)])
         if not destination_record:
             raise PathNotFound("Could not find path - routing table does not have needed record")
         destination_record = destination_record[0]
@@ -258,7 +265,7 @@ class Path:
             address_record = self.db_client.get_data("ipv4_addresses", [("ipv4_address", nexthop)])[0]
             network_id = address_record["ipv4_network_id"]
             network_record = self.db_client.get_data("ipv4_networks", [("ipv4_network_id", network_id)])[0]
-            new_network = network_record["ipv4_network"]
+            new_network = network_record["network_address"]
 
         return {"source_port_id": source_port_id, "destination_port_id": destination_port_id, "network": new_network}
 
@@ -286,7 +293,6 @@ class Path:
             if initial_opposing_interface.device_id == destination_device_id:
                 return path
 
-        current_network = str(IPv4Interface(source).network)
         forbidden_device_ids = [source_device_id]
         local_source_port_id = source_port_id
         local_destination_port_id = destination_port_id
@@ -296,6 +302,7 @@ class Path:
 
         source_network = self.__get_target_network(source)
         destination_network = self.__get_target_network(destination)
+        current_network = source_network
 
         if source_network == destination_network:
             same_network = True
@@ -315,7 +322,7 @@ class Path:
         while True:
             # if devices are not in the same network, find default gateway
             if guess_gateway:
-                local_destination = self.__get_default_gateway(source_device_id, str(current_network), forbidden_device_ids)
+                local_destination = self.__get_default_gateway(source_device_id, current_network, forbidden_device_ids)
                 if not local_destination:
                     raise PathNotFound("Could not find path - guessing starting point gateways was exhausted")
                 local_destination_port_id = local_destination["port_id"]
