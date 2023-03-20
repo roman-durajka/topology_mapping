@@ -52,7 +52,21 @@ class MariaDBClient:
             for query in queries:
                 if not first:
                     statement += f" AND"
-                statement += f" {query[0]}=\'{query[1]}\'"
+                if type(query[1]) == list:
+                    statement += f" {query[0]} IN ("
+                    first_item = True
+                    for item in query[1]:
+                        if not first_item:
+                            statement += ","
+                        else:
+                            first_item = False
+                        if type(item) == str:
+                            statement += f"\'{item}\'"
+                        else:
+                            statement += f"{item}"
+                    statement += ")"
+                else:
+                    statement += f" {query[0]}=\'{query[1]}\'"
                 first = False
 
         self.cursor.execute(statement)

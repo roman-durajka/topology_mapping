@@ -84,8 +84,8 @@ class MacExtractor(Extractor):
         :param destination_interface: record of destination interface from table 'ports'
         :return: bool if devices are neighbors
         """
-        device_fdb_records = self.db_client.get_data("ports_fdb", [(
-            "mac_address", destination_interface["ifPhysAddress"])])
+        device_fdb_records = self.db_client.get_data("mac_table", [(
+            "mac_address", destination_interface["mac_address"])])
 
         index_to_pop = -1
         for index, record in enumerate(device_fdb_records):
@@ -97,13 +97,13 @@ class MacExtractor(Extractor):
 
         for record in device_fdb_records:
             intermediate_device_id = record["device_id"]
-            intermediary_port_records = self.db_client.get_data("ports", [("device_id", intermediate_device_id), ("ifOperStatus", "up")])
+            intermediary_port_records = self.db_client.get_data("ports", [("device_id", intermediate_device_id), ("oper_status", "up")])
             for intermediary_port_record in intermediary_port_records:
                 if intermediary_port_record["port_id"] == record["port_id"]:
                     continue
 
-                fdb_records = self.db_client.get_data("ports_fdb", [("port_id", source_to_device_port_id), (
-                    "mac_address", intermediary_port_record["ifPhysAddress"])])
+                fdb_records = self.db_client.get_data("mac_table", [("port_id", source_to_device_port_id), (
+                    "mac_address", intermediary_port_record["mac_address"])])
                 if fdb_records:
                     return False
         return True
@@ -118,13 +118,13 @@ class MacExtractor(Extractor):
         :return: destination Interface object
         """
         port_mac_address = record["mac_address"]
-        port_records = self.db_client.get_data("ports", [("ifPhysAddress", port_mac_address), ("ifOperStatus", "up")])
+        port_records = self.db_client.get_data("ports", [("mac_address", port_mac_address), ("oper_status", "up")])
         if not port_records:
             raise NotFoundError
 
         valid_port_record = None
         for port_record in port_records:
-            if "virtual" in port_record["ifType"].lower():  # skip virtual interfaces
+            if "virtual" in port_record["if_type"].lower():  # skip virtual interfaces
                 continue
             if self.__is_directly_connected(source_interface, port_record):
                 valid_port_record = port_record
@@ -135,10 +135,10 @@ class MacExtractor(Extractor):
         port_record = valid_port_record
 
         port_id = port_record["port_id"]
-        interface_name = port_record["ifName"]
+        interface_name = port_record["if_name"]
         device_id = port_record["device_id"]
-        trunk = port_record["ifTrunk"]
-        mac_address = port_record["ifPhysAddress"]
+        trunk = port_record["is_trunk"]
+        mac_address = port_record["mac_address"]
         port_ip_address = self.db_client.get_data("ipv4_addresses", [("port_id", port_id)])
 
         if port_ip_address:  # some interfaces don't have ip address
@@ -153,8 +153,12 @@ class MacExtractor(Extractor):
         Extracts all available relations based on MAC table records.
         :return: RelationsContainer object containing found relations
         """
-        for device_id in self.extract_device_ids("ports_fdb"):
-            records = self.db_client.get_data("ports_fdb", [("device_id", device_id)])
+        for device_id in self.extract_device_ids("mac_table"):
+            ports_records = self.db_client.get_data("ports", [("device_id", device_id)])
+            port_ids = []
+            for ports_record in ports_records:
+                port_ids.append(ports_record["port_id"])
+            records = self.db_client.get_data("mac_table", [("port_id", port_ids)])
 
             duplicates = []
             for record in records:
@@ -162,7 +166,7 @@ class MacExtractor(Extractor):
                     continue
                 duplicates.append((record["port_id"], record["mac_address"]))
                 try:
-                    source_interface = self.get_source_interface(record["device_id"], record["port_id"])
+                    source_interface = self.get_source_interface(device_id, record["port_id"])
                     destination_interface = self.get_destination_interface(record, source_interface)
                 except NotFoundError:
                     continue
@@ -306,19 +310,11 @@ class DeviceExtractor:
         for port_record in port_records:
             port_ids.append(port_record["port_id"])
 
-        mac_records = self.db_client.get_data("mac_table")
-        has_switching_capabilities = False
-        for mac_record in mac_records:
-            if mac_record["port_id"] in port_ids:
-                has_switching_capabilities = True
-                break
+        mac_records = self.db_client.get_data("mac_table", [("port_id", port_ids)])
+        has_switching_capabilities = True if mac_records else False
 
-        route_records = self.db_client.get_data("routing_table")
-        has_routing_capabilities = False
-        for route_record in route_records:
-            if route_record["port_id"] in port_ids:
-                has_routing_capabilities = True
-                break
+        route_records = self.db_client.get_data("routing_table", [("port_id", port_ids)])
+        has_routing_capabilities = True if route_records else False
 
         if has_routing_capabilities and has_switching_capabilities:
             return "l3sw"
