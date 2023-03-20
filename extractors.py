@@ -48,7 +48,7 @@ class Extractor:
         if port_id == 0:
             raise NotFoundError
 
-        ports_table_data = self.db_client.get_data("ports", [("port_id", port_id), ("ifOperStatus", "up")])
+        ports_table_data = self.db_client.get_data("ports", [("port_id", port_id), ("oper_status", "up")])
         if not ports_table_data:
             raise NotFoundError
         ports_table_data = ports_table_data[0]
@@ -301,10 +301,24 @@ class DeviceExtractor:
         if os in HOST_OPERATING_SYSTEMS:
             return "host"
 
-        mac_records = self.db_client.get_data("ports_fdb", [("device_id", device_id)])
-        has_switching_capabilities = True if mac_records else False
-        route_records = self.db_client.get_data("route", [("device_id", device_id)])
-        has_routing_capabilities = True if route_records else False
+        port_records = self.db_client.get_data("ports", [("device_id", device_id)])
+        port_ids = []
+        for port_record in port_records:
+            port_ids.append(port_record["port_id"])
+
+        mac_records = self.db_client.get_data("mac_table")
+        has_switching_capabilities = False
+        for mac_record in mac_records:
+            if mac_record["port_id"] in port_ids:
+                has_switching_capabilities = True
+                break
+
+        route_records = self.db_client.get_data("routing_table")
+        has_routing_capabilities = False
+        for route_record in route_records:
+            if route_record["port_id"] in port_ids:
+                has_routing_capabilities = True
+                break
 
         if has_routing_capabilities and has_switching_capabilities:
             return "l3sw"
@@ -324,10 +338,10 @@ class DeviceExtractor:
         :return: dict of interfaces in format {device_id: data}
         """
         interfaces = {}
-        ports = self.db_client.get_data("ports", [("device_id", device_id), ("ifOperStatus", "up")])
+        ports = self.db_client.get_data("ports", [("device_id", device_id), ("oper_status", "up")])
         for port_record in ports:
-            interface_data = {"status": port_record["ifOperStatus"], "name": port_record["ifName"], "mac_address": "none", "ip_address": "none"}
-            mac_address = port_record["ifPhysAddress"]
+            interface_data = {"status": port_record["oper_status"], "name": port_record["if_name"], "mac_address": "none", "ip_address": "none"}
+            mac_address = port_record["mac_address"]
             if mac_address:
                 interface_data["mac_address"] = mac_address
             ip_address_record = self.db_client.get_data("ipv4_addresses", [("port_id", port_record["port_id"])])
@@ -351,7 +365,7 @@ class DeviceExtractor:
             device_type = self.__get_device_type(record["device_id"], record["os"])
             interfaces = self.__get_interfaces(record["device_id"])
 
-            device = Device(record["device_id"], record["sysName"], record["os"], record["hardware"], device_type, interfaces)
+            device = Device(record["device_id"], record["device_name"], record["os"], record["model"], device_type, interfaces)
             devices.append(device)
 
         return devices
