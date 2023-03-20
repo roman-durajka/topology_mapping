@@ -98,15 +98,15 @@ class MacExtractor(Extractor):
 
         index_to_pop = -1
         for index, record in enumerate(device_fdb_records):
-            if record["device_id"] == source_interface.device_id:
+            if record["port_id"] == source_interface.port_id:
                 index_to_pop = index
                 break
         source_to_device_fdb_record = device_fdb_records.pop(index_to_pop)
         source_to_device_port_id = source_to_device_fdb_record["port_id"]
 
         for record in device_fdb_records:
-            intermediate_device_id = record["device_id"]
-            intermediary_port_records = self.db_client.get_data("ports", [("device_id", intermediate_device_id), ("oper_status", "up")])
+            intermediary_device_id = self.db_client.get_data("ports", [("port_id", record["port_id"])])[0]["device_id"]
+            intermediary_port_records = self.db_client.get_data("ports", [("device_id", intermediary_device_id), ("oper_status", "up")])
             for intermediary_port_record in intermediary_port_records:
                 if intermediary_port_record["port_id"] == record["port_id"]:
                     continue
