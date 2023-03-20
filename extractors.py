@@ -10,19 +10,28 @@ class Extractor:
     def __init__(self, db_client: MariaDBClient):
         self.db_client = db_client
 
-    def extract_device_ids(self, table_name: str):
+    def extract_device_ids_using_port_id(self, table_name: str):
         """
-        Extracts all device ids from database table.
+        Extracts all device ids from given table by using port ids.
         :param table_name: name of database table
         """
-        device_ids = []
-
-        records = self.db_client.get_data(table_name, None, "device_id")
+        records = self.db_client.get_data(table_name, None, "port_id")
+        port_ids = []
         for record in records:
-            device_id = record["device_id"]
-            if device_id not in device_ids:
-                device_ids.append(device_id)
-                yield device_id
+            port_id = record["port_id"]
+            port_ids.append(port_id)
+
+        port_ids = list(set(port_ids))
+
+        devices_ids = []
+        ports_records = self.db_client.get_data("ports", [("port_id", port_ids)])
+        for port_record in ports_records:
+            device_id = port_record["device_id"]
+            devices_ids.append(device_id)
+
+        devices_ids = list(set(devices_ids))
+        for device_id in devices_ids:
+            yield device_id
 
     def extract_vlan_ids(self, table: str):
         """
@@ -52,9 +61,9 @@ class Extractor:
         if not ports_table_data:
             raise NotFoundError
         ports_table_data = ports_table_data[0]
-        interface_trunk = False if not ports_table_data["ifTrunk"] else True
-        interface_name = ports_table_data["ifName"]
-        interface_mac_address = ports_table_data["ifPhysAddress"]
+        interface_trunk = False if not ports_table_data["is_trunk"] else True
+        interface_name = ports_table_data["if_name"]
+        interface_mac_address = ports_table_data["mac_address"]
         interface_ip_address = self.db_client.get_data("ipv4_addresses", [("port_id", port_id)], "ipv4_address")
         if interface_ip_address:  # some interfaces don't have ip address
             interface_ip_address = interface_ip_address[0]["ipv4_address"]
@@ -153,7 +162,7 @@ class MacExtractor(Extractor):
         Extracts all available relations based on MAC table records.
         :return: RelationsContainer object containing found relations
         """
-        for device_id in self.extract_device_ids("mac_table"):
+        for device_id in self.extract_device_ids_using_port_id("mac_table"):
             ports_records = self.db_client.get_data("ports", [("device_id", device_id)])
             port_ids = []
             for ports_record in ports_records:
@@ -267,7 +276,9 @@ class DPExtractor(Extractor):
         :param source_interface: source Interface object
         :return: destination Interface object
         """
-        return self.get_source_interface(record["remote_device_id"], record["remote_port_id"])
+        remote_port_id = record["remote_port_id"]
+        remote_device_id = self.db_client.get_data("ports", [("port_id", remote_port_id)])[0]["device_id"]
+        return self.get_source_interface(remote_device_id, remote_port_id)
 
     def extract(self) -> RelationsContainer:
         """
@@ -277,7 +288,9 @@ class DPExtractor(Extractor):
         records = self.db_client.get_data("links")
         for record in records:
             try:
-                source_interface = self.get_source_interface(record["local_device_id"], record["local_port_id"])
+                local_port_id = record["local_port_id"]
+                local_device_id = self.db_client.get_data("ports", [("port_id", local_port_id)])[0]["device_id"]
+                source_interface = self.get_source_interface(local_device_id, local_port_id)
                 destination_interface = self.get_destination_interface(record, source_interface)
             except ArithmeticError:
                 continue
