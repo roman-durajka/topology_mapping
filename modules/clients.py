@@ -5,8 +5,8 @@ class MariaDBClient:
     """Client to establish connection with MariaDB database and offer basic statement actions."""
     def __init__(self):
         self.connection = mariadb.connect(
-            database="test",
-            user="root",
+            database="relations",
+            user="user",
             password="password",
             host="db_con"
         )
