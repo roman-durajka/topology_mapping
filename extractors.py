@@ -274,7 +274,7 @@ class DPExtractor(Extractor):
             try:
                 source_interface = self.get_source_interface(record["local_device_id"], record["local_port_id"])
                 destination_interface = self.get_destination_interface(record, source_interface)
-            except ArithmeticError:
+            except NotFoundError:
                 continue
 
             self.relations.add(Relation(source_interface, destination_interface))
