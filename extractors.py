@@ -292,7 +292,7 @@ class DPExtractor(Extractor):
                 local_device_id = self.db_client.get_data("ports", [("port_id", local_port_id)])[0]["device_id"]
                 source_interface = self.get_source_interface(local_device_id, local_port_id)
                 destination_interface = self.get_destination_interface(record, source_interface)
-            except ArithmeticError:
+            except NotFoundError:
                 continue
 
             self.relations.add(Relation(source_interface, destination_interface))
