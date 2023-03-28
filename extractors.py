@@ -315,7 +315,7 @@ class DeviceExtractor:
         if has_switching_capabilities:
             return "switch"
 
-        raise UndefinedDeviceType("Could not define device type!")
+        return "unknown"
 
     def __get_interfaces(self, device_id: int) -> dict:
         """
