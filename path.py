@@ -2,8 +2,8 @@ from modules import topology_generator
 from modules.entities import RelationsContainer, load_entities
 from modules.clients import MariaDBClient
 from modules.exceptions import NotFoundError, MultipleOccurrences, PathNotFound
+from extractors import get_port_id_by_network
 
-from ipaddress import IPv4Interface
 import json
 
 
@@ -108,9 +108,7 @@ class Path:
         algorithm
         :return:
         """
-        ports_ids = self.__get_port_ids_from_device_id(device_id)
-
-        route_records = self.db_client.get_data("routing_table", [("port_id", ports_ids), ("destination", "0.0.0.0")])
+        route_records = self.db_client.get_data("routing_table", [("device_id", device_id), ("destination", "0.0.0.0")])
         if route_records:
             nexthop = route_records[0]["nexthop"]
             nexthop_addresses_records = self.db_client.get_data("ipv4_addresses", [("ipv4_address", nexthop)])
@@ -247,14 +245,11 @@ class Path:
         :param device_id: device id of router on which routing records should be searched
         :return: dict containing new network and source/destination interface ids in this network
         """
-        ports_ids = self.__get_port_ids_from_device_id(device_id)
-
-        destination_record = self.db_client.get_data("routing_table", [("destination", destination_network), ("port_id", ports_ids)])
+        destination_record = self.db_client.get_data("routing_table", [("destination", destination_network), ("device_id", device_id)])
         if not destination_record:
             raise PathNotFound("Could not find path - routing table does not have needed record")
         destination_record = destination_record[0]
 
-        source_port_id = destination_record["port_id"]
         nexthop = destination_record["nexthop"]
         destination_port_id = None
 
@@ -266,6 +261,7 @@ class Path:
             network_id = address_record["ipv4_network_id"]
             network_record = self.db_client.get_data("ipv4_networks", [("ipv4_network_id", network_id)])[0]
             new_network = network_record["network_address"]
+        source_port_id = get_port_id_by_network(self.db_client, device_id, new_network)
 
         return {"source_port_id": source_port_id, "destination_port_id": destination_port_id, "network": new_network}
 

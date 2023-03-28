@@ -1,8 +1,35 @@
 from modules.clients import MariaDBClient
 from modules.entities import RelationsContainer, Interface, Relation, Device
-from modules.exceptions import UndefinedDeviceType
 from ipaddress import IPv4Network, IPv4Address
 from modules.exceptions import NotFoundError, DifferentNetworksError, VirtualInterfaceFound
+
+
+def get_port_id_by_network(db_client: MariaDBClient, device_id: int, destination_network: str) -> int:
+    """
+    Finds and returns port id of a specified device that has IP address matching specified destination network
+    address. Used to find port id of an interface whose IP address belongs to specified network.
+    :param db_client: database connection
+    :param device_id: device id of router
+    :param destination_network: network to which port belongs
+    :return: int port id
+    """
+    network_id_record = db_client.get_data("ipv4_networks", [("network_address", destination_network)])
+    if not network_id_record:
+        raise NotFoundError("Could not find destination network. Records in database don't match with each other!")
+    network_id = network_id_record[0]["ipv4_network_id"]
+
+    port_records = db_client.get_data("ports", [("device_id", device_id)])
+    port_ids = []
+    for port_record in port_records:
+        port_ids.append(port_record["port_id"])
+
+    networks_record = db_client.get_data("ipv4_addresses",
+                                              [("port_id", port_ids), ("ipv4_network_id", network_id)])
+    if not networks_record:
+        raise NotFoundError("Could not find port with IP address from router to destination")
+
+    port_id = networks_record[0]["port_id"]
+    return port_id
 
 
 class Extractor:
@@ -249,8 +276,8 @@ class IPExtractor(Extractor):
         records = self.db_client.get_data("routing_table")
         for record in records:
             try:
-                device_id = self.db_client.get_data("ports", [("port_id", record["port_id"])])[0]["device_id"]
-                source_interface = self.get_source_interface(device_id, record["port_id"])
+                port_id = get_port_id_by_network(self.db_client, record["device_id"], record["destination"])
+                source_interface = self.get_source_interface(record["device_id"], port_id)
                 if not source_interface.ip_address or source_interface.ip_address in ["0.0.0.0", "127.0.0.1"]:
                     continue
                 destination_interface = self.get_destination_interface(record, source_interface)
@@ -327,7 +354,7 @@ class DeviceExtractor:
         mac_records = self.db_client.get_data("mac_table", [("port_id", port_ids)])
         has_switching_capabilities = True if mac_records else False
 
-        route_records = self.db_client.get_data("routing_table", [("port_id", port_ids)])
+        route_records = self.db_client.get_data("routing_table", [("device_id", device_id)])
         has_routing_capabilities = True if route_records else False
 
         if has_routing_capabilities and has_switching_capabilities:
