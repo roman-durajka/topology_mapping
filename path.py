@@ -3,7 +3,6 @@ from modules.entities import RelationsContainer, load_entities
 from modules.clients import MariaDBClient
 from modules.exceptions import NotFoundError, MultipleOccurrences, PathNotFound
 
-from ipaddress import IPv4Interface
 import json
 
 
