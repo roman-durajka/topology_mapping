@@ -285,8 +285,8 @@ class Path:
         initial_relation = self.relations.find("", source_port_id)
         if initial_relation:
             initial_opposing_interface = initial_relation.get_opposing_interface(source_mac, source_port_id)
-            path.add(initial_relation)
             if initial_opposing_interface.device_id == destination_device_id:
+                path.add(initial_relation)
                 return path
 
         forbidden_device_ids = [source_device_id]
