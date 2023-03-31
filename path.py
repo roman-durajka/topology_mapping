@@ -271,8 +271,6 @@ class Path:
                 path.add(initial_relation)
                 return path
 
-        current_network_id = self.db_client.get_data("ipv4_addresses", [("ipv4_address", source)])[0]["ipv4_network_id"]
-        current_network = self.db_client.get_data("ipv4_networks", [("ipv4_network_id", current_network_id)])[0]["ipv4_network"]
         forbidden_device_ids = [source_device_id]
         local_source_port_id = source_port_id
         local_destination_port_id = destination_port_id
@@ -282,6 +280,7 @@ class Path:
 
         source_network = self.__get_target_network(source)
         destination_network = self.__get_target_network(destination)
+        current_network = source_network
 
         if source_network == destination_network:
             same_network = True
