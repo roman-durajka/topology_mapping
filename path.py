@@ -187,7 +187,7 @@ class Path:
 
         # start algorithm based on MAC tables
         while True:
-            args = [("device_id", opposing_device_id), ]
+            args = [("device_id", opposing_device_id)]
             if destination_mac:
                 args.append(("mac_address", destination_mac))
             else:
