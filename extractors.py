@@ -248,6 +248,11 @@ class IPExtractor(Extractor):
         if len(network_devices) != 2:  # intermediary devices exist
             raise NotFoundError
 
+        # check if there is a switch in the network
+        mac_table_records = self.db_client.get_data("mac_table", [("mac_address", source_interface.mac_address)])
+        if mac_table_records:
+            raise NotFoundError
+
         network_devices.remove(source_interface.ip_address)
         destination_interface_ip = network_devices[0]
 
