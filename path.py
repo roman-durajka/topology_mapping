@@ -302,7 +302,7 @@ class Path:
             if guess_gateway:
                 local_destination = self.__get_default_gateway(source_device_id, str(current_network), forbidden_device_ids)
                 if not local_destination:
-                    raise PathNotFound("Could not find path - guessing starting point gateways was exhausted")
+                    raise PathNotFound("Could not find path - guessing starting point gateways were exhausted")
                 local_destination_port_id = local_destination["port_id"]
 
             # find path inside local network
