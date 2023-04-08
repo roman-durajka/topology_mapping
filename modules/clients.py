@@ -1,4 +1,5 @@
 import mariadb
+from modules.exceptions import NotFoundError
 
 
 class MariaDBClient:
@@ -55,6 +56,10 @@ class MariaDBClient:
                 statement += f" {query[0]}=\'{query[1]}\'"
                 first = False
 
-        self.cursor.execute(statement)
+        try:
+            self.cursor.execute(statement)
+        except mariadb.Error as error:
+            raise NotFoundError("ERROR: Could not execute db statement. Are you sure you loaded all database"
+                                           f" data correctly? Detailed message: {error}")
 
         return self.__parse_cursor_data(table_name, *args)
