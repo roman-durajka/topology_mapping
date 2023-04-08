@@ -13,3 +13,5 @@ which supports **custom data model**, switch to branch _custom_db_.
 5. docker exec -i db_con mysql -uroot -ppassword -e "create database librenms;"
 6. docker exec -i db_con mysql -uroot -ppassword librenms < dumps/data_model_dump_librenms.sql
 7. open localhost:8000 in web browser
+
+This app uses tool called [NeXt](https://developer.cisco.com/site/neXt/) made by Cisco DevNet.
