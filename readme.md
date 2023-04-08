@@ -13,3 +13,5 @@ version of the app which supports data model produces by **libreNMS**, switch to
 5. docker exec -i db_con mysql -uroot -ppassword -e "create database relations;"
 6. docker exec -i db_con mysql -uroot -ppassword relations < dumps/data_model_dump_toad.sql
 7. open localhost:8000 in web browser
+
+This app uses tool called [NeXt](https://developer.cisco.com/site/neXt/) made by Cisco DevNet.
