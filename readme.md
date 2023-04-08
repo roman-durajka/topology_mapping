@@ -3,7 +3,7 @@ Bachelor's thesis: Creating a visualization of connections between network devic
 Bakalárska práca: Tvorba vizualizácie vzájomných väzieb medzi sieťovými zariadeniami a koncovými stanicami v sieti
 
 This branch contains version of the app which supports **custom data model** created specifically for this app. To use 
-version of the app which supports data model produces by **libreNMS**, switch to branch **master**. 
+version of the app which supports data model produces by **libreNMS**, switch to branch _master_. 
 
 ### Usage:
 1. git clone https://github.com/roman-durajka/topology_mapping
