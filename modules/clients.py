@@ -74,6 +74,6 @@ class MariaDBClient:
             self.cursor.execute(statement)
         except mariadb.Error as error:
             raise NotFoundError("ERROR: Could not execute db statement. Are you sure you loaded all database"
-                                           f" data correctly? Detailed message: {error}")
+                                f" data correctly? Detailed message: {error}")
 
         return self.__parse_cursor_data(table_name, *args)
