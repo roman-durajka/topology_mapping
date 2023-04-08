@@ -24,9 +24,16 @@ def get_path():
     :return: data in json format and status code
     """
     req_json = request.json
-    path_json = path.main(req_json)
+    result = {}
+    try:
+        path_json = path.main(req_json)
+        result.update(path_json)
+        result["code"] = 200
+    except Exception as error:
+        result["error"] = str(error)
+        result["code"] = 500
 
-    return jsonify(path_json), 200
+    return jsonify(result)
 
 
 @app.route('/topology', methods=['GET'])
@@ -35,9 +42,16 @@ def create_topology():
     Endpoint to create and return topology data to be drawn in js app.
     :return: data in json format and status code
     """
-    js_data = main.main()
+    result = {}
+    try:
+        js_data = main.main()
+        result["data"] = js_data
+        result["code"] = 200
+    except Exception as error:
+        result["error"] = str(error)
+        result["code"] = 500
 
-    return jsonify({"status": "success", "data": js_data}), 200
+    return jsonify(result)
 
 
 if __name__ == '__main__':

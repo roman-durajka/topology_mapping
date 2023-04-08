@@ -100,18 +100,22 @@ nx.define("ActionPanel", nx.ui.Component, {
             })
                 .then((response) => response.json())
                 .then((data) => {
-                    let ids = [];
-                    for (let i = 0; i < data["links"].length; i++) {
-                        let data_json = data["links"][i];
-                        topo.addLink(
-                            data_json
-                        );
-                        ids.push(data_json["id"]);
+                    if (data["code"] !== 200) {
+                        window.alert("ERROR: Could not create path.\n" + data["error"]);
+                    } else {
+                        let ids = [];
+                        for (let i = 0; i < data["links"].length; i++) {
+                            let data_json = data["links"][i];
+                            topo.addLink(
+                                data_json
+                            );
+                            ids.push(data_json["id"]);
+                        }
+                        if (data["links"].length >= 1) {
+                            addTableRecord(this.name(), inputData["color"], this.cost(), ids, topo, data["nodes"]);
+                        }
+                        addAssetValues(data["nodes"], this.cost(), topo);
                     }
-                    if (data["links"].length >= 1) {
-                        addTableRecord(this.name(), inputData["color"], this.cost(), ids, topo, data["nodes"]);
-                    }
-                    addAssetValues(data["nodes"], this.cost(), topo);
                 })
                 .catch((error) => {
                     window.alert("ERROR: Could not create path. For detailed report check console or system runtime logs.");
@@ -126,8 +130,12 @@ nx.define("ActionPanel", nx.ui.Component, {
             })
                 .then((response) => response.json())
                 .then((data) => {
-                    let topologyData = data["data"];
-                    topo.setData(topologyData);
+                    if (data["code"] !== 200) {
+                        window.alert("ERROR: Could not create topology.\n" + data["error"]);
+                    } else {
+                        let topologyData = data["data"];
+                        topo.setData(topologyData);
+                    }
                 })
                 .catch((error) => {
                     window.alert("ERROR: Could not create topology. For detailed report check console or system runtime logs.");
