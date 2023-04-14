@@ -81,8 +81,16 @@ nx.define("ActionPanel", nx.ui.Component, {
         "addPath": function (sender, events) {
             var topo = this.topology;
 
-            // get number of links so the indexing can continue
-            let startIndex = topo.getLayer("links").links().length;
+            // get highest index so the indexing can continue
+            let links = topo.getLayer("links").links();
+            let startIndex = 1;
+            let linkIndex = 0;
+            for (let dictIndex in links) {
+                linkIndex = links[dictIndex].id() + 1;
+                if (linkIndex > startIndex) {
+                    startIndex = linkIndex;
+                }
+            }
 
             let inputData = {
                 "source": this.sourceIpAddress(),
