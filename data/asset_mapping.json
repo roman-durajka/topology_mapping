@@ -1,0 +1,39 @@
+{
+  "server": {
+    "server": "d2023e65-44d1-11e9-a78c-0800277f0571"
+  },
+  "wireless": {
+    "network": "d2023e4b-44d1-11e9-a78c-0800277f0571",
+    "network and communication": "d2023ed7-44d1-11e9-a78c-0800277f0571",
+    "internet access device": "d2023f08-44d1-11e9-a78c-0800277f0571"
+  },
+  "network": {
+    "network": "d2023e4b-44d1-11e9-a78c-0800277f0571",
+    "network and communication": "d2023ed7-44d1-11e9-a78c-0800277f0571",
+    "internet access device": "d2023f08-44d1-11e9-a78c-0800277f0571"
+  },
+  "firewall": {
+    "network": "d2023e4b-44d1-11e9-a78c-0800277f0571",
+    "network and communication": "d2023ed7-44d1-11e9-a78c-0800277f0571",
+    "internet access device": "d2023f08-44d1-11e9-a78c-0800277f0571"
+  },
+  "storage": {
+    "backup": "d2023d98-44d1-11e9-a78c-0800277f0571",
+    "electronic medium": "d2023d57-44d1-11e9-a78c-0800277f0571"
+  },
+  "workstation": {
+    "fixed equipment": "d2023d19-44d1-11e9-a78c-0800277f0571"
+  },
+  "appliance": {
+    "transportable equipment": "d2023d29-44d1-11e9-a78c-0800277f0571"
+  },
+  "printer": {
+    "processing peripheral": "d2023d46-44d1-11e9-a78c-0800277f0571"
+  },
+  "power": {
+    "essential service": "d2023eef-44d1-11e9-a78c-0800277f0571"
+  },
+  "loadbalancer": {
+    "network": "d2023e4b-44d1-11e9-a78c-0800277f0571"
+  }
+}

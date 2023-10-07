@@ -7,12 +7,26 @@ nx.define('NodeTooltipExtension', nx.ui.Component, {
                 let data = value.model().getData();
                 let node_data = {};
                 let if_data = {};
+                let vulnerabilities_data = {};
+                let threats_data = {};
 
                 for (const [key, value] of Object.entries(data)) {
                     if (ILLEGAL_ATTRIBUTES.indexOf(key) === -1) {
                         if (key === "interfaces") {
                             for (const [if_key, if_value] of Object.entries(value)) {
                                 if_data[if_key] = if_value;
+                            }
+                        } else if (key === "vulnerabilities"){
+                            let i = 0;
+                            for (const vulnerability_value of value) {
+                                vulnerabilities_data[i] = vulnerability_value;
+                                i++;
+                            }
+                        } else if (key === "threats"){
+                            let i = 0;
+                            for (const threats_value of value) {
+                                threats_data[i] = threats_value;
+                                i++;
                             }
                         } else {
                             node_data[key] = value;
@@ -22,6 +36,8 @@ nx.define('NodeTooltipExtension', nx.ui.Component, {
 
                 this.view('list').set('items', new nx.data.Dictionary(node_data));
                 this.view('if-list').set('items', new nx.data.Dictionary(if_data));
+                this.view('vulnerabilities-list').set('items', new nx.data.Dictionary(vulnerabilities_data));
+                this.view('threats-list').set('items', new nx.data.Dictionary(threats_data));
                 this.title("Device description");
                 console.log(new nx.data.Dictionary(node_data));
             }
@@ -30,7 +46,7 @@ nx.define('NodeTooltipExtension', nx.ui.Component, {
         title: {}
     },
     view: {
-        props: {"style": "width: 450px;"},
+        props: {"style": "width: 450px; height: 300px; overflow-y: scroll;"},
         content: [
             {
                 name: 'header',
@@ -116,6 +132,79 @@ nx.define('NodeTooltipExtension', nx.ui.Component, {
                                         }
                                     }
                                 },
+                            ]
+                        }
+                    }, {
+                        name: "vulnerabilities",
+                        tag: 'ul',
+                        props: {
+                            'class': 'n-list-wrap',
+                            tag: 'li',
+                            content: [
+                                {
+                                    tag: 'label',
+                                    content: 'vulnerabilities'
+                                },
+                                {
+                                    name: 'vulnerabilities-list',
+                                    tag: 'ul',
+                                    props: {
+                                        'class': 'n-list-wrap',
+                                        template: {
+                                            tag: 'li',
+                                            props: {
+                                                'class': 'n-list-item-i li-indent',
+                                                role: 'listitem'
+                                            },
+                                            content: [
+                                                {
+                                                    tag: 'label',
+                                                    content: '  -'
+                                                },
+                                                {
+                                                    tag: 'span',
+                                                    content: '{value}'
+                                                }
+                                            ]
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }, {
+                        name: "threats",
+                        tag: 'ul',
+                        props: {
+                            'class': 'n-list-wrap',
+                            tag: 'li',
+                            content: [
+                                {
+                                    tag: 'label',
+                                    content: 'threats'
+                                }, {
+                                    name: 'threats-list',
+                                    tag: 'ul',
+                                    props: {
+                                        'class': 'n-list-wrap',
+                                        template: {
+                                            tag: 'li',
+                                            props: {
+                                                'class': 'n-list-item-i li-indent',
+                                                role: 'listitem'
+                                            },
+                                            content: [
+                                                {
+                                                    tag: 'label',
+                                                    content: '  -'
+                                                },
+                                                {
+                                                    tag: 'span',
+                                                    content: '{value}'
+                                                }
+                                            ]
+                                        }
+                                    }
+                                }
                             ]
                         }
                     }

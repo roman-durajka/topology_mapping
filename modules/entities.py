@@ -125,14 +125,17 @@ class RelationsContainer:
 class Device:
     """Class representing real device."""
 
-    def __init__(self, device_id, name, os, model, device_type, interfaces):
+    def __init__(self, device_id, name, os, model, device_type, interfaces, asset):
         self.device_id = device_id
         self.name = name
         self.os = os
         self.model = model
         self.device_type = device_type
+        self.asset = asset
 
         self.interfaces = interfaces
+        self.vulns = []
+        self.threats = []
 
     def asdict(self) -> dict:
         """
@@ -162,7 +165,8 @@ def load_entities(json: dict) -> typing.Tuple[list, RelationsContainer]:
             device_dict["os"],
             device_dict["model"],
             device_dict["device_type"],
-            device_dict["interfaces"]
+            device_dict["interfaces"],
+            device_dict["asset"]
         )
         devices.append(new_device)
 

@@ -1,6 +1,6 @@
 from extractors import MacExtractor, IPExtractor, DeviceExtractor, DPExtractor
 from modules.clients import MariaDBClient
-from modules import entities, topology_generator
+from modules import entities, topology_generator, asset_mapper
 import sys
 
 
@@ -8,6 +8,9 @@ def main():
     db_client = MariaDBClient()
     device_extractor = DeviceExtractor(db_client)
     devices = device_extractor.extract()
+
+    asset_map = asset_mapper.AssetMapper()
+    asset_map.map_risks_to_assets(devices)
 
     relations = entities.RelationsContainer()
     if len(sys.argv) > 1 and sys.argv[1] == "custom":  # uses custom algorithm if argument "custom" is specified

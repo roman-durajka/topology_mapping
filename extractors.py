@@ -355,7 +355,7 @@ class DeviceExtractor:
             device_type = self.__get_device_type(record["device_id"], record["os"])
             interfaces = self.__get_interfaces(record["device_id"])
 
-            device = Device(record["device_id"], record["sysName"], record["os"], record["hardware"], device_type, interfaces)
+            device = Device(record["device_id"], record["sysName"], record["os"], record["hardware"], device_type, interfaces, record["type"])
             devices.append(device)
 
         return devices

@@ -18,6 +18,7 @@ def generate_js_data_json(devices: list, relations: RelationsContainer) -> dict:
                          "type": device.device_type,
                          "os": device.os,
                          "model": device.model,
+                         "asset": device.asset,
                          "asset-value": 0,
                          "asset-values": [0]}
 
@@ -26,6 +27,12 @@ def generate_js_data_json(devices: list, relations: RelationsContainer) -> dict:
             interface_string = f"{value['status']}/{value['ip_address']}/{value['mac_address']}"
             interfaces.update({value["name"]: interface_string})
         device_to_add.update({"interfaces": interfaces})
+
+        if device.vulns:
+            device_to_add.update({"vulnerabilities": device.vulns})
+
+        if device.threats:
+            device_to_add.update({"threats": device.threats})
 
         output["nodes"].append(device_to_add)
 
