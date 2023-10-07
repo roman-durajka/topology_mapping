@@ -1,4 +1,4 @@
-FROM python:3.6-alpine
+FROM python:3.10-alpine
 
 COPY config/nginx.conf /etc/nginx/conf.d/default.conf
 
