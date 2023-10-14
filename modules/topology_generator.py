@@ -28,8 +28,8 @@ def generate_js_data_json(devices: list, relations: RelationsContainer) -> dict:
             interfaces.update({value["name"]: interface_string})
         device_to_add.update({"interfaces": interfaces})
 
-        if device.vulns:
-            device_to_add.update({"vulnerabilities": device.vulns})
+        if device.vulnerabilities:
+            device_to_add.update({"vulnerabilities": device.vulnerabilities})
 
         if device.threats:
             device_to_add.update({"threats": device.threats})

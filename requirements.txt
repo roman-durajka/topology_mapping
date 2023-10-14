@@ -2,3 +2,6 @@ flask
 flask-cors
 mariadb
 pymosp
+bs4
+requests
+lxml

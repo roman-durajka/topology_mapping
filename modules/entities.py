@@ -134,7 +134,7 @@ class Device:
         self.asset = asset
 
         self.interfaces = interfaces
-        self.vulns = []
+        self.vulnerabilities = []
         self.threats = []
 
     def asdict(self) -> dict:
