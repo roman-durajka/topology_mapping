@@ -10,7 +10,7 @@ def main():
     devices = device_extractor.extract()
 
     asset_map = asset_mapper.AssetMapper()
-    asset_map.map_risks_to_assets(devices)
+    asset_map.assign_risks_to_devices(devices)
 
     relations = entities.RelationsContainer()
     if len(sys.argv) > 1 and sys.argv[1] == "custom":  # uses custom algorithm if argument "custom" is specified
