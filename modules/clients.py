@@ -1,12 +1,14 @@
 import mariadb
+import json
+
 from modules.exceptions import NotFoundError
 
 
 class MariaDBClient:
     """Client to establish connection with MariaDB database and offer basic statement actions."""
-    def __init__(self):
+    def __init__(self, database):
         self.connection = mariadb.connect(
-            database="librenms",
+            database=database,
             user="root",
             password="password",
             host="db_con"
@@ -42,7 +44,7 @@ class MariaDBClient:
         """
         Parses and returns data from database based on table name, column names and queries.
         :param table_name: name of table
-        :param queries: list of tuples to query only specific data, fe. [("color", "red)] -> color has to be red
+        :param queries: list of tuples to query only specific data, fe. [("color", "red")] -> color has to be red
         :param args: optional args to specify which columns data to return
         :return:
         """
@@ -63,3 +65,19 @@ class MariaDBClient:
                                 f" data correctly? Detailed message: {error}")
 
         return self.__parse_cursor_data(table_name, *args)
+
+    def insert_data(self, data: list, table_name: str):
+        for record in data:
+            for key, value in record.items():
+                if isinstance(value, dict):
+                    record[key] = json.dumps(value)
+
+            columns = list(record.keys())
+            values = list(record.values())
+
+            placeholders = ', '.join(['%s'] * len(columns))
+            columns = ', '.join(columns)
+
+            query = f"REPLACE INTO {table_name} ({columns}) VALUES ({placeholders});"
+            self.cursor.execute(query, values)
+            self.connection.commit()
