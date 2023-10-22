@@ -29,8 +29,8 @@ class AssetMapper:
         for device in devices:
             for m_asset_type, m_uuid in self.asset_mapping_json[device.asset].items():
                 for risk_uuid, values in mapped_risks[m_uuid]["risks"].items():
-                    device.vulnerabilities.extend(values["threat"])
-                    device.vulnerabilities.extend(values["vulnerability"])
+                    device.vulnerabilities.append(values["threat"])
+                    device.vulnerabilities.append(values["vulnerability"])
 
     def __map_risks_to_assets(self, asset_uuids: list):
         mapped_risks = {}  # {asset_uuid: {risks: {threat: ..., vulnerability: ...}}}
