@@ -1,4 +1,5 @@
 import requests
+import re
 
 
 class DataLoader:
@@ -39,8 +40,34 @@ class DataLoader:
                 risk["measures"] = ",".join(risk["measures"])
         self.db_connection.insert_data(risk_objects, "risks")
 
+    def load_measures(self):
+        measure_objects = self.__load_mosp_api_data({"schema": "Security referentials", "name": "ISO/IEC 27002 [2013]"},
+                                                    {"X-Fields": "data{name, json_object}"})["data"]
+        measure_objects = measure_objects[0]["json_object"]["values"]
+        self.db_connection.insert_data(measure_objects, "measures_iso_27002")
+
+    def load_measures_to_risks_mapping(self):
+        mapped_items = []
+
+        raw_text = self.__load_raw_data("https://raw.githubusercontent.com/monarc-project/MonarcAppFO/master/db-bootstrap/monarc_data.sql",
+                                        r"measures_amvs`\s+VALUES\s+([^;]+)\);")
+        raw_text_parts = re.split(r'\),\(', raw_text)
+        for raw_text_part in raw_text_parts:
+            values = raw_text_part.split(",")
+            measure_id = values[1].replace("'", "")
+            risk_id = values[-1].replace("'", "")
+            mapped_items.append({"measure_id": measure_id, "risk_id": risk_id})
+
+        self.db_connection.insert_data(mapped_items, "measures_risks_map")
+
     def __load_mosp_api_data(self, params, headers):
         params.update({"per_page": 5000})
         objects = requests.get("https://objects.monarc.lu/api/v2/object", params, headers=headers).json()
 
         return objects
+
+    def __load_raw_data(self, url: str, regexp_str: str):
+        raw_data = requests.get(url).text
+        raw_text = re.search(regexp_str, raw_data).group(1)
+
+        return raw_text

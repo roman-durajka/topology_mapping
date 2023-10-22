@@ -12,9 +12,11 @@ def main():
     risk_mgmt_db_client = MariaDBClient("risk_management")
 
     # TODO: integrate into UI when it's done
-    # data_load = DataLoader(risk_mgmt_db_client)
-    # data_load.load_assets()
-    # data_load.load_risks()
+    #data_load = DataLoader(risk_mgmt_db_client)
+    #data_load.load_assets()
+    #data_load.load_risks()
+    #data_load.load_measures()
+    #data_load.load_measures_to_risks_mapping()
 
     asset_map = asset_mapper.AssetMapper(risk_mgmt_db_client)
     asset_map.assign_risks_to_devices(devices)
