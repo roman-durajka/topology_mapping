@@ -18,8 +18,8 @@ def main():
     #data_load.load_measures()
     #data_load.load_measures_to_risks_mapping()
 
-    asset_map = asset_mapper.AssetMapper(risk_mgmt_db_client)
-    asset_map.assign_risks_to_devices(devices)
+    #asset_map = asset_mapper.AssetMapper(risk_mgmt_db_client)
+    #asset_map.assign_risks_to_devices(devices)
 
     relations = entities.RelationsContainer()
     if len(sys.argv) > 1 and sys.argv[1] == "custom":  # uses custom algorithm if argument "custom" is specified
@@ -34,7 +34,7 @@ def main():
 
     js_data_json = topology_generator.generate_js_data_json(devices, relations)
     path_data_json = topology_generator.generate_topology_data_json(devices, relations)
-    # topology_generator.create_js_data_file(js_data_json, "./src/data.js")  # write js topology data to file
+    # topology_generator.create_js_data_file(js_data_json, "./src/data.next_ui")  # write next_ui topology data to file
     topology_generator.create_json_file(path_data_json, "./data/topology_data.json")
 
     return js_data_json

@@ -333,7 +333,7 @@ class Path:
 
 def main(req_json):
     """Function to find path fired from one of API endpoints."""
-    db_client = MariaDBClient()
+    db_client = MariaDBClient("librenms")
 
     file_to_read = open("data/topology_data.json", "r")
     file_data = file_to_read.read()

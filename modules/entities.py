@@ -148,6 +148,7 @@ class Device:
             "os": self.os,
             "model": self.model,
             "device_type": self.device_type,
+            "asset": self.asset,
             "interfaces": [{keyitem[0]: keyitem[1]} for keyitem in self.interfaces.items()]
         }
 

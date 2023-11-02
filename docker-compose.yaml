@@ -37,6 +37,17 @@ services:
          - ./dumps:/docker-entrypoint-initdb.d
         networks:
          - inside_net
+    react:
+        container_name: react_con
+        build:
+          context: ./nextjs
+          dockerfile: Dockerfile
+        ports:
+          - "3000:3000"
+        networks:
+          - inside_net
+        volumes:
+          - ./src:/usr/share/nginx/html
 
 networks:
   inside_net:
