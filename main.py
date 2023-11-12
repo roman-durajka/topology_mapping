@@ -18,9 +18,6 @@ def main():
     #data_load.load_measures()
     #data_load.load_measures_to_risks_mapping()
 
-    #asset_map = asset_mapper.AssetMapper(risk_mgmt_db_client)
-    #asset_map.assign_risks_to_devices(devices)
-
     relations = entities.RelationsContainer()
     if len(sys.argv) > 1 and sys.argv[1] == "custom":  # uses custom algorithm if argument "custom" is specified
         mac_extractor = MacExtractor(topology_db_client, relations)

@@ -2,6 +2,7 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 import path
 import main
+from modules import asset_mapper
 
 
 app = Flask(__name__)
@@ -50,6 +51,24 @@ def create_topology():
     except Exception as error:
         result["error"] = str(error)
         result["code"] = 500
+
+    return jsonify(result)
+
+
+@app.route('/assets', methods=['GET'])
+def get_mapped_assets():
+    """
+    Endpoint to create and return assets along with risks/vulnerabilities/threats.
+    :return: data in json format and status code
+    """
+    result = {}
+    try:
+        mapped_assets = asset_mapper.get_mapped_assets()
+        result.update(mapped_assets)
+        #result["code"] = 200
+    except Exception as error:
+        result["error"] = str(error)
+        #result["code"] = 500
 
     return jsonify(result)
 
