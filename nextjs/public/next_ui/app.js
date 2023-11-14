@@ -53,6 +53,7 @@
     actionPanel.attach(app);
 
     createTopology(topology);
+    setTimeout(() => loadPaths(topology), 1000);
 })(nx);
 
 
@@ -71,6 +72,46 @@ function createTopology(topo) {
         })
         .catch((error) => {
             window.alert("ERROR: Could not create topology. For detailed report check console or system runtime logs.");
+            console.error("ERROR:", error);
+        });
+}
+
+
+function loadPaths(topo) {
+    fetch("http://localhost:5000/load-paths", {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+        },
+    })
+        .then((response) => response.json())
+        .then((data) => {
+            if (data["code"] !== 200) {
+                window.alert("ERROR: Could not load paths.\n" + data["error"]);
+            } else {
+                let paths_data = data["data"]
+
+                for (let i = 0; i < paths_data.length; i++) {
+                    let single_path_data = paths_data[i];
+
+                    let ids = [];
+                    for (let i = 0; i < single_path_data["links"].length; i++) {
+                        let link_data_json = single_path_data["links"][i];
+                        topo.addLink(
+                            link_data_json
+                        );
+                        ids.push(link_data_json["id"]);
+                    }
+
+                    if (single_path_data["links"].length >= 1) {
+                        addTableRecord(single_path_data["name"], single_path_data["links"][0]["color"], single_path_data["asset_value"], ids, topo, single_path_data["nodes"]);
+                    }
+                    addAssetValues(single_path_data["nodes"], single_path_data["asset_value"], topo);
+                }
+            }
+        })
+        .catch((error) => {
+            window.alert("ERROR: Could not load paths. For detailed report check console or system runtime logs.");
             console.error("ERROR:", error);
         });
 }

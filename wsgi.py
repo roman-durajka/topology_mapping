@@ -18,8 +18,8 @@ def signal():
     return "It's working!"
 
 
-@app.route('/path', methods=['POST'])
-def get_path():
+@app.route('/add-path', methods=['POST'])
+def add_path():
     """
     Endpoint to create and return path based on POST data.
     :return: data in json format and status code
@@ -27,8 +27,44 @@ def get_path():
     req_json = request.json
     result = {}
     try:
-        path_json = path.main(req_json)
+        path_json = path.add_path(req_json)
         result.update(path_json)
+        result["code"] = 200
+    except Exception as error:
+        result["error"] = str(error)
+        result["code"] = 500
+
+    return jsonify(result)
+
+
+@app.route('/remove-path', methods=['POST'])
+def remove_path():
+    """
+    Endpoint to remove path from database.
+    :return: data in json format and status code
+    """
+    req_json = request.json
+    result = {}
+    try:
+        path.remove_path(req_json)
+        result["code"] = 200
+    except Exception as error:
+        result["error"] = str(error)
+        result["code"] = 500
+
+    return jsonify(result)
+
+
+@app.route('/load-paths', methods=['GET'])
+def load_saved_paths():
+    """
+    Endpoint to load and return all saved paths.
+    :return: data in json format and status code
+    """
+    result = {}
+    try:
+        paths = path.load_paths()
+        result.update({"data": paths})
         result["code"] = 200
     except Exception as error:
         result["error"] = str(error)

@@ -80,10 +80,12 @@ nx.define("ActionPanel", nx.ui.Component, {
                 "source": this.sourceIpAddress(),
                 "target": this.targetIpAddress(),
                 "color": getColor(),
-                "startingIndex": startIndex
+                "startingIndex": startIndex,
+                "assetValue": this.cost(),
+                "name": this.name()
             };
 
-            fetch("http://localhost:5000/path", {
+            fetch("http://localhost:5000/add-path", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -145,6 +147,27 @@ function removeAssetValues(devices, cost, topo) {
 }
 
 
+function removePath(path_id) {
+    fetch("http://localhost:5000/remove-path", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({"path_id": path_id}),
+    })
+        .then((response) => response.json())
+        .then((data) => {
+            if (data["code"] !== 200) {
+                window.alert("ERROR occurred:.\n" + data["error"]);
+            }
+        })
+        .catch((error) => {
+            window.alert("ERROR occurred. For detailed report check console or system runtime logs.");
+            console.error("ERROR:", error);
+        });
+}
+
+
 function updateDeviceAssetValue(node) {
     let assetValues = node.model().get("asset-values");
     let maxValue = Math.max(...assetValues);
@@ -186,6 +209,7 @@ function addTableRecord(name, color, cost, ids, topo, devices) {
         for (let i = 0; i < ids.length; i++) {
             topo.removeLink(ids[i]);
         }
+        removePath(Math.min(...ids));
         tbody.removeChild(tr1);
     };
     td3.appendChild(a);

@@ -81,3 +81,17 @@ class MariaDBClient:
             query = f"REPLACE INTO {table_name} ({columns}) VALUES ({placeholders});"
             self.cursor.execute(query, values)
             self.connection.commit()
+
+    def remove_data(self, conditions: list[tuple], table_name: str):
+        """Removes data from database. Conditions should look like this: [("a", 5), ("b", 6)]"""
+        query = f"DELETE FROM {table_name} WHERE"
+        values = []
+        first_condition = True
+        for condition in conditions:
+            if not first_condition:
+                query += " AND"
+            query += f" {condition[0]} = %s"
+            values.append(condition[1])
+            first_condition = False
+        self.cursor.execute(query, values)
+        self.connection.commit()

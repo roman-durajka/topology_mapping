@@ -331,8 +331,8 @@ class Path:
         return path
 
 
-def main(req_json):
-    """Function to find path fired from one of API endpoints."""
+def add_path(req_json):
+    """Function to find path fired from one of API endpoints. Also saves path to db."""
     librenms_db_client = MariaDBClient("librenms")
     topology_db_client = MariaDBClient("topology")
 
@@ -342,10 +342,41 @@ def main(req_json):
     destination = req_json["target"]
     color = req_json["color"]
     starting_index = req_json["startingIndex"]
+    asset_value = req_json["assetValue"]
+    path_name = req_json["name"]
 
     path_obj = Path(librenms_db_client, devices, relations_container)
     path = path_obj.get_path(source, destination)
 
+    topology_generator.save_path_to_db(path, starting_index, color, asset_value, path_name, topology_db_client)
     path_json = topology_generator.generate_js_path_data_json(path, color, starting_index)
 
     return path_json
+
+
+def load_paths():
+    """Function to load all saved paths."""
+    librenms_db_client = MariaDBClient("librenms")
+    topology_db_client = MariaDBClient("topology")
+
+    loaded_paths = []
+
+    paths_data = topology_generator.load_paths_from_db(topology_db_client, librenms_db_client)
+    for path_dict in paths_data:
+        starting_index = path_dict["starting_index"]
+        color = path_dict["color"]
+        path_container = path_dict["path"]
+        asset_value = path_dict["asset_value"]
+        path_name = path_dict["name"]
+
+        path_json = topology_generator.generate_js_path_data_json(path_container, color, starting_index)
+        path_json.update({"asset_value": asset_value, "name": path_name})
+        loaded_paths.append(path_json)
+
+    return loaded_paths
+
+
+def remove_path(req_json):
+    """Function to remove path from database."""
+    librenms_db_client = MariaDBClient("topology")
+    librenms_db_client.remove_data([("path_id", req_json["path_id"])], "paths")

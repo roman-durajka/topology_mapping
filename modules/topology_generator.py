@@ -1,4 +1,4 @@
-from modules.entities import RelationsContainer
+from modules.entities import RelationsContainer, Interface, Relation
 import json
 
 
@@ -10,8 +10,7 @@ def save_topology_to_db(devices: list, relations: RelationsContainer, db_client)
                              "asset": device.asset,
                              "asset_value": 0,
                              "asset_values": [0]})
-    db_client.insert_data(devices_data,
-                         "nodes")
+    db_client.insert_data(devices_data, "nodes")
 
     relations_data = []
     for index, relation in enumerate(relations):
@@ -44,9 +43,7 @@ def load_topology_from_db(topology_db_client, librenms_db_client) -> dict:
         for interface_data in librenms_db_client.get_data("ports", [("device_id", node["id"])]):
             status = interface_data["ifOperStatus"]
             mac_address = interface_data["ifPhysAddress"]
-            if not mac_address:
-                continue
-            ip_address = "null"
+            ip_address = None
             ip_address_record = librenms_db_client.get_data("ipv4_addresses", [("port_id", interface_data["port_id"])])
             if ip_address_record:
                 ip_address = ip_address_record[0]["ipv4_address"]
@@ -74,6 +71,91 @@ def load_topology_from_db(topology_db_client, librenms_db_client) -> dict:
         output["links"].append(relation_to_add)
 
     return output
+
+
+def save_path_to_db(path: RelationsContainer, starting_index: int, color: str, asset_value: int, path_name: str, topology_db_client):
+    path_relations = []
+
+    for relation in path:
+        relation_record = topology_db_client.get_data("relations", [("source_if", relation.interface1.port_id), ("target_if", relation.interface2.port_id)])[0]
+        relation_id = relation_record["id"]
+
+        relation_to_add = {"path_id": starting_index,
+                           "relation_id": relation_id,
+                           "color": color,
+                           "asset_value": asset_value,
+                           "name": path_name}
+
+        path_relations.append(relation_to_add)
+
+    topology_db_client.insert_data(path_relations, "paths")
+
+
+def load_paths_from_db(topology_db_client, librenms_db_client) -> list:
+    paths_records = topology_db_client.get_data("paths")
+
+    path_ids = []
+    for path_record in paths_records:
+        if path_record["path_id"] not in path_ids:
+            path_ids.append(path_record["path_id"])
+
+    # {path: RelationsContainer, starting_index: ..., color: ...}
+    paths = []
+
+    for path_id in path_ids:
+        path_container = RelationsContainer()
+        color = ""
+        asset_value = 0
+        path_name = ""
+        for path_record in paths_records:
+            if path_record["path_id"] == path_id:
+                relation_record = topology_db_client.get_data("relations", [("id", path_record["relation_id"])])[0]
+
+                if not color:
+                    color = path_record["color"]
+
+                if asset_value == 0:
+                    asset_value = path_record["asset_value"]
+
+                if not path_name:
+                    path_name = path_record["name"]
+
+                # get all necessary source interface data
+                source_if_id = relation_record["source_if"]
+                source_interface_data = librenms_db_client.get_data("ports", [("port_id", source_if_id)])[0]
+                source_interface_name = source_interface_data["ifName"]
+                source_device_id = relation_record["source"]
+                source_ip_address = None
+                source_ip_address_record = librenms_db_client.get_data("ipv4_addresses",
+                                                                [("port_id", source_interface_data["port_id"])])
+                if source_ip_address_record:
+                    source_ip_address = source_ip_address_record[0]["ipv4_address"]
+                source_mac_address = source_interface_data["ifPhysAddress"]
+                source_trunk = True if source_interface_data["ifTrunk"] else False
+
+                source_interface = Interface(source_interface_name, source_device_id, source_if_id, source_ip_address, source_mac_address, source_trunk)
+
+                # get all necessary target interface data
+                target_if_id = relation_record["target_if"]
+                target_interface_data = librenms_db_client.get_data("ports", [("port_id", target_if_id)])[0]
+                target_interface_name = target_interface_data["ifName"]
+                target_device_id = relation_record["target"]
+                target_ip_address = None
+                target_ip_address_record = librenms_db_client.get_data("ipv4_addresses",
+                                                                       [("port_id", target_interface_data["port_id"])])
+                if target_ip_address_record:
+                    target_ip_address = target_ip_address_record[0]["ipv4_address"]
+                target_mac_address = target_interface_data["ifPhysAddress"]
+                target_trunk = True if target_interface_data["ifTrunk"] else False
+
+                target_interface = Interface(target_interface_name, target_device_id, target_if_id, target_ip_address,
+                                      target_mac_address, target_trunk)
+
+                relation = Relation(source_interface, target_interface)
+                path_container.add(relation)
+
+        paths.append({"path": path_container, "starting_index": path_id, "color": color, "asset_value": asset_value, "name": path_name})
+    return paths
 
 
 def generate_js_data_json(devices: list, relations: RelationsContainer) -> dict:
