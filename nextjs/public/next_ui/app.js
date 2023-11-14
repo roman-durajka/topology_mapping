@@ -51,7 +51,29 @@
     let actionPanel = new ActionPanel();
     actionPanel.topology = topology;
     actionPanel.attach(app);
+
+    createTopology(topology);
 })(nx);
+
+
+function createTopology(topo) {
+    fetch("http://localhost:5000/topology", {
+        method: "GET"
+    })
+        .then((response) => response.json())
+        .then((data) => {
+            if (data["code"] !== 200) {
+                window.alert("ERROR: Could not create topology.\n" + data["error"]);
+            } else {
+                let topologyData = data["data"];
+                topo.setData(topologyData);
+            }
+        })
+        .catch((error) => {
+            window.alert("ERROR: Could not create topology. For detailed report check console or system runtime logs.");
+            console.error("ERROR:", error);
+        });
+}
 
 
 function buildTable() {

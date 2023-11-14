@@ -17,16 +17,6 @@ nx.define("ActionPanel", nx.ui.Component, {
                 "content": [
                     {
                         "tag": "button",
-                        "content": " Draw topology ",
-                        "events": {
-                            "click": "{#createTopology}"
-                        },
-                        "props": {
-                            "class": "t-button"
-                        }
-                    },
-                    {
-                        "tag": "button",
                         "content": " Draw path ",
                         "events": {
                             "click": "{#addPath}"
@@ -121,26 +111,6 @@ nx.define("ActionPanel", nx.ui.Component, {
                 })
                 .catch((error) => {
                     window.alert("ERROR: Could not create path. For detailed report check console or system runtime logs.");
-                    console.error("ERROR:", error);
-                });
-        },
-        "createTopology": function (sender, events) {
-            let topo = this.topology;
-
-            fetch("http://localhost:5000/topology", {
-                method: "GET"
-            })
-                .then((response) => response.json())
-                .then((data) => {
-                    if (data["code"] !== 200) {
-                        window.alert("ERROR: Could not create topology.\n" + data["error"]);
-                    } else {
-                        let topologyData = data["data"];
-                        topo.setData(topologyData);
-                    }
-                })
-                .catch((error) => {
-                    window.alert("ERROR: Could not create topology. For detailed report check console or system runtime logs.");
                     console.error("ERROR:", error);
                 });
         }
