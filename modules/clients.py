@@ -69,7 +69,7 @@ class MariaDBClient:
     def insert_data(self, data: list, table_name: str):
         for record in data:
             for key, value in record.items():
-                if isinstance(value, dict):
+                if isinstance(value, dict) or isinstance(value, list):
                     record[key] = json.dumps(value)
 
             columns = list(record.keys())

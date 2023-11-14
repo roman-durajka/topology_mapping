@@ -5,11 +5,15 @@ import sys
 
 
 def main():
-    topology_db_client = MariaDBClient("librenms")
-    device_extractor = DeviceExtractor(topology_db_client)
-    devices = device_extractor.extract()
+    topology_db_client = MariaDBClient("topology")
+    librenms_db_client = MariaDBClient("librenms")
+    if topology_db_client.get_data("nodes"):
+        js_data_json = topology_generator.load_topology_from_db(topology_db_client, librenms_db_client)
 
-    risk_mgmt_db_client = MariaDBClient("risk_management")
+        return js_data_json
+
+    device_extractor = DeviceExtractor(librenms_db_client)
+    devices = device_extractor.extract()
 
     # TODO: integrate into UI when it's done
     #data_load = DataLoader(risk_mgmt_db_client)
@@ -20,15 +24,16 @@ def main():
 
     relations = entities.RelationsContainer()
     if len(sys.argv) > 1 and sys.argv[1] == "custom":  # uses custom algorithm if argument "custom" is specified
-        mac_extractor = MacExtractor(topology_db_client, relations)
+        mac_extractor = MacExtractor(librenms_db_client, relations)
         mac_relations = mac_extractor.extract()
 
-        ip_extractor = IPExtractor(topology_db_client, mac_relations)
+        ip_extractor = IPExtractor(librenms_db_client, mac_relations)
         relations = ip_extractor.extract()
     else:  # uses discovery protocols algorithm if nothing else is specified
-        dp_extractor = DPExtractor(topology_db_client, relations)
+        dp_extractor = DPExtractor(librenms_db_client, relations)
         relations = dp_extractor.extract()
 
+    topology_generator.save_topology_to_db(devices, relations, topology_db_client)
     js_data_json = topology_generator.generate_js_data_json(devices, relations)
     path_data_json = topology_generator.generate_topology_data_json(devices, relations)
     # topology_generator.create_js_data_file(js_data_json, "./src/data.next_ui")  # write next_ui topology data to file
