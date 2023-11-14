@@ -35,9 +35,9 @@ def main():
 
     topology_generator.save_topology_to_db(devices, relations, topology_db_client)
     js_data_json = topology_generator.generate_js_data_json(devices, relations)
-    path_data_json = topology_generator.generate_topology_data_json(devices, relations)
+    #path_data_json = topology_generator.generate_topology_data_json(devices, relations)  # write topology to file for path module to read
+    #topology_generator.create_json_file(path_data_json, "./data/topology_data.json")
     # topology_generator.create_js_data_file(js_data_json, "./src/data.next_ui")  # write next_ui topology data to file
-    topology_generator.create_json_file(path_data_json, "./data/topology_data.json")
 
     return js_data_json
 

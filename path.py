@@ -1,5 +1,5 @@
 from modules import topology_generator
-from modules.entities import RelationsContainer, load_entities
+from modules.entities import RelationsContainer, load_entities_from_db
 from modules.clients import MariaDBClient
 from modules.exceptions import NotFoundError, MultipleOccurrences, PathNotFound
 
@@ -333,20 +333,17 @@ class Path:
 
 def main(req_json):
     """Function to find path fired from one of API endpoints."""
-    db_client = MariaDBClient("librenms")
+    librenms_db_client = MariaDBClient("librenms")
+    topology_db_client = MariaDBClient("topology")
 
-    file_to_read = open("data/topology_data.json", "r")
-    file_data = file_to_read.read()
-    file_to_read.close()
-    json_data = json.loads(file_data)
-    devices, relations_container = load_entities(json_data)
+    devices, relations_container = load_entities_from_db(topology_db_client, librenms_db_client)
 
     source = req_json["source"]
     destination = req_json["target"]
     color = req_json["color"]
     starting_index = req_json["startingIndex"]
 
-    path_obj = Path(db_client, devices, relations_container)
+    path_obj = Path(librenms_db_client, devices, relations_container)
     path = path_obj.get_path(source, destination)
 
     path_json = topology_generator.generate_js_path_data_json(path, color, starting_index)

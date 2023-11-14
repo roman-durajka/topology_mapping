@@ -153,46 +153,78 @@ class Device:
         }
 
 
-def load_entities(json: dict) -> typing.Tuple[list, RelationsContainer]:
+def load_entities_from_db(topology_db_client, librenms_db_client) -> typing.Tuple[list, RelationsContainer]:
     """
     Loads data from json into appropriate objects.
     """
     devices = []
 
-    for device_dict in json["devices"]:
+    nodes = topology_db_client.get_data("nodes")
+
+    for node in nodes:
+        device_data = librenms_db_client.get_data("devices", [("device_id", node["id"])])[0]
+        interfaces = []
+        interfaces_data = librenms_db_client.get_data("ports", [("device_id", node["id"])])
+        for interface in interfaces_data:
+            interface_ip_record = librenms_db_client.get_data("ipv4_addresses", [("port_id", interface["port_id"])])
+            interface_ip = None if not interface_ip_record else interface_ip_record[0]["ipv4_address"]
+            interface_dict = {
+                interface["port_id"]: {
+                    "ip_address": interface_ip,
+                    "mac_address": interface["ifPhysAddress"],
+                    "name": interface["ifName"],
+                    "status": interface["ifOperStatus"]
+                }
+            }
+            interfaces.append(interface_dict)
+
         new_device = Device(
-            device_dict["device_id"],
-            device_dict["name"],
-            device_dict["os"],
-            device_dict["model"],
-            device_dict["device_type"],
-            device_dict["interfaces"],
-            device_dict["asset"]
+            node["id"],
+            device_data["sysName"],
+            device_data["os"],
+            device_data["hardware"],
+            node["type"],
+            interfaces,
+            node["asset"]
         )
         devices.append(new_device)
 
     relations_container = RelationsContainer()
+    relations = topology_db_client.get_data("relations")
 
-    for relation_dict in json["relations"]:
-        if1_dict = relation_dict["interface1"]
-        if2_dict = relation_dict["interface2"]
+    for relation in relations:
+        source_if_id = relation["source_if"]
+
+        source_if_data = librenms_db_client.get_data("ports", [("port_id", source_if_id)])[0]
+        source_if_ip_record = librenms_db_client.get_data("ipv4_addresses", [("port_id", source_if_id)])
+        source_if_ip = None if not source_if_ip_record else source_if_ip_record[0]["ipv4_address"]
+
+        source_trunk = True if source_if_data["ifTrunk"] else False
 
         if1 = Interface(
-            if1_dict["interface_name"],
-            if1_dict["device_id"],
-            if1_dict["port_id"],
-            if1_dict["ip_address"],
-            if1_dict["mac_address"],
-            if1_dict["trunk"]
+            source_if_data["ifName"],
+            relation["source"],
+            source_if_id,
+            source_if_ip,
+            source_if_data["ifPhysAddress"],
+            source_trunk
         )
 
+        target_if_id = relation["target_if"]
+
+        target_if_data = librenms_db_client.get_data("ports", [("port_id", target_if_id)])[0]
+        target_if_ip_record = librenms_db_client.get_data("ipv4_addresses", [("port_id", target_if_id)])
+        target_if_ip = None if not target_if_ip_record else target_if_ip_record[0]["ipv4_address"]
+
+        target_trunk = True if target_if_data["ifTrunk"] else False
+
         if2 = Interface(
-            if2_dict["interface_name"],
-            if2_dict["device_id"],
-            if2_dict["port_id"],
-            if2_dict["ip_address"],
-            if2_dict["mac_address"],
-            if2_dict["trunk"]
+            target_if_data["ifName"],
+            relation["target"],
+            target_if_id,
+            target_if_ip,
+            target_if_data["ifPhysAddress"],
+            target_trunk
         )
 
         if_relation = Relation(if1, if2)
