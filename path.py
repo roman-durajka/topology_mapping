@@ -3,8 +3,6 @@ from modules.entities import RelationsContainer, load_entities_from_db
 from modules.clients import MariaDBClient
 from modules.exceptions import NotFoundError, MultipleOccurrences, PathNotFound
 
-import json
-
 
 class Path:
     """Class for finding path from source to destination"""

@@ -44,7 +44,7 @@
 }
 
 .left-border.expanded {
-    width: 300px;
+    width: 200px;
 }
 
 .content {
@@ -67,13 +67,14 @@
 }
 
 .middle-container {
-    background: white;
     flex: 1;
     display: flex;
     margin: 0;
     padding: 0;
     position: relative;
     z-index: 2;
+
+    background-color: white;
 }
 
 .top-bottom-container {
@@ -113,22 +114,22 @@
 }
 
 .left-border-buttons {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
 }
 
 .left-border-buttons button {
-  background: darkcyan;
-  color: white;
-  border: none;
-  padding: 5px 20px;
-  text-align: left;
-  cursor: pointer;
-  transition: background-color 0.3s, box-shadow 0.3s;
-  display: flex;
-  justify-content: flex-start;
-  align-items: center;
+    background: darkcyan;
+    color: white;
+    border: none;
+    padding: 5px 20px;
+    text-align: left;
+    cursor: pointer;
+    transition: background-color 0.3s, box-shadow 0.3s;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
 }
 
 .left-border-buttons button:active {
@@ -137,68 +138,68 @@
 }
 
 .spinner-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 100vw;
-  height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100vw;
+    height: 100vh;
 }
 
 .spinner {
-  width: 50px;
-  height: 50px;
+    width: 50px;
+    height: 50px;
 }
 
 .asset-list {
-  width: 100vw;
+    width: 100vw;
 }
 
 .asset-table {
-  padding: 10px;
-  background-color: #f7f7f7;
+    padding: 10px;
+    background-color: #f7f7f7;
 }
 
 .asset-row {
-  display: flex;
-  align-items: center;
-  border: 1px solid #eee;
-  padding: 6px;
-  background-color: #fff;
+    display: flex;
+    align-items: center;
+    border: 1px solid #eee;
+    padding: 6px;
+    background-color: #fff;
 }
 
 .device-id {
-  flex: 1;
-  font-weight: bold;
-  padding: 5px;
-  text-align: center;
+    flex: 1;
+    font-weight: bold;
+    padding: 5px;
+    text-align: center;
 }
 
 .device-name {
-  flex: 1;
-  padding: 5px;
-  text-align: center;
+    flex: 1;
+    padding: 5px;
+    text-align: center;
 }
 
 .vulnerability,
 .threat {
-  padding: 5px;
+    padding: 5px;
     flex: 5;
-  font-weight: bold;
-  text-align: center;
+    font-weight: bold;
+    text-align: center;
 }
 
 .asset-details {
     flex: 1;
-  padding: 5px;
-  text-align: center;
+    padding: 5px;
+    text-align: center;
 }
 
 .asset-header {
     display: flex;
-  align-items: center;
-  background-color: #333;
-  color: #fff;
-  font-weight: bold;
+    align-items: center;
+    background-color: #333;
+    color: #fff;
+    font-weight: bold;
 }
 
 .device-id-header,
@@ -206,7 +207,7 @@
 .vulnerability-header,
 .threat-header,
 .asset-details-header {
-  text-align: center;
+    text-align: center;
     border: 2px solid #ccc;
 }
 
@@ -223,7 +224,122 @@
 
 
 .asset-details span {
-  font-size: 20px;
-  color: black;
-  cursor: pointer;
+    font-size: 20px;
+    color: black;
+    cursor: pointer;
+}
+
+.application-groups {
+    display: flex;
+    flex-direction: column;
+    width: 100vw;
+    padding: 50px;
+}
+
+.application-group-box {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 6px;
+    background-color: lightblue;
+    margin: 20px;
+    box-shadow: rgba(50, 50, 93, 0.25) 0px 6px 12px -2px, rgba(0, 0, 0, 0.3) 0px 3px 7px -3px;
+}
+
+.application-group-header {
+    width: 100%;
+    border: 1px solid black;
+    display: flex;
+    display-direction: row;
+    align-items: center;
+}
+
+.application-group-header-group1 {
+    display: flex;
+    flex-direction: column;
+}
+
+.application-group-buttons {
+    border-left: 1px solid black;
+    margin-left: auto;
+    padding: 10px;
+    font-size: 20px;
+}
+
+.application-group-redirect {
+    border-bottom: 1px solid black;
+    justify-content: center;
+    display: flex;
+}
+
+.application-group-edit {
+    margin-top: 5px;
+    padding: 3px;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: background 0.3s;
+    border: 1px solid black;
+    box-shadow: 3px 3px 5px rgba(0, 0, 0, 0.2);
+}
+
+.application-group-edit:active {
+    background: cyan;
+    box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.2);
+
+}
+
+.application-group {
+    display: flex;
+    flex-direction: row;
+    padding: 10px;
+}
+
+.application-group-input {
+    background: transparent;
+    border-radius: 2px;
+    transition: background 0.3s;
+    border: 1px solid black;
+    box-shadow: 3px 3px 5px rgba(0, 0, 0, 0.2);
+    padding-left: 5px;
+}
+
+.application-group-text {
+    padding-left: 5px;
+}
+
+.application-group-is {
+    padding: 10px;
+}
+
+.application-group-split {
+    padding: 1px;
+    width: 100%;
+    border-bottom: 1px solid black;
+}
+
+.application-group-devices-content {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    width: 100%;
+}
+
+.application-group-devices {
+    border-left: 1px solid black;
+    display: flex;
+    flex-direction: column;
+    flex: 10;
+}
+
+.application-group-devices-title {
+    text-align: center;
+    padding: 15px;
+    width: 100%;
+    flex: 1;
+}
+
+.application-group-device {
+    padding: 5px;
+    padding-left: 20px;
+    border-bottom: 1px solid black;
 }

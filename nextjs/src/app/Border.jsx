@@ -1,6 +1,7 @@
-import Button from "@/app/Button";
+import Button from "./Button"
 import React from "react";
 import './styles.css';
+import { Link } from 'react-router-dom';
 
 function Title() {
     return (
@@ -36,22 +37,13 @@ function BottomBorder() {
 }
 
 function LeftBorder({leftBorderOpen}) {
-    const handleAssetsClick = () => {
-    window.location.href = 'http://localhost:3000/assets';
-  };
-
-  const handleTopologyClick = () => {
-    window.location.href = 'http://localhost:3000/';
-  };
-
     return (
         <div className={`left-border ${leftBorderOpen ? 'expanded' : ''}`}>
             {leftBorderOpen && (
                 <div className="left-border-buttons">
-                    <button onClick={handleTopologyClick}>Topology</button>
-                    <button onClick={handleAssetsClick}>Assets</button>
-                </div>
-            )}
+                    <button><Link to="/">Topology</Link></button>
+                    <button><Link to="/business-process">Business Processes</Link></button>
+                </div>)}
         </div>
     );
 }

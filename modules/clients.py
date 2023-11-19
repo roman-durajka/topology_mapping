@@ -95,3 +95,33 @@ class MariaDBClient:
             first_condition = False
         self.cursor.execute(query, values)
         self.connection.commit()
+
+    def update_data(self, table_name: str, data: list, conditions: list[tuple] = None):
+        for record in data:
+            for key, value in record.items():
+                if isinstance(value, (dict, list)):
+                    record[key] = json.dumps(value)
+
+            columns = list(record.keys())
+            values = list(record.values())
+
+            query = f"UPDATE {table_name} SET"
+
+            first = True
+            for index, column in enumerate(columns):
+                if not first:
+                    query += ","
+                query += f" {column} = %s"
+                first = False
+            if conditions:
+                first = True
+                query += " WHERE"
+                for condition in conditions:
+                    if not first:
+                        query += " AND"
+                    query += f" {condition[0]} = {condition[1]}"
+                    first = False
+
+            self.cursor.execute(query, values)
+            self.connection.commit()
+

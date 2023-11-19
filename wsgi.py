@@ -91,20 +91,38 @@ def create_topology():
     return jsonify(result)
 
 
-@app.route('/assets', methods=['GET'])
-def get_mapped_assets():
+@app.route('/application-groups', methods=['GET'])
+def get_application_groups():
     """
-    Endpoint to create and return assets along with risks/vulnerabilities/threats.
+    Endpoint to return current application_groups.
     :return: data in json format and status code
     """
     result = {}
     try:
-        mapped_assets = asset_mapper.get_mapped_assets()
-        result.update(mapped_assets)
-        #result["code"] = 200
+        application_groups = asset_mapper.get_application_groups()
+        result["data"] = application_groups
+        result["code"] = 200
     except Exception as error:
         result["error"] = str(error)
-        #result["code"] = 500
+        result["code"] = 500
+
+    return jsonify(result)
+
+
+@app.route('/update-application-groups', methods=['POST'])
+def update_application_groups():
+    """
+    Endpoint to save updated (edited) application groups to database.
+    :return: data in json format and status code
+    """
+    req_json = request.json
+    result = {}
+    try:
+        asset_mapper.update_application_groups(req_json)
+        result["code"] = 200
+    except Exception as error:
+        result["error"] = str(error)
+        result["code"] = 500
 
     return jsonify(result)
 

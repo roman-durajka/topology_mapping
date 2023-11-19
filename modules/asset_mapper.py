@@ -25,18 +25,14 @@ class AssetMapper:
                     m_uuids.append(m_uuid)
 
         mapped_risks = self.__map_risks_to_assets(m_uuids)
-        mapped_devices = {}
-        # {device_id: {name: ..., risks: {risk_uuid: {vulnerability:..., threat:...}}}}
 
         for device in devices:
-            device_id = str(device.device_id)
-            mapped_devices[device_id] = {}
-            mapped_devices[device_id]["name"] = device.name
-            mapped_devices[device_id]["risks"] = {}
             for m_asset_type, m_uuid in self.asset_mapping_json[device.asset].items():
-                mapped_devices[device_id]["risks"].update(mapped_risks[m_uuid]["risks"])
+                for key, item in mapped_risks[m_uuid]["risks"].items():
+                    device.vulnerabilities.append(item["vulnerability"])
+                    device.threats.append(item["threat"])
 
-        return mapped_devices
+        return devices
 
     def __map_risks_to_assets(self, asset_uuids: list):
         mapped_risks = {}  # {asset_uuid: {risks: risk_uuid: {threat: ..., threat_uuid: ..., vulnerability: ..., vulnerability_uuid: ...}}}
@@ -63,9 +59,9 @@ class AssetMapper:
 
 
 def get_mapped_assets():
-    """Function to returns assets/risks/vulnerabilities/threats fired from one of API endpoints."""
+    """Function to returns devices with mapped assets/risks/vulnerabilities/threats."""
     risk_mgmt_db_client = MariaDBClient("risk_management")
-    topology_db_client = MariaDBClient("librenms")
+    topology_db_client = MariaDBClient("topology")
 
     device_extractor = DeviceExtractor(topology_db_client)
     devices = device_extractor.extract()
@@ -74,3 +70,48 @@ def get_mapped_assets():
     mapped_devices = asset_mapper.assign_risks_to_devices(devices)
 
     return mapped_devices
+
+
+def get_application_groups():
+    topology_db_client = MariaDBClient("topology")
+    librenms_db_client = MariaDBClient("librenms")
+    paths_records = topology_db_client.get_data("paths")
+
+    # we define application groups by path ids
+    paths_ids = [path_record["path_id"] for path_record in paths_records]
+    paths_ids = list(set(paths_ids))
+
+    application_groups = {}
+
+    for path_id in paths_ids:
+        path_records = topology_db_client.get_data("paths", [("path_id", path_id)])
+        application_groups[path_id] = {"devices": {},
+                                       "business_process_name": path_records[0]["name"],
+                                       "information_systems": []}
+
+        processed_devices = []
+        for path_record in path_records:
+            relation_id = path_record["relation_id"]
+            relation_data = topology_db_client.get_data("relations", [("id", relation_id)])[0]
+            for device_id in [relation_data["source"], relation_data["target"]]:
+                if device_id not in processed_devices:
+                    processed_devices.append(device_id)
+
+                    device_data = librenms_db_client.get_data("devices", [("device_id", device_id)])[0]
+                    device_name = device_data["sysName"]
+                    application_groups[path_id]["devices"].update({device_id: device_name})
+
+    return application_groups
+
+
+def update_application_groups(req_json):
+    topology_db_client = MariaDBClient("topology")
+
+    for path_id, value in req_json.items():
+        for field, data in value.items():
+            if field == "business_process_name":
+                topology_db_client.update_data("paths", [{"name": data}], [("path_id", path_id)])
+            elif field == "information_systems":
+                information_systems = [{"path_id": path_id, "information_system": item} for item in json.loads(data)]
+                topology_db_client.insert_data(information_systems, "information_systems")
+
