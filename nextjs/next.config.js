@@ -3,11 +3,12 @@ const nextConfig = {
   async rewrites() {
     return [
       {
-        source: '/:any*',
-        destination: '/',
+        source: "/:any*",
+        destination: "/",
       },
     ];
   },
-}
+  output: "standalone",
+};
 
-module.exports = nextConfig
+module.exports = nextConfig;

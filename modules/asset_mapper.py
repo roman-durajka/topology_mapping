@@ -85,9 +85,10 @@ def get_application_groups():
 
     for path_id in paths_ids:
         path_records = topology_db_client.get_data("paths", [("path_id", path_id)])
+        information_systems_records = topology_db_client.get_data("information_systems", [("path_id", path_id)])
         application_groups[path_id] = {"devices": {},
                                        "business_process_name": path_records[0]["name"],
-                                       "information_systems": []}
+                                       "information_systems": [record["information_system"] for record in information_systems_records]}
 
         processed_devices = []
         for path_record in path_records:
