@@ -200,7 +200,7 @@ function RenderApplicationGroups() {
                     <div className="application-group-device-info">Type</div>
                   </div>
                   {Object.keys(group.devices).map((device_id) => (
-                    <div className="application-group-device">
+                    <div className="application-group-device" key={device_id}>
                       <div
                         className="application-group-device-info"
                         key={device_id}
