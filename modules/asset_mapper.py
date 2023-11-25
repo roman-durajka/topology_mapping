@@ -97,9 +97,18 @@ def get_application_groups():
                 if device_id not in processed_devices:
                     processed_devices.append(device_id)
 
-                    device_data = librenms_db_client.get_data("devices", [("device_id", device_id)])[0]
-                    device_name = device_data["sysName"]
-                    application_groups[path_id]["devices"].update({device_id: device_name})
+                    librenms_device_data = librenms_db_client.get_data("devices", [("device_id", device_id)])[0]
+                    device_name = librenms_device_data["sysName"]
+                    device_os = librenms_device_data["os"]
+                    device_model = librenms_device_data["hardware"]
+
+                    topology_device_data = topology_db_client.get_data("nodes", [("id", device_id)])[0]
+                    device_type = topology_device_data["type"]
+                    device_info = {"os": device_os,
+                                   "name": device_name,
+                                   "model": device_model,
+                                   "type": device_type}
+                    application_groups[path_id]["devices"].update({device_id: device_info})
 
     return application_groups
 
@@ -112,6 +121,10 @@ def update_application_groups(req_json):
             if field == "business_process_name":
                 topology_db_client.update_data("paths", [{"name": data}], [("path_id", path_id)])
             elif field == "information_systems":
-                information_systems = [{"path_id": path_id, "information_system": item} for item in json.loads(data)]
-                topology_db_client.insert_data(information_systems, "information_systems")
-
+                topology_db_client.remove_data([("path_id", path_id)], "information_systems")
+                information_systems = []
+                for item in data:
+                    if item:
+                        information_systems.append({"path_id": path_id, "information_system": item})
+                if information_systems:
+                    topology_db_client.insert_data(information_systems, "information_systems")

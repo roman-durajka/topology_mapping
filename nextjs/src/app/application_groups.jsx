@@ -193,9 +193,38 @@ function RenderApplicationGroups() {
               <div key={key} className="application-group-devices-content">
                 <div className="application-group-devices-title">Devices</div>
                 <div className="application-group-devices">
+                  <div className="application-group-device application-group-device-header">
+                    <div className="application-group-device-info">Name</div>
+                    <div className="application-group-device-info">Model</div>
+                    <div className="application-group-device-info">OS</div>
+                    <div className="application-group-device-info">Type</div>
+                  </div>
                   {Object.keys(group.devices).map((device_id) => (
-                    <div className="application-group-device" key={device_id}>
-                      &#x2022; {group["devices"][device_id]}
+                    <div className="application-group-device">
+                      <div
+                        className="application-group-device-info"
+                        key={device_id}
+                      >
+                        &#x2022; {group["devices"][device_id]["name"]}
+                      </div>
+                      <div
+                        className="application-group-device-info"
+                        key={device_id}
+                      >
+                        {group["devices"][device_id]["model"]}
+                      </div>
+                      <div
+                        className="application-group-device-info"
+                        key={device_id}
+                      >
+                        {group["devices"][device_id]["os"]}
+                      </div>
+                      <div
+                        className="application-group-device-info"
+                        key={device_id}
+                      >
+                        {group["devices"][device_id]["type"]}
+                      </div>
                     </div>
                   ))}
                 </div>

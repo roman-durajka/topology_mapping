@@ -149,13 +149,35 @@ class Device:
             "model": self.model,
             "device_type": self.device_type,
             "asset": self.asset,
-            "interfaces": [{keyitem[0]: keyitem[1]} for keyitem in self.interfaces.items()]
+            "interfaces": [{keyitem[0]: keyitem[1]} for keyitem in self.interfaces.items()],
+            "vulnerabilities": self.vulnerabilities,
+            "threats": self.threats
+        }
+
+
+class ApplicationGroup:
+    """Class representing application group."""
+    
+    def __init__(self, process_name: str, devices: list[Device], information_systems: list[str] = None):
+        self.process_name = process_name
+        self.devices = devices
+        self.information_systems = information_systems
+
+    def asdict(self) -> dict:
+        """
+        Returns object attributes as dictionary.
+        :return: dict
+        """
+        return {
+            "process_name": self.process_name,
+            "devices": [item.asdict() for item in self.devices],
+            "information_systems": self.information_systems
         }
 
 
 def load_entities_from_db(topology_db_client, librenms_db_client) -> typing.Tuple[list, RelationsContainer]:
     """
-    Loads data from json into appropriate objects.
+    Loads data from database into appropriate objects.
     """
     devices = []
 

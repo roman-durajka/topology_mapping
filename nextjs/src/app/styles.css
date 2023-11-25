@@ -339,7 +339,17 @@
 }
 
 .application-group-device {
+    display: flex;
+    flex-direction: row;
     padding: 5px;
     padding-left: 20px;
     border-bottom: 1px solid black;
+}
+
+.application-group-device-header {
+    font-weight: bold;
+}
+
+.application-group-device-info {
+    flex: 1;
 }
