@@ -61,6 +61,8 @@ def load_topology_from_db(topology_db_client, librenms_db_client) -> dict:
         if1_data = librenms_db_client.get_data("ports", [("port_id", relation["source_if"])])[0]
         if2_data = librenms_db_client.get_data("ports", [("port_id", relation["target_if"])])[0]
         relation_to_add = {"id": relation["id"],
+                           "srcIfID": relation["source_if"],
+                           "tgtIfID": relation["target_if"],
                            "source": relation["source"],
                            "target": relation["target"],
                            "srcIfName": if1_data["ifName"],
@@ -194,6 +196,8 @@ def generate_js_data_json(devices: list, relations: RelationsContainer) -> dict:
 
     for index, relation in enumerate(relations):
         relation_to_add = {"id": index,
+                           "srcIfID": relation.interface1.port_id,
+                           "tgtIfID": relation.interface2.port_id,
                            "source": relation.interface1.device_id,
                            "target": relation.interface2.device_id,
                            "srcIfName": relation.interface1.interface_name,

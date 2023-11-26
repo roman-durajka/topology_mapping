@@ -13,6 +13,7 @@ CORS(app)
 def signal():
     """
     Endpoint to check app status.
+
     :return: str
     """
     return "It's working!"
@@ -22,6 +23,7 @@ def signal():
 def add_path():
     """
     Endpoint to create and return path based on POST data.
+
     :return: data in json format and status code
     """
     req_json = request.json
@@ -41,6 +43,7 @@ def add_path():
 def remove_path():
     """
     Endpoint to remove path from database.
+
     :return: data in json format and status code
     """
     req_json = request.json
@@ -59,6 +62,7 @@ def remove_path():
 def load_saved_paths():
     """
     Endpoint to load and return all saved paths.
+
     :return: data in json format and status code
     """
     result = {}
@@ -77,6 +81,7 @@ def load_saved_paths():
 def create_topology():
     """
     Endpoint to create and return topology data to be drawn in js app.
+
     :return: data in json format and status code
     """
     result = {}
@@ -95,6 +100,7 @@ def create_topology():
 def get_application_groups():
     """
     Endpoint to return current application_groups.
+
     :return: data in json format and status code
     """
     result = {}
@@ -113,12 +119,32 @@ def get_application_groups():
 def update_application_groups():
     """
     Endpoint to save updated (edited) application groups to database.
+
     :return: data in json format and status code
     """
     req_json = request.json
     result = {}
     try:
         asset_mapper.update_application_groups(req_json)
+        result["code"] = 200
+    except Exception as error:
+        result["error"] = str(error)
+        result["code"] = 500
+
+    return jsonify(result)
+
+
+@app.route('/add-device', methods=['POST'])
+def add_device():
+    """
+    Endpoint to add new device added on frontend to db.
+
+    :return: data in json format and status code
+    """
+    req_json = request.json
+    result = {}
+    try:
+        main.add_device(req_json)
         result["code"] = 200
     except Exception as error:
         result["error"] = str(error)

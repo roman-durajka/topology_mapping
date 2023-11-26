@@ -68,7 +68,7 @@
     padding: 0;
 }
 
-.t-button {
+.t-button, .form-container button {
     background: darkcyan;
     color: white;
     border: none;
@@ -79,12 +79,12 @@
     box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
 }
 
-.t-button:active {
+.t-button:active, .form-container button:active {
     background: cyan;
     box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.2);
 }
 
-.path-input {
+.path-input, .form-container input, .form-container select {
     border: 1px solid darkcyan;
     border-radius: 5px;
     padding: 8px;
@@ -128,6 +128,46 @@ body {
     overflow-y: auto;
     overflow-x: hidden;
     z-index: 1;
+}
+
+.form-container {
+    position: absolute;
+    z-index: 1;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    border: 3px solid darkcyan;
+    padding: 10px;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    font-weight: normal;
+    display: flex;
+    flex-direction: column;
+}
+
+.form-block {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    padding: 10px;
+}
+
+.form-container input, .form-container label {
+    flex: 2;
+}
+
+.form-container select {
+    flex: 2;
+    margin-right: 20%;
+}
+
+.form-container label {
+    margin: auto;
+}
+
+.interfaces-form-block {
+    border-top: 1px solid black;
 }
 
 .table-structure {

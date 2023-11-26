@@ -4,6 +4,28 @@ from modules import entities, topology_generator, asset_mapper
 import sys
 
 
+def add_device(req_json: dict):
+    topology_db_client = MariaDBClient("topology")
+    librenms_db_client = MariaDBClient("librenms")
+
+    topology_data = {"id": req_json["id"],
+                     "type": req_json["type"],
+                     "asset": req_json["asset"],
+                     "asset_value": req_json["asset-value"],
+                     "asset_values": req_json["asset-values"]}
+
+    topology_db_client.insert_data([topology_data], "nodes")
+
+    librenms_data = {"device_id": req_json["id"],
+                     "sysName": req_json["name"],
+                     "hardware": req_json["model"],
+                     "os": req_json["os"],
+                     "hostname": req_json["name"],
+                     "status_reason": " "}
+
+    librenms_db_client.insert_data([librenms_data], "devices")
+
+
 def main():
     topology_db_client = MariaDBClient("topology")
     librenms_db_client = MariaDBClient("librenms")
