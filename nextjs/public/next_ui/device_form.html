@@ -1,4 +1,12 @@
 <form class="form-container" id="deviceForm">
+    <div class="form-header">
+        <div class="form-header-padding"></div>
+        <div class="form-title">Add Device</div>
+        <button type="button" class="form-button-close" id="formButtonClose" onclick="closeFormWindow()">
+            X
+        </button>
+    </div>
+    <div class="form-content">
     <div class="form-block">
         <label for="name">Name:</label>
         <input type="text" value="pc1" id="name" name="name" required>
@@ -33,5 +41,6 @@
         </select>
     </div>
 
-    <button id="deviceFormButtom">Submit</button>
+    <button type="button" id="deviceFormButton">Save</button>
+    </div>
 </form>

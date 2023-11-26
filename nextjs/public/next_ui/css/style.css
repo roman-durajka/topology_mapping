@@ -138,12 +138,44 @@ body {
     transform: translate(-50%, -50%);
     background: white;
     border: 3px solid darkcyan;
-    padding: 10px;
     font-family: Arial, sans-serif;
     font-size: 14px;
     font-weight: normal;
     display: flex;
     flex-direction: column;
+}
+
+.form-header {
+    background: darkcyan;
+    display: flex;
+    align-items: center;
+}
+
+.form-title {
+    flex: 10;
+    font-size: 18px;
+    color: white;
+    text-align: center;
+}
+
+.form-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-button-close, .form-header-padding {
+    padding: 5px 5px !important;
+    margin: 5px;
+    flex: 1;
+}
+
+.form-button-close {
+    color: white;
+    border: 1px solid white !important;
+}
+
+.form-content {
+    padding: 10px;
 }
 
 .form-block {

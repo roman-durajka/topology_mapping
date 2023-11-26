@@ -92,7 +92,8 @@ nx.define("ActionPanel", nx.ui.Component, {
         if (xhr.status === 200) {
           formContainer.innerHTML = xhr.responseText;
           let deviceForm = document.getElementById("deviceForm");
-          deviceForm.addEventListener("submit", (event) => {
+          let deviceFormButton = document.getElementById("deviceFormButton");
+          deviceFormButton.addEventListener("click", (event) => {
             event.preventDefault();
 
             let formData = new FormData(deviceForm);
@@ -202,6 +203,11 @@ nx.define("ActionPanel", nx.ui.Component, {
     },
   },
 });
+
+function closeFormWindow() {
+  let formContainer = document.querySelector("#formContainer");
+  formContainer.innerHTML = "";
+}
 
 function generateNodeId(topo) {
   let highestId = 0;
