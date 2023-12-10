@@ -61,9 +61,9 @@ class AssetMapper:
 def get_mapped_assets():
     """Function to returns devices with mapped assets/risks/vulnerabilities/threats."""
     risk_mgmt_db_client = MariaDBClient("risk_management")
-    topology_db_client = MariaDBClient("topology")
+    librenms_db_client = MariaDBClient("librenms")
 
-    device_extractor = DeviceExtractor(topology_db_client)
+    device_extractor = DeviceExtractor(librenms_db_client)
     devices = device_extractor.extract()
 
     asset_mapper = AssetMapper(risk_mgmt_db_client)
