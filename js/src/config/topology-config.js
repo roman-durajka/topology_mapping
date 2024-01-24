@@ -1,6 +1,6 @@
 let topologyConfig = {
   width: window.innerWidth - 100,
-  height: window.innerHeight - 160,
+  height: window.innerHeight - 130,
   dataProcessor: "force",
   identityKey: "id",
   nodeConfig: {

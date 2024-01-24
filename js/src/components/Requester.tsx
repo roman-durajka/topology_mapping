@@ -1,13 +1,12 @@
 import { Dispatch } from "react";
 
 interface RequesterProps {
-  setState: Dispatch<object>;
   url: string;
   method: string;
   postData?: object;
 }
 
-function request({ setState, url, method, postData }: RequesterProps) {
+function request({ url, method, postData }: RequesterProps) {
   let requestOptions: RequestInit = {
     method: method,
     headers: { "Content-Type": "application/json" },
@@ -20,11 +19,13 @@ function request({ setState, url, method, postData }: RequesterProps) {
     };
   }
 
-  fetch(url, requestOptions)
-    .then((response) => response.json())
-    .then((data) => {
-      setState(data);
-    });
+  return fetch(url, requestOptions);
+  //.then((response) => response.json())
+  //.then((data) => {
+  //return data;
+  //if (setState) {
+  //  setState(data);
+  //}
 }
 
 export default request;

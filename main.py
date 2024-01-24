@@ -21,7 +21,8 @@ def add_device(req_json: dict):
                      "hardware": req_json["model"],
                      "os": req_json["os"],
                      "hostname": req_json["name"],
-                     "status_reason": " "}
+                     "status_reason": " ",
+                     "type": req_json["type"]}
 
     librenms_db_client.insert_data([librenms_data], "devices")
 

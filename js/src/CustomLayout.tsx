@@ -1,42 +1,44 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Breadcrumb, Layout, Menu, theme } from "antd";
+import { Breadcrumb, Layout, Menu, theme, Space } from "antd";
 import { ApartmentOutlined, RightOutlined } from "@ant-design/icons";
-
-import CustomFunction from "./components/types";
 
 const { Header, Content, Footer } = Layout;
 
 interface InterfaceLayout {
   children: React.ReactNode;
-  customFunctions?: CustomFunction[];
+  modals?: React.ReactNode[];
 }
 
-const CustomLayout: React.FC<InterfaceLayout> = ({
-  children,
-  customFunctions,
-}) => {
+const CustomLayout: React.FC<InterfaceLayout> = ({ children, modals }) => {
   const {
     token: { colorBgContainer },
   } = theme.useToken();
 
   return (
-    <Layout className="layout">
-      <Header style={{ display: "flex", alignItems: "center" }}>
+    <Layout className="layout" style={{ "min-height": "100vh" }}>
+      <Header
+        style={{
+          display: "flex",
+          alignItems: "center",
+          width: "100vw",
+          position: "sticky",
+          top: 0,
+          zIndex: 1,
+        }}
+      >
         <div className="demo-logo" />
         <Menu theme="dark" mode="horizontal" disabledOverflow={true}>
-          <Menu.Item key="1" icon={<ApartmentOutlined />}>
-            <Link to="/">Topology</Link>
-          </Menu.Item>
-          <Menu.Item key="2">
-            <Link to="/asd">Elsewhere</Link>
-          </Menu.Item>
-          <RightOutlined />
-          {customFunctions?.map((value) => (
-            <Menu.Item key={value.name} onClick={value.fun}>
-              {value.name}
+          <Space>
+            <Menu.Item key="1" icon={<ApartmentOutlined />}>
+              <Link to="/">Topology</Link>
             </Menu.Item>
-          ))}
+            <Menu.Item key="2">
+              <Link to="/business-process">Business Process</Link>
+            </Menu.Item>
+            {modals && modals.length > 0 && <RightOutlined />}
+            {modals?.map((value) => <>{value}</>)}
+          </Space>
         </Menu>
       </Header>
       <Content style={{ padding: "0 50px" }}>
@@ -45,7 +47,7 @@ const CustomLayout: React.FC<InterfaceLayout> = ({
         </Breadcrumb>
         <div
           className="site-layout-content"
-          style={{ background: colorBgContainer }}
+          style={{ background: colorBgContainer, "min-height": "80vh" }}
         >
           {children}
         </div>

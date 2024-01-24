@@ -348,6 +348,7 @@ def add_path(req_json):
 
     topology_generator.save_path_to_db(path, starting_index, color, asset_value, path_name, topology_db_client)
     path_json = topology_generator.generate_js_path_data_json(path, color, starting_index)
+    path_json.update({"asset_value": asset_value, "name": path_name})
 
     return path_json
 
@@ -375,6 +376,7 @@ def load_paths():
 
 
 def remove_path(req_json):
-    """Function to remove path from database."""
+    """Function to remove path from database. Also removes associated information systems."""
     librenms_db_client = MariaDBClient("topology")
     librenms_db_client.remove_data([("path_id", req_json["path_id"])], "paths")
+    librenms_db_client.remove_data([("path_id", req_json["path_id"])], "information_systems")

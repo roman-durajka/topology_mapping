@@ -4,11 +4,17 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import Topology from "./components/Topology.tsx";
 import ErrorPage from "./Error.tsx";
 import "./index.css";
+import ApplicationGroups from "./components/ApplicationGroups.tsx";
 
 const router = createBrowserRouter([
   {
     path: "/",
     element: <Topology />,
+    errorElement: <ErrorPage />,
+  },
+  {
+    path: "business-process",
+    element: <ApplicationGroups />,
     errorElement: <ErrorPage />,
   },
 ]);
