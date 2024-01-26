@@ -14,25 +14,24 @@ nx.define("NodeTooltipExtension", nx.ui.Component, {
     node: {
       set: function (value) {
         let data = value.model().getData();
-        let node_data = {};
-        let if_data = {};
+        let nodeData = {};
+        let ifData = {};
 
         for (const [key, value] of Object.entries(data)) {
           if (ILLEGAL_ATTRIBUTES.indexOf(key) === -1) {
             if (key === "interfaces") {
-              for (const [if_key, if_value] of Object.entries(value)) {
-                if_data[if_key] = if_value;
+              for (const [ifKey, ifValue] of Object.entries(value)) {
+                ifData[ifKey] = ifValue;
               }
             } else {
-              node_data[key] = value;
+              nodeData[key] = value;
             }
           }
         }
 
-        this.view("list").set("items", new nx.data.Dictionary(node_data));
-        this.view("if-list").set("items", new nx.data.Dictionary(if_data));
+        this.view("list").set("items", new nx.data.Dictionary(nodeData));
+        this.view("if-list").set("items", new nx.data.Dictionary(ifData));
         this.title("Device description");
-        console.log(new nx.data.Dictionary(node_data));
       },
     },
     topology: {},

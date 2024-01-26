@@ -24,6 +24,10 @@ export const addPathFormObject = [
     propertyName: "color",
     selectOptions: ["red", "yellow", "green", "pink", "orange", "blue"],
   },
+  {
+    label: "Business Process",
+    propertyName: "businessProcess",
+  },
 ];
 
 //form object when adding device
@@ -71,13 +75,46 @@ export class TopologyConnector {
     this.topology.setData(topologyData.data);
   }
 
+  updateAssetValue(node) {
+    let assetValues = node.model().get("asset-values");
+    let maxValue = Math.max(...assetValues);
+    node.model().set("asset-value", maxValue);
+  }
+
+  addAssetValues(devices, assetValue) {
+    devices.map((device) => {
+      let node = this.topology.getNode(device);
+      let assetValues = node.model().get("asset-values");
+      assetValues.push(assetValue);
+      node.model().set("asset-values", assetValues);
+
+      this.updateAssetValue(node);
+    });
+  }
+
+  removeAssetValues(devices, assetValue) {
+    devices.map((device) => {
+      let node = this.topology.getNode(device);
+      let assetValues = node.model().get("asset-values");
+      let valToRemoveIndex = assetValues.indexOf(assetValue);
+      if (valToRemoveIndex !== -1) {
+        assetValues.splice(valToRemoveIndex, 1);
+      }
+      node.model().set("asset-values", assetValues);
+
+      this.updateAssetValue(node);
+    });
+  }
+
   loadPaths(pathData) {
     pathData.map((item) => {
+      //add individual links
       item.links.map((link) => {
         this.topology.addLink(link);
       });
+      //add asset values
+      this.addAssetValues(item["nodes"], item["asset_value"]);
     });
-    //add asset values
   }
 
   //formats and returns path data to be used by table builder
@@ -98,12 +135,17 @@ export class TopologyConnector {
           //remove links from topology
           ids.map((id) => this.topology.removeLink(id));
           //send request to remove path from db
-          const postData = { path_id: Math.min(...ids) };
+          const postData = {
+            pathId: Math.min(...ids),
+            groupId: item.application_group_id,
+          };
           request({
             url: "http://localhost:5000/remove-path",
             method: "POST",
             postData: postData,
           });
+          //remove asset values
+          this.removeAssetValues(item["nodes"], item["asset_value"]);
         },
       });
     });

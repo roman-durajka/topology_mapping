@@ -1,6 +1,11 @@
-import React, { useState } from "react";
+import React, { ReactNode, useState } from "react";
 import { Form, Input, InputNumber, Popconfirm, Table, Typography } from "antd";
-import { ColumnItem, SubColumnItem } from "./types";
+import {
+  ColumnGroup,
+  ColumnItem,
+  SubColumnGroup,
+  SubColumnItem,
+} from "./types";
 
 interface Item {
   key: string;
@@ -56,13 +61,15 @@ const EditableCell: React.FC<EditableCellProps> = ({
 interface InterfaceEditableTable {
   data: object[];
   columns: ColumnItem[];
-  subColumns?: SubColumnItem[];
+  subColumns?: SubColumnGroup[];
+  title: ReactNode;
 }
 
 const EditableTable: React.FC<InterfaceEditableTable> = ({
   data,
   columns,
   subColumns,
+  title,
 }) => {
   const [form] = Form.useForm();
   const [tableData, setTableData] = useState(data);
@@ -157,7 +164,6 @@ const EditableTable: React.FC<InterfaceEditableTable> = ({
         <Table columns={subColumns} dataSource={subItems} pagination={false} />
       );
     }
-    console.log(props);
     return undefined;
   };
 
@@ -177,6 +183,7 @@ const EditableTable: React.FC<InterfaceEditableTable> = ({
         columns={mergedColumns}
         rowClassName="editable-row"
         pagination={false}
+        title={() => title}
       />
     </Form>
   );

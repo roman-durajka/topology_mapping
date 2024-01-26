@@ -1,16 +1,37 @@
 import { useEffect, useState } from "react";
-import { message, Empty, DescriptionsProps } from "antd";
+import { message, Empty, DescriptionsProps, Space, Divider } from "antd";
 
 import CustomLayout from "../CustomLayout";
 import { messageLoading, messageSuccess } from "../message";
 import request from "./Requester";
 import CustomDescription from "./Description";
-import { ColumnItem, SubColumnGroup, SubColumnItem } from "./types";
+import {
+  ColumnItem,
+  ColumnGroup,
+  SubColumnGroup,
+  SubColumnItem,
+} from "./types";
 import EditableTable from "./EditableTable";
+import EditableText from "./EditableText";
 
 export default function ApplicationGroups() {
   const [messageApi, contextHolder] = message.useMessage();
   const [applicationGroups, setApplicationGroups] = useState({});
+
+  const onGroupNameChange = (newName: string, groupId: number) => {
+    let formData: object = {
+      applicationGroupId: groupId,
+      applicationGroupName: newName,
+    };
+
+    request({
+      url: "http://localhost:5000/update-application-groups",
+      method: "POST",
+      postData: formData,
+    });
+
+    messageSuccess(messageApi, "Bussiness process name successfully changed.");
+  };
 
   useEffect(() => {
     const responseData: Promise<Response> = request({
@@ -29,8 +50,8 @@ export default function ApplicationGroups() {
 
   const columns: ColumnItem[] = [
     {
-      title: "process name",
-      dataIndex: "processName",
+      title: "path name",
+      dataIndex: "pathName",
       width: "50%",
       editable: true,
     },
@@ -68,26 +89,37 @@ export default function ApplicationGroups() {
   ];
 
   //items for description component
-  const items: object[] = Object.keys(applicationGroups).map(
-    (dictKey: string, index: number) => {
-      const item: object = applicationGroups[dictKey];
-      const devices: object[] = Object.keys(item.devices).map(
-        (deviceId: string, deviceIndex: number) => {
-          const deviceItem: object = item["devices"][deviceId];
+  const groups: object[] = Object.keys(applicationGroups).map(
+    (groupId: string) => {
+      const groupItem: object = applicationGroups[groupId];
+      const paths: object[] = Object.keys(groupItem["paths"]).map(
+        (pathId: string, index: number) => {
+          const pathItem: object = applicationGroups[groupId]["paths"][pathId];
+          const devices: object[] = Object.keys(pathItem["devices"]).map(
+            (deviceId: string, deviceIndex: number) => {
+              const deviceItem: object = pathItem["devices"][deviceId];
+              return {
+                key: index.toString() + "_device" + deviceIndex.toString(),
+                deviceName: deviceItem.name,
+                model: deviceItem.model,
+                os: deviceItem.os,
+                type: deviceItem.type,
+              };
+            },
+          );
           return {
-            key: index.toString() + "_device" + deviceIndex.toString(),
-            deviceName: deviceItem.name,
-            model: deviceItem.model,
-            os: deviceItem.os,
-            type: deviceItem.type,
+            key: index.toString(),
+            pathName: pathItem.path_name,
+            informationSystems: pathItem.information_systems.join(","),
+            subItems: devices,
           };
         },
       );
       return {
-        key: index.toString(),
-        processName: item.business_process_name,
-        informationSystems: item.information_systems.join(","),
-        subItems: devices,
+        applicationGroupName:
+          applicationGroups[groupId]["application_group_name"],
+        applicationGroupId: groupId,
+        paths: paths,
       };
     },
   );
@@ -96,12 +128,26 @@ export default function ApplicationGroups() {
     <CustomLayout>
       {contextHolder}
       <div style={{ padding: "20px" }}>
-        {items.length > 0 ? (
-          <EditableTable
-            data={items}
-            columns={columns}
-            subColumns={subColumns}
-          />
+        {groups.length > 0 ? (
+          groups.map((group: object) => (
+            <div style={{ marginBottom: "50px" }}>
+              <EditableTable
+                data={group["paths"]}
+                columns={columns}
+                subColumns={subColumns}
+                title={
+                  <div style={{ textAlign: "center" }}>
+                    <EditableText
+                      text={group["applicationGroupName"]}
+                      onChange={(newText: string) => {
+                        onGroupNameChange(newText, group["applicationGroupId"]);
+                      }}
+                    ></EditableText>
+                  </div>
+                }
+              />
+            </div>
+          ))
         ) : (
           <Empty></Empty>
         )}

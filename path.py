@@ -342,13 +342,21 @@ def add_path(req_json):
     starting_index = req_json["startingIndex"]
     asset_value = req_json["assetValue"]
     path_name = req_json["name"]
+    application_group = req_json["businessProcess"]
 
     path_obj = Path(librenms_db_client, devices, relations_container)
     path = path_obj.get_path(source, destination)
 
-    topology_generator.save_path_to_db(path, starting_index, color, asset_value, path_name, topology_db_client)
+    # get application group id, or create if not exists
+    group_record = topology_db_client.get_data("application_groups", [("name", application_group)])
+    if not group_record:
+        topology_db_client.insert_data([{"name": application_group}], "application_groups")
+        group_record = topology_db_client.get_data("application_groups", [("name", application_group)])
+    group_id = group_record[0]["id"]
+
+    topology_generator.save_path_to_db(path, starting_index, color, asset_value, path_name, group_id, topology_db_client)
     path_json = topology_generator.generate_js_path_data_json(path, color, starting_index)
-    path_json.update({"asset_value": asset_value, "name": path_name})
+    path_json.update({"asset_value": asset_value, "name": path_name, "application_group_id": group_id})
 
     return path_json
 
@@ -369,7 +377,9 @@ def load_paths():
         path_name = path_dict["name"]
 
         path_json = topology_generator.generate_js_path_data_json(path_container, color, starting_index)
-        path_json.update({"asset_value": asset_value, "name": path_name})
+
+        group_id = topology_db_client.get_data("paths", [("path_id", starting_index)])[0]["application_group_id"]
+        path_json.update({"asset_value": asset_value, "name": path_name, "application_group_id": group_id})
         loaded_paths.append(path_json)
 
     return loaded_paths
@@ -377,6 +387,9 @@ def load_paths():
 
 def remove_path(req_json):
     """Function to remove path from database. Also removes associated information systems."""
-    librenms_db_client = MariaDBClient("topology")
-    librenms_db_client.remove_data([("path_id", req_json["path_id"])], "paths")
-    librenms_db_client.remove_data([("path_id", req_json["path_id"])], "information_systems")
+    topology_db_client = MariaDBClient("topology")
+    topology_db_client.remove_data([("path_id", req_json["pathId"])], "paths")
+    topology_db_client.remove_data([("path_id", req_json["pathId"])], "information_systems")
+    group_records = topology_db_client.get_data("paths", [("application_group_id", req_json["groupId"])])
+    if not group_records:
+        topology_db_client.remove_data([("id", req_json["groupId"])], "application_groups")

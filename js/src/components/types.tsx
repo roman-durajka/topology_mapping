@@ -24,6 +24,11 @@ export type ColumnItem = {
   editable: boolean;
 };
 
+export type ColumnGroup = {
+  title: string;
+  children: ColumnItem[];
+};
+
 export type SubColumnItem = {
   title: string;
   dataIndex: string;

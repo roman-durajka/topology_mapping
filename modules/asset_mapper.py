@@ -75,25 +75,27 @@ def get_mapped_assets():
 def get_application_groups():
     topology_db_client = MariaDBClient("topology")
     librenms_db_client = MariaDBClient("librenms")
-    paths_records = topology_db_client.get_data("paths")
-
-    # we define application groups by path ids
-    paths_ids = [path_record["path_id"] for path_record in paths_records]
-    paths_ids = list(set(paths_ids))
+    records = topology_db_client.get_data("application_groups")
 
     application_groups = {}
+    for application_group_record in records:
+        group_id = application_group_record["id"]
+        group_name = application_group_record["name"]
+        application_groups[group_id] = {"application_group_name": group_name, "paths": {}}
 
-    for path_id in paths_ids:
-        path_records = topology_db_client.get_data("paths", [("path_id", path_id)])
-        information_systems_records = topology_db_client.get_data("information_systems", [("path_id", path_id)])
-        application_groups[path_id] = {"devices": {},
-                                       "business_process_name": path_records[0]["name"],
-                                       "information_systems": [record["information_system"] for record in information_systems_records]}
+        path_records = topology_db_client.get_data("paths", [("application_group_id", group_id)])
 
-        processed_devices = []
         for path_record in path_records:
+            path_id = path_record["path_id"]
+            if path_id not in application_groups[group_id].keys():  # add information system and path name
+                information_systems_records = topology_db_client.get_data("information_systems", [("path_id", path_id)])
+                application_groups[group_id]["paths"][path_id] = {"devices": {},
+                                                         "path_name": path_record["name"],
+                                                         "information_systems": [record["information_system"] for record in information_systems_records]}
+
             relation_id = path_record["relation_id"]
             relation_data = topology_db_client.get_data("relations", [("id", relation_id)])[0]
+            processed_devices = []
             for device_id in [relation_data["source"], relation_data["target"]]:
                 if device_id not in processed_devices:
                     processed_devices.append(device_id)
@@ -109,7 +111,7 @@ def get_application_groups():
                                    "name": device_name,
                                    "model": device_model,
                                    "type": device_type}
-                    application_groups[path_id]["devices"].update({device_id: device_info})
+                    application_groups[group_id]["paths"][path_id]["devices"].update({device_id: device_info})
 
     return application_groups
 
@@ -117,15 +119,16 @@ def get_application_groups():
 def update_application_groups(req_json):
     topology_db_client = MariaDBClient("topology")
 
-    for path_id, value in req_json.items():
-        for field, data in value.items():
-            if field == "business_process_name":
-                topology_db_client.update_data("paths", [{"name": data}], [("path_id", path_id)])
-            elif field == "information_systems":
-                topology_db_client.remove_data([("path_id", path_id)], "information_systems")
-                information_systems = []
-                for item in data:
-                    if item:
-                        information_systems.append({"path_id": path_id, "information_system": item})
-                if information_systems:
-                    topology_db_client.insert_data(information_systems, "information_systems")
+    for field, data in req_json.items():
+        if field == "pathName":
+            topology_db_client.update_data("paths", [{"name": data}], [("path_id", req_json["pathId"])])
+        elif field == "informationSystems":
+            topology_db_client.remove_data([("path_id", req_json["pathId"])], "information_systems")
+            information_systems = []
+            for item in data:
+                if item:
+                    information_systems.append({"path_id": req_json["pathId"], "information_system": item})
+            if information_systems:
+                topology_db_client.insert_data(information_systems, "information_systems")
+        elif field == "applicationGroupName":
+            topology_db_client.update_data("application_groups", [{"name": data}], [("id", req_json["applicationGroupId"])])

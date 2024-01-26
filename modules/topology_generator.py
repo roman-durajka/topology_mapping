@@ -75,7 +75,7 @@ def load_topology_from_db(topology_db_client, librenms_db_client) -> dict:
     return output
 
 
-def save_path_to_db(path: RelationsContainer, starting_index: int, color: str, asset_value: int, path_name: str, topology_db_client):
+def save_path_to_db(path: RelationsContainer, starting_index: int, color: str, asset_value: int, path_name: str, group_id: int, topology_db_client):
     path_relations = []
 
     for relation in path:
@@ -86,7 +86,8 @@ def save_path_to_db(path: RelationsContainer, starting_index: int, color: str, a
                            "relation_id": relation_id,
                            "color": color,
                            "asset_value": asset_value,
-                           "name": path_name}
+                           "name": path_name,
+                           "application_group_id": group_id}
 
         path_relations.append(relation_to_add)
 
