@@ -87,7 +87,7 @@ def get_application_groups():
 
         for path_record in path_records:
             path_id = path_record["path_id"]
-            if path_id not in application_groups[group_id].keys():  # add information system and path name
+            if path_id not in application_groups[group_id]["paths"].keys():  # add information system and path name
                 information_systems_records = topology_db_client.get_data("information_systems", [("path_id", path_id)])
                 application_groups[group_id]["paths"][path_id] = {"devices": {},
                                                          "path_name": path_record["name"],
@@ -95,11 +95,8 @@ def get_application_groups():
 
             relation_id = path_record["relation_id"]
             relation_data = topology_db_client.get_data("relations", [("id", relation_id)])[0]
-            processed_devices = []
             for device_id in [relation_data["source"], relation_data["target"]]:
-                if device_id not in processed_devices:
-                    processed_devices.append(device_id)
-
+                if device_id not in application_groups[group_id]["paths"][path_id]["devices"].keys():
                     librenms_device_data = librenms_db_client.get_data("devices", [("device_id", device_id)])[0]
                     device_name = librenms_device_data["sysName"]
                     device_os = librenms_device_data["os"]
