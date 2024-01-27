@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Typography } from "antd";
 
 const { Paragraph } = Typography;
@@ -10,9 +10,14 @@ interface InterfaceEditableText {
 
 const EditableText: React.FC<InterfaceEditableText> = ({ text, onChange }) => {
   const [editableStr, setEditableStr] = useState(text);
+  const initialText = useRef(true);
 
   useEffect(() => {
-    onChange(editableStr);
+    if (initialText.current == true) {
+      initialText.current = false;
+    } else {
+      onChange(editableStr);
+    }
   }, [editableStr]);
 
   return (
