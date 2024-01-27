@@ -39,7 +39,7 @@ const EditableCell: React.FC<EditableCellProps> = ({
           style={{ margin: 0 }}
           rules={[
             {
-              required: true,
+              required: false,
               message: `Please Input ${title}!`,
             },
           ]}

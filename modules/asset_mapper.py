@@ -118,7 +118,8 @@ def update_application_groups(req_json):
 
     for field, data in req_json.items():
         if field == "pathName":
-            topology_db_client.update_data("paths", [{"name": data}], [("path_id", req_json["pathId"])])
+            if data:
+                topology_db_client.update_data("paths", [{"name": data}], [("path_id", req_json["pathId"])])
         elif field == "informationSystems":
             topology_db_client.remove_data([("path_id", req_json["pathId"])], "information_systems")
             information_systems = []
