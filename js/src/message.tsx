@@ -1,7 +1,7 @@
-import { message } from "antd";
+import { MessageInstance } from "antd/es/message/interface";
 
 export const messageLoading = (
-  messageApi: typeof message,
+  messageApi: MessageInstance,
   messageString?: string,
 ) => {
   messageApi.open({
@@ -12,7 +12,7 @@ export const messageLoading = (
 };
 
 export const messageError = (
-  messageApi: typeof message,
+  messageApi: MessageInstance,
   messageString?: string,
 ) => {
   messageApi.open({
@@ -24,7 +24,7 @@ export const messageError = (
 };
 
 export const messageSuccess = (
-  messageApi: typeof message,
+  messageApi: MessageInstance,
   messageString?: string,
 ) => {
   messageApi.open({

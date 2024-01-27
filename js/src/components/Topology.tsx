@@ -13,12 +13,12 @@ import CustomLayout from "../CustomLayout";
 import Modal from "./Modal";
 import Form from "./Form";
 import PathTable from "./PathTable";
+import { PathTableItem } from "./types";
 
 function Topology() {
   const [messageApi, contextHolder] = message.useMessage();
   const topologyContainer = useRef(null);
-  const [pathTableData, setPathTableData] = useState<object[]>([]);
-  const [responseStatus, setResponseStatus] = useState<object>({});
+  const [pathTableData, setPathTableData] = useState<PathTableItem[]>([]);
   const connector = useRef(new TopologyConnector());
 
   //load once on startup
@@ -43,26 +43,14 @@ function Topology() {
         .then((response) => response.json())
         .then((data) => {
           connector.current.loadPaths(data.data);
-          const pathTableData: object[] = connector.current.formatPathTableData(
-            data.data,
-          );
+          const pathTableData: PathTableItem[] =
+            connector.current.formatPathTableData(data.data);
           setPathTableData(pathTableData);
           messageApi.destroy();
           messageSuccess(messageApi, "Topology loaded.");
         });
     }
   }, []);
-
-  useEffect(() => {
-    if (Object.keys(responseStatus).length > 0) {
-      if (responseStatus.code == 200) {
-        messageSuccess(messageApi);
-      } else {
-        console.log(Object.keys(responseStatus));
-        messageError(messageApi);
-      }
-    }
-  }, [responseStatus]);
 
   const addPathFormSubmit = (props: object) => {
     const formData = {
@@ -81,7 +69,7 @@ function Topology() {
         //add paths to topology
         connector.current.addPath(data.data);
         //add paths to path table
-        const newPathTableData: object[] =
+        const newPathTableData: PathTableItem[] =
           connector.current.formatPathTableData([{ ...data.data, formData }]);
         setPathTableData([...pathTableData, ...newPathTableData]);
         //make alert
@@ -89,7 +77,7 @@ function Topology() {
       });
   };
 
-  const addDeviceFormSubmit = (props: object) => {
+  const addDeviceFormSubmit = (props: { [key: string]: any }) => {
     const formData = {
       ...props,
       icon: props.type,
@@ -110,7 +98,7 @@ function Topology() {
         connector.current.addDevice(formData);
         //make alert
         if (data.code === 200) {
-          messageSuccess(mesageApi, "Device was successfully added.");
+          messageSuccess(messageApi, "Device was successfully added.");
         } else {
           messageError(messageApi, "Could not add device: ${data.error}");
         }

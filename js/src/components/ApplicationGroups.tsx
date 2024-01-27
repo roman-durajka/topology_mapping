@@ -1,22 +1,18 @@
 import { useEffect, useState } from "react";
-import { message, Empty, DescriptionsProps, Space, Divider } from "antd";
+import { message, Empty } from "antd";
 
 import CustomLayout from "../CustomLayout";
 import { messageLoading, messageSuccess } from "../message";
 import request from "./Requester";
-import CustomDescription from "./Description";
-import {
-  ColumnItem,
-  ColumnGroup,
-  SubColumnGroup,
-  SubColumnItem,
-} from "./types";
+import { ColumnItem, SubColumnGroup } from "./types";
 import EditableTable from "./EditableTable";
 import EditableText from "./EditableText";
 
 export default function ApplicationGroups() {
   const [messageApi, contextHolder] = message.useMessage();
-  const [applicationGroups, setApplicationGroups] = useState({});
+  const [applicationGroups, setApplicationGroups] = useState<{
+    [index: string]: any;
+  }>({});
 
   useEffect(() => {
     const responseData: Promise<Response> = request({
@@ -76,19 +72,21 @@ export default function ApplicationGroups() {
   //items for description component
   const groups: object[] = Object.keys(applicationGroups).map(
     (groupId: string) => {
-      const groupItem: object = applicationGroups[groupId];
+      const groupItem: { [index: string]: any } = applicationGroups[groupId];
       const paths: object[] = Object.keys(groupItem["paths"]).map(
         (pathId: string, index: number) => {
-          const pathItem: object = applicationGroups[groupId]["paths"][pathId];
+          const pathItem: { [index: string]: any } =
+            applicationGroups[groupId]["paths"][pathId];
           const devices: object[] = Object.keys(pathItem["devices"]).map(
             (deviceId: string, deviceIndex: number) => {
-              const deviceItem: object = pathItem["devices"][deviceId];
+              const deviceItem: { [index: string]: any } =
+                pathItem["devices"][deviceId];
               return {
                 key: index.toString() + "_device" + deviceIndex.toString(),
-                deviceName: deviceItem.name,
-                model: deviceItem.model,
-                os: deviceItem.os,
-                type: deviceItem.type,
+                deviceName: deviceItem["name"],
+                model: deviceItem["model"],
+                os: deviceItem["os"],
+                type: deviceItem["type"],
               };
             },
           );
@@ -140,7 +138,7 @@ export default function ApplicationGroups() {
       {contextHolder}
       <div style={{ padding: "20px" }}>
         {groups.length > 0 ? (
-          groups.map((group: object) => (
+          groups.map((group: { [index: string]: any }) => (
             <div style={{ marginBottom: "50px" }}>
               <EditableTable
                 data={group["paths"]}

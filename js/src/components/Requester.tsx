@@ -1,5 +1,3 @@
-import { Dispatch } from "react";
-
 interface RequesterProps {
   url: string;
   method: string;

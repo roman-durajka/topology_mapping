@@ -1,5 +1,5 @@
 import React from "react";
-import { Badge, Descriptions } from "antd";
+import { Descriptions } from "antd";
 import type { DescriptionsProps } from "antd";
 
 interface InterfaceDescription {

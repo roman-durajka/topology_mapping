@@ -37,10 +37,10 @@ services:
          - ./dumps:/docker-entrypoint-initdb.d
         networks:
          - inside_net
-    react:
-        container_name: react_con
+    node:
+        container_name: node_con
         build:
-          context: ./nextjs
+          context: ./js
           dockerfile: Dockerfile
         ports:
           - "3000:3000"

@@ -16,7 +16,7 @@ const CustomLayout: React.FC<InterfaceLayout> = ({ children, modals }) => {
   } = theme.useToken();
 
   return (
-    <Layout className="layout" style={{ "min-height": "100vh" }}>
+    <Layout className="layout" style={{ minHeight: "100vh" }}>
       <Header
         style={{
           display: "flex",
@@ -47,7 +47,7 @@ const CustomLayout: React.FC<InterfaceLayout> = ({ children, modals }) => {
         </Breadcrumb>
         <div
           className="site-layout-content"
-          style={{ background: colorBgContainer, "min-height": "80vh" }}
+          style={{ background: colorBgContainer, minHeight: "80vh" }}
         >
           {children}
         </div>

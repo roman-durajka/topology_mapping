@@ -70,11 +70,16 @@ const EditableTable: React.FC<InterfaceEditableTable> = ({
 }) => {
   const [form] = Form.useForm();
   const [tableData, setTableData] = useState(data);
-  const [editingKey, setEditingKey] = useState("");
+  const [editingKey, setEditingKey] = useState<string | React.Key>("");
 
-  const isEditing = (record: object) => record.key === editingKey;
+  const isEditing = (record: { [index: string]: any }) =>
+    record.key === editingKey;
 
-  const edit = (record: Partial<object> & { key: React.Key }) => {
+  const edit = (
+    record:
+      | Partial<{ [index: string]: any }>
+      | ({ [index: string]: any } & { key: React.Key }),
+  ) => {
     form.setFieldsValue(record);
     setEditingKey(record.key);
   };
@@ -88,7 +93,9 @@ const EditableTable: React.FC<InterfaceEditableTable> = ({
       const row = (await form.validateFields()) as Item;
 
       const newData = [...tableData];
-      const index = newData.findIndex((item) => key === item.key);
+      const index = newData.findIndex(
+        (item: { [index: string]: any }) => key === item.key,
+      );
       if (index > -1) {
         const item = newData[index];
         newData.splice(index, 1, {
@@ -108,12 +115,12 @@ const EditableTable: React.FC<InterfaceEditableTable> = ({
     }
   };
 
-  const tableColumns = [
+  const tableColumns: ColumnItem[] | { [index: string]: any }[] = [
     ...columns,
     {
       title: "operation",
       dataIndex: "operation",
-      render: (_: any, record: object) => {
+      render: (_: any, record: { [index: string]: any }) => {
         const editable = isEditing(record);
         return editable ? (
           <span>
@@ -157,7 +164,7 @@ const EditableTable: React.FC<InterfaceEditableTable> = ({
 
   const expandedRowRender = (props: object) => {
     if (props && "subItems" in props && subColumns) {
-      const subItems: object[] = props["subItems"];
+      const subItems: any = props["subItems"];
       return (
         <Table columns={subColumns} dataSource={subItems} pagination={false} />
       );

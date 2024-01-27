@@ -7,7 +7,7 @@ const { Column } = Table;
 
 interface InterfacePathTable {
   items: PathTableItem[];
-  setPathTableData: Dispatch<object[]>;
+  setPathTableData: Dispatch<PathTableItem[]>;
 }
 
 const PathTable: React.FC<InterfacePathTable> = ({
