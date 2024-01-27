@@ -18,21 +18,6 @@ export default function ApplicationGroups() {
   const [messageApi, contextHolder] = message.useMessage();
   const [applicationGroups, setApplicationGroups] = useState({});
 
-  const onGroupNameChange = (newName: string, groupId: number) => {
-    let formData: object = {
-      applicationGroupId: groupId,
-      applicationGroupName: newName,
-    };
-
-    request({
-      url: "http://localhost:5000/update-application-groups",
-      method: "POST",
-      postData: formData,
-    });
-
-    messageSuccess(messageApi, "Bussiness process name successfully changed.");
-  };
-
   useEffect(() => {
     const responseData: Promise<Response> = request({
       url: "http://localhost:5000/application-groups",
@@ -109,6 +94,7 @@ export default function ApplicationGroups() {
           );
           return {
             key: index.toString(),
+            pathId: pathId,
             pathName: pathItem.path_name,
             informationSystems: pathItem.information_systems.join(","),
             subItems: devices,
@@ -124,6 +110,31 @@ export default function ApplicationGroups() {
     },
   );
 
+  const onGroupNameChange = (newName: string, groupId: number) => {
+    let formData: object = {
+      applicationGroupId: groupId,
+      applicationGroupName: newName,
+    };
+
+    request({
+      url: "http://localhost:5000/update-application-groups",
+      method: "POST",
+      postData: formData,
+    });
+
+    messageSuccess(messageApi, "Bussiness process name successfully changed.");
+  };
+
+  const onTableSave = (newData: object) => {
+    request({
+      url: "http://localhost:5000/update-application-groups",
+      method: "POST",
+      postData: newData,
+    });
+
+    messageSuccess(messageApi, "Data successfully changed.");
+  };
+
   return (
     <CustomLayout>
       {contextHolder}
@@ -133,6 +144,7 @@ export default function ApplicationGroups() {
             <div style={{ marginBottom: "50px" }}>
               <EditableTable
                 data={group["paths"]}
+                onSave={onTableSave}
                 columns={columns}
                 subColumns={subColumns}
                 title={

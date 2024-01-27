@@ -122,7 +122,7 @@ def update_application_groups(req_json):
         elif field == "informationSystems":
             topology_db_client.remove_data([("path_id", req_json["pathId"])], "information_systems")
             information_systems = []
-            for item in data:
+            for item in data.split(","):
                 if item:
                     information_systems.append({"path_id": req_json["pathId"], "information_system": item})
             if information_systems:
