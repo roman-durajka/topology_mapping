@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { message, Empty } from "antd";
 
-import CustomLayout from "../CustomLayout";
-import { messageLoading, messageSuccess } from "../message";
+import CustomLayout from "./CustomLayout";
+import { messageLoading, messageSuccess } from "./message";
 import request from "./Requester";
 import { ColumnItem, SubColumnGroup } from "./types";
 import EditableTable from "./EditableTable";

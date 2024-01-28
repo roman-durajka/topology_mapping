@@ -18,12 +18,6 @@ function request({ url, method, postData }: RequesterProps) {
   }
 
   return fetch(url, requestOptions);
-  //.then((response) => response.json())
-  //.then((data) => {
-  //return data;
-  //if (setState) {
-  //  setState(data);
-  //}
 }
 
 export default request;

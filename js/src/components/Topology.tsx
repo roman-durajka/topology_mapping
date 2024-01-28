@@ -2,13 +2,13 @@ import { useEffect, useRef, useState } from "react";
 import { message } from "antd";
 
 import request from "./Requester";
-import { messageError, messageSuccess, messageLoading } from "../message";
+import { messageError, messageSuccess, messageLoading } from "./message";
 import {
   TopologyConnector,
   addPathFormObject,
   addDeviceFormObject,
 } from "../TopologyConnector";
-import CustomLayout from "../CustomLayout";
+import CustomLayout from "./CustomLayout";
 
 import Modal from "./Modal";
 import Form from "./Form";
