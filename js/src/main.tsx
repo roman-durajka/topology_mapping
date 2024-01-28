@@ -1,12 +1,12 @@
 import ReactDOM from "react-dom/client";
-import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import { createHashRouter, RouterProvider } from "react-router-dom";
 
 import Topology from "./components/Topology.tsx";
 import ErrorPage from "./Error.tsx";
 import "./index.css";
 import ApplicationGroups from "./components/ApplicationGroups.tsx";
 
-const router = createBrowserRouter([
+const router = createHashRouter([
   {
     path: "/",
     element: <Topology />,

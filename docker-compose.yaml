@@ -14,12 +14,14 @@ services:
         volumes:
          - .:/src
     web:
-        image: nginx
         container_name: web_con
+        build:
+          context: ./js
+          dockerfile: Dockerfile
         ports:
          - "8000:80"
         volumes:
-         - ./src:/usr/share/nginx/html
+         - .:/src
         networks:
          - inside_net
     db:
@@ -37,17 +39,6 @@ services:
          - ./dumps:/docker-entrypoint-initdb.d
         networks:
          - inside_net
-    node:
-        container_name: node_con
-        build:
-          context: ./js
-          dockerfile: Dockerfile
-        ports:
-          - "3000:3000"
-        networks:
-          - inside_net
-        volumes:
-          - ./src:/usr/share/nginx/html
 
 networks:
   inside_net:

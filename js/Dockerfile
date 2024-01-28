@@ -1,10 +1,12 @@
-FROM node:alpine
-#ENV NODE_ENV production
+FROM node:alpine as development
+
 WORKDIR /app
-COPY ./package.json ./package-lock.json ./
+COPY package*.json .
 RUN npm install
-COPY --chown=node:node . .
-#RUN npm ci --only=production
+
+COPY . .
 RUN npm run build
-USER node
-CMD ["npm", "run", "preview"]
+
+FROM nginx:stable-alpine as production
+COPY --from=development /app/dist /usr/share/nginx/html
+COPY --from=development /app/src/next_ui/*.js /usr/share/nginx/html/src/next_ui/
