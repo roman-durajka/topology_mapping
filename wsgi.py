@@ -30,7 +30,7 @@ def add_path():
     result = {}
     try:
         path_json = path.add_path(req_json)
-        result.update(path_json)
+        result["data"] = path_json
         result["code"] = 200
     except Exception as error:
         result["error"] = str(error)

@@ -1,6 +1,12 @@
 CREATE DATABASE `topology` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci */;
 USE `topology`;
 
+CREATE TABLE `application_groups` (
+    `id` int(11) NOT NULL AUTO_INCREMENT,
+    `name` VARCHAR(255) NOT NULL,
+    PRIMARY KEY (`id`)
+);
+
 CREATE TABLE `information_systems` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `path_id` int(11) DEFAULT NULL,
@@ -24,6 +30,7 @@ CREATE TABLE `paths` (
   `color` text DEFAULT NULL,
   `asset_value` int(11) DEFAULT NULL,
   `name` text DEFAULT NULL,
+  `application_group_id` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=108 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 

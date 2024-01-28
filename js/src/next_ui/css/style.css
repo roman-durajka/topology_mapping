@@ -1,0 +1,25 @@
+.source-link-label {
+    font-size: 7px;
+    fill: black;
+}
+
+.target-link-label {
+    font-size: 7px;
+    fill: black;
+}
+
+.link-labelText {
+    font-size: 20px;
+    text-shadow: 0 0 1px black, 0 0 1px black, 0 0 1px black, 0 0 1px black;
+    font-family: 'Ubuntu', sans-serif;
+}
+
+.popover {
+    max-width: 1980px !important;
+    max-height: 1080px;
+}
+
+.li-indent {
+    margin-left: 35px;
+    padding: 0;
+}
