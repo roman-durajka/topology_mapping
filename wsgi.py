@@ -153,5 +153,26 @@ def add_device():
     return jsonify(result)
 
 
+# ENDPOINTS TO UPDATE TOPOLOGY DATA USING PREDEFINED SCHEME
+
+@app.route('/scheme-update', methods=['POST'])
+def scheme_update():
+    """
+    Endpoint to update topology data in db using scheme uploaded by user.
+
+    :return: data in json format and status code
+    """
+    req_json = request.json
+    result = {}
+    try:
+        result["error"] = str(req_json)
+        result["code"] = 200
+    except Exception as error:
+        result["error"] = str(error)
+        result["code"] = 500
+
+    return jsonify(result)
+
+
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5000, debug=True)

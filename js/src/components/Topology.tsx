@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { message } from "antd";
+import { Button, Flex, message } from "antd";
 
 import request from "./Requester";
 import { messageError, messageSuccess, messageLoading } from "./message";
@@ -14,6 +14,8 @@ import Modal from "./Modal";
 import Form from "./Form";
 import PathTable from "./PathTable";
 import { PathTableItem } from "./types";
+import { DownloadOutlined } from "@ant-design/icons";
+import UploadButton from "./UploadButton";
 
 function Topology() {
   const [messageApi, contextHolder] = message.useMessage();
@@ -120,6 +122,24 @@ function Topology() {
           formItems={addDeviceFormObject}
           onFinishFun={addDeviceFormSubmit}
         />
+      }
+    />,
+    <Modal
+      title="Import scheme"
+      children={
+        <>
+          <Flex vertical gap="middle" justify="center" align="center">
+            <Button
+              icon={<DownloadOutlined />}
+              size="large"
+              href="import-scheme.json"
+              download
+            >
+              Download blank scheme
+            </Button>
+            <UploadButton />
+          </Flex>
+        </>
       }
     />,
   ];

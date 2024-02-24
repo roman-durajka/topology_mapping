@@ -1,0 +1,81 @@
+{
+  "devices": [
+    {
+      "device_id": 1,
+      "hostname": "example.fsf.org",
+      "sysName": "R1",
+      "version": "15.0(2)SE",
+      "hardware": "WS-C2960-24TT-L",
+      "os": "ios",
+      "type": "server"
+    }
+  ],
+  "ports": [
+    {
+      "port_id": 100,
+      "device_id": 1,
+      "ifName": "Fa0/0",
+      "ifDescr": "FastEthernet0/0",
+      "ifOperStatus": "down",
+      "ifType": "ethernetCsmacd",
+      "ifPhysAddress": "0012a3456b00",
+      "ifVlan": "10"
+    }
+  ],
+  "ipv4_networks": [
+    {
+      "ipv4_network_id": 15,
+      "ipv4_network": "192.168.1.0/24"
+    }
+  ],
+  "ipv4_addresses": [
+    {
+      "ipv4_address_id": 5,
+      "ipv4_network_id": 15,
+      "port_id": 100,
+      "ipv4_address": "192.168.1.1",
+      "ipv4_prefixlen": 24
+    }
+  ],
+  "ipv4_mac": [
+    {
+      "port_id": 100,
+      "device_id": 1,
+      "mac_address": "0012a3456b00",
+      "ipv4_address": "192.168.1.1"
+    }
+  ],
+  "links": [
+    {
+      "local_port_id": 100,
+      "local_device_id": 1,
+      "remote_port_id": 200,
+      "remote_device_id": 2,
+      "protocol": "cdp"
+    }
+  ],
+  "ports_fdb": [
+    {
+      "port_id": 100,
+      "mac_address": "99999a01ab0a",
+      "vlan_id": 10,
+      "device_id": 1
+    }
+  ],
+  "route": [
+    {
+      "device_id": 1,
+      "port_id": 100,
+      "inetCidrRouteDest": "192.168.3.0",
+      "inetCidrRoutePfxLen": 24,
+      "inetCidrRouteNextHop": "192.168.2.1"
+    }
+  ],
+  "vlans": [
+    {
+      "device_id": 1,
+      "vlan_vlan": 10,
+      "vlan_name": "BlackHole"
+    }
+  ]
+}

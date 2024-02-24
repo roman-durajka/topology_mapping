@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Button, Modal } from "antd";
+import { Button, Divider, Modal } from "antd";
 
 interface InterfaceModal {
   children: React.ReactNode;
@@ -40,6 +40,7 @@ const CustomModal: React.FC<InterfaceModal> = ({ title, children }) => {
         onCancel={handleCancel}
         footer={null}
       >
+        <Divider />
         {children}
       </Modal>
     </>
