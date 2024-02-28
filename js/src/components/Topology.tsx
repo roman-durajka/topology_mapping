@@ -137,7 +137,7 @@ function Topology() {
             >
               Download blank scheme
             </Button>
-            <UploadButton />
+            <UploadButton url="http://localhost:5000/scheme-update" />
           </Flex>
         </>
       }

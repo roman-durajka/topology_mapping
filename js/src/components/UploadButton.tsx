@@ -7,13 +7,13 @@ import request from "./Requester";
 
 const props: UploadProps = {
   name: "file",
-  action: "http://localhost:5000/scheme-update",
+  action: "",
   headers: {
     authorization: "authorization-text",
     "content-type": "application/json",
   },
   accept: ".json",
-  customRequest({ onSuccess, onError, file }) {
+  customRequest({ onSuccess, onError, file, action }) {
     const fileReader = new FileReader();
     fileReader.onload = (e) => {
       let formData: object = {};
@@ -25,7 +25,7 @@ const props: UploadProps = {
       }
 
       const responseData: Promise<Response> = request({
-        url: "http://localhost:5000/scheme-update",
+        url: action as string,
         method: "POST",
         postData: formData,
       });
@@ -57,19 +57,27 @@ const props: UploadProps = {
   },
 };
 
-const UploadButton: React.FC = () => (
-  <Dragger {...props}>
-    <p className="ant-upload-drag-icon">
-      <InboxOutlined />
-    </p>
-    <p className="ant-upload-text">
-      Click or drag file to this area to upload files
-    </p>
-    <p className="ant-upload-hint">
-      Here you should upload scheme filled with data you want to insert into
-      database.
-    </p>
-  </Dragger>
-);
+interface InterfaceUploadButton {
+  url: string;
+}
+
+const UploadButton: React.FC<InterfaceUploadButton> = ({ url }) => {
+  props.action = url;
+
+  return (
+    <Dragger {...props}>
+      <p className="ant-upload-drag-icon">
+        <InboxOutlined />
+      </p>
+      <p className="ant-upload-text">
+        Click or drag file to this area to upload files
+      </p>
+      <p className="ant-upload-hint">
+        Here you should upload scheme filled with data you want to insert into
+        database.
+      </p>
+    </Dragger>
+  );
+};
 
 export default UploadButton;
