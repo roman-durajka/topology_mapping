@@ -33,6 +33,7 @@ const props: UploadProps = {
       responseData
         .then((response) => response.json())
         .then((data) => {
+          // CHECK FOR ERRORS ----------------------------------------------------------------------------------------------------------
           if (onSuccess) onSuccess(data);
         })
         .catch((error) => {

@@ -16,6 +16,7 @@ import PathTable from "./PathTable";
 import { PathTableItem } from "./types";
 import { DownloadOutlined } from "@ant-design/icons";
 import UploadButton from "./UploadButton";
+import generateJsonFile from "./scheme";
 
 function Topology() {
   const [messageApi, contextHolder] = message.useMessage();
@@ -132,7 +133,7 @@ function Topology() {
             <Button
               icon={<DownloadOutlined />}
               size="large"
-              href="import-scheme.json"
+              href={generateJsonFile(connector.current)}
               download
             >
               Download blank scheme
