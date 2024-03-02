@@ -66,7 +66,7 @@ class MariaDBClient:
 
         return self.__parse_cursor_data(table_name, *args)
 
-    def insert_data(self, data: list, table_name: str):
+    def insert_data(self, data: list, table_name: str, commit: bool = True):
         for record in data:
             for key, value in record.items():
                 if isinstance(value, dict) or isinstance(value, list):
@@ -80,6 +80,7 @@ class MariaDBClient:
 
             query = f"REPLACE INTO {table_name} ({columns}) VALUES ({placeholders});"
             self.cursor.execute(query, values)
+        if commit:
             self.connection.commit()
 
     def remove_data(self, conditions: list[tuple], table_name: str):
@@ -125,3 +126,8 @@ class MariaDBClient:
             self.cursor.execute(query, values)
             self.connection.commit()
 
+    def commit(self):
+        self.connection.commit()
+
+    def rollback(self):
+        self.connection.rollback()

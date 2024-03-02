@@ -2,7 +2,7 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 import path
 import main
-from modules import asset_mapper
+from modules import asset_mapper, topology_updater
 
 
 app = Flask(__name__)
@@ -165,7 +165,7 @@ def scheme_update():
     req_json = request.json
     result = {}
     try:
-        result["error"] = str(req_json)
+        topology_updater.update_db_from_scheme(req_json)
         result["code"] = 200
     except Exception as error:
         result["error"] = str(error)

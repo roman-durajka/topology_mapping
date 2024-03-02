@@ -41,13 +41,14 @@ def load_topology_from_db(topology_db_client, librenms_db_client) -> dict:
         interfaces = {}
 
         for interface_data in librenms_db_client.get_data("ports", [("device_id", node["id"])]):
+            port_id = interface_data["port_id"]
             status = interface_data["ifOperStatus"]
             mac_address = interface_data["ifPhysAddress"]
             ip_address = None
-            ip_address_record = librenms_db_client.get_data("ipv4_addresses", [("port_id", interface_data["port_id"])])
+            ip_address_record = librenms_db_client.get_data("ipv4_addresses", [("port_id", port_id)])
             if ip_address_record:
                 ip_address = ip_address_record[0]["ipv4_address"]
-            interface_string = f"{status}/{ip_address}/{mac_address}"
+            interface_string = f"{port_id}/{status}/{ip_address}/{mac_address}"
             interface_name = interface_data["ifName"]
 
             interfaces.update({interface_name: interface_string})
@@ -183,7 +184,7 @@ def generate_js_data_json(devices: list, relations: RelationsContainer) -> dict:
 
         interfaces = {}
         for key, value in device.interfaces.items():
-            interface_string = f"{value['status']}/{value['ip_address']}/{value['mac_address']}"
+            interface_string = f"{key}/{value['status']}/{value['ip_address']}/{value['mac_address']}"
             interfaces.update({value["name"]: interface_string})
         device_to_add.update({"interfaces": interfaces})
 

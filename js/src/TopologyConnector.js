@@ -177,6 +177,22 @@ export class TopologyConnector {
     return maxID + 1;
   }
 
+  getIfStartingIndex() {
+    let nodes = this.topology.getLayer("nodes").nodes();
+    let maxID = 0;
+    nodes.map((node) => {
+      const if_data = node.model().get("interfaces");
+      Object.entries(if_data).map(([key, value]) => {
+        const ifIndex = parseInt(value.split("/")[0], 10);
+        if (ifIndex > maxID) {
+          maxID = ifIndex;
+        }
+      });
+    });
+
+    return maxID + 1;
+  }
+
   addDevice(deviceData) {
     this.topology.addNode(deviceData);
   }

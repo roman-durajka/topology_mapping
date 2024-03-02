@@ -99,7 +99,7 @@ nx.define("NodeTooltipExtension", nx.ui.Component, {
                 },
                 {
                   tag: "span",
-                  content: "(status/ip/mac)",
+                  content: "(id/status/ip/mac)",
                 },
                 {
                   name: "if-list",

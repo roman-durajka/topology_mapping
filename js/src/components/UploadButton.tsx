@@ -1,7 +1,7 @@
 import React from "react";
 import { InboxOutlined } from "@ant-design/icons";
 import type { UploadProps } from "antd";
-import { message } from "antd";
+import { message, notification } from "antd";
 import Dragger from "antd/es/upload/Dragger";
 import request from "./Requester";
 
@@ -33,7 +33,9 @@ const props: UploadProps = {
       responseData
         .then((response) => response.json())
         .then((data) => {
-          // CHECK FOR ERRORS ----------------------------------------------------------------------------------------------------------
+          if (data.code != 200) {
+            throw new Error(data.error);
+          }
           if (onSuccess) onSuccess(data);
         })
         .catch((error) => {
@@ -50,7 +52,13 @@ const props: UploadProps = {
     if (info.file.status === "done") {
       message.success(`${info.file.name} file uploaded successfully.`);
     } else if (info.file.status === "error") {
-      message.error(`${info.file.name} file upload failed.`);
+      //message.error(`${info.file.name} file upload failed.`);
+      notification.error({
+        message: "Could not process scheme",
+        description: info.file.error.message,
+        placement: "top",
+        duration: 0,
+      });
     }
   },
   onDrop(e) {

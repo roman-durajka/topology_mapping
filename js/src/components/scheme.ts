@@ -8,7 +8,7 @@ function generateJsonFile(
     let resultingJson: string =
       "########## START WITH THESE VALUES WHEN ADDING NEW NODES AND INTERFACES, THEN DELETE THIS COMMMENT\n";
     resultingJson += `device_id: ${topologyConnector.getNodeStartingIndex()}\n`;
-    resultingJson += `port_id: ${topologyConnector.getPathStartingIndex()}\n`;
+    resultingJson += `port_id: ${topologyConnector.getIfStartingIndex()}\n`;
     resultingJson += "##########\n\n";
 
     resultingJson += JSON.stringify(originalJson);

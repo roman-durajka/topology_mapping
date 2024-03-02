@@ -7,7 +7,7 @@
       "version": "15.0(2)SE",
       "hardware": "WS-C2960-24TT-L",
       "os": "ios",
-      "type": "server"
+      "type": "network/server"
     }
   ],
   "ports": [
@@ -16,7 +16,7 @@
       "device_id": 1,
       "ifName": "Fa0/0",
       "ifDescr": "FastEthernet0/0",
-      "ifOperStatus": "down",
+      "ifOperStatus": "up",
       "ifType": "ethernetCsmacd",
       "ifPhysAddress": "0012a3456b00",
       "ifVlan": "10"

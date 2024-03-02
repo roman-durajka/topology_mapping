@@ -1,6 +1,6 @@
 from extractors import MacExtractor, IPExtractor, DeviceExtractor, DPExtractor
 from modules.clients import MariaDBClient
-from modules import entities, topology_generator, asset_mapper
+from modules import entities, topology_generator
 import sys
 
 
