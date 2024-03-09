@@ -1,78 +1,13 @@
 import React from "react";
 import { InboxOutlined } from "@ant-design/icons";
 import type { UploadProps } from "antd";
-import { message, notification } from "antd";
 import Dragger from "antd/es/upload/Dragger";
-import request from "./Requester";
-
-const props: UploadProps = {
-  name: "file",
-  action: "",
-  headers: {
-    authorization: "authorization-text",
-    "content-type": "application/json",
-  },
-  accept: ".json",
-  customRequest({ onSuccess, onError, file, action }) {
-    const fileReader = new FileReader();
-    fileReader.onload = (e) => {
-      let formData: object = {};
-      try {
-        if (e.target) formData = JSON.parse(e.target.result as string);
-      } catch (error) {
-        if (onError) onError(error as ProgressEvent<EventTarget>, file);
-        return;
-      }
-
-      const responseData: Promise<Response> = request({
-        url: action as string,
-        method: "POST",
-        postData: formData,
-      });
-
-      responseData
-        .then((response) => response.json())
-        .then((data) => {
-          if (data.code != 200) {
-            throw new Error(data.error);
-          }
-          if (onSuccess) onSuccess(data);
-        })
-        .catch((error) => {
-          if (onError) onError(error, file);
-        });
-    };
-
-    fileReader.readAsText(file as Blob);
-  },
-  onChange(info) {
-    if (info.file.status !== "uploading") {
-      console.log(info.file, info.fileList);
-    }
-    if (info.file.status === "done") {
-      message.success(`${info.file.name} file uploaded successfully.`);
-    } else if (info.file.status === "error") {
-      //message.error(`${info.file.name} file upload failed.`);
-      notification.error({
-        message: "Could not process scheme",
-        description: info.file.error.message,
-        placement: "top",
-        duration: 0,
-      });
-    }
-  },
-  onDrop(e) {
-    console.log("Dropped files", e.dataTransfer.files);
-  },
-};
 
 interface InterfaceUploadButton {
-  url: string;
+  props: UploadProps;
 }
 
-const UploadButton: React.FC<InterfaceUploadButton> = ({ url }) => {
-  props.action = url;
-
+const UploadButton: React.FC<InterfaceUploadButton> = ({ props }) => {
   return (
     <Dragger {...props}>
       <p className="ant-upload-drag-icon">

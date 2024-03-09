@@ -3,7 +3,7 @@ from flask_cors import CORS
 import path
 import main
 from modules import asset_mapper, topology_updater
-
+from modules.exceptions import DuplicitDBEntry, CommonDBError
 
 app = Flask(__name__)
 CORS(app)
@@ -166,6 +166,28 @@ def scheme_update():
     result = {}
     try:
         topology_updater.update_db_from_scheme(req_json)
+        result["code"] = 200
+    except DuplicitDBEntry as error:
+        result["error"] = str(error)
+        result["code"] = 409
+    except Exception as error:
+        result["error"] = str(error)
+        result["code"] = 500
+
+    return jsonify(result)
+
+
+@app.route('/scheme-replace', methods=['POST'])
+def scheme_replace():
+    """
+    Endpoint to replace already uploaded data that were already in DB.
+
+    :return: data in json format and status code
+    """
+    req_json = request.json
+    result = {}
+    try:
+        topology_updater.update_db_from_scheme(req_json, True)
         result["code"] = 200
     except Exception as error:
         result["error"] = str(error)

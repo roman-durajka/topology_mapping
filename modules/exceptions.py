@@ -20,3 +20,11 @@ class DifferentNetworksError(Exception):
 
 class VirtualInterfaceFound(Exception):
     pass
+
+
+class DuplicitDBEntry(Exception):
+    pass
+
+
+class CommonDBError(Exception):
+    pass

@@ -16,7 +16,7 @@ import PathTable from "./PathTable";
 import { PathTableItem } from "./types";
 import { DownloadOutlined } from "@ant-design/icons";
 import UploadButton from "./UploadButton";
-import generateJsonFile from "./scheme";
+import { generateJsonFile, SchemeUploadButtonProps } from "./Scheme";
 
 function Topology() {
   const [messageApi, contextHolder] = message.useMessage();
@@ -138,7 +138,7 @@ function Topology() {
             >
               Download blank scheme
             </Button>
-            <UploadButton url="http://localhost:5000/scheme-update" />
+            <UploadButton props={SchemeUploadButtonProps} />
           </Flex>
         </>
       }

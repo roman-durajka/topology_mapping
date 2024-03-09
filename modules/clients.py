@@ -50,11 +50,11 @@ class MariaDBClient:
         """
         statement = f"SELECT {','.join(args) if args else '*'} from {table_name}"
         if queries:
-            statement += f" WHERE"
+            statement += " WHERE"
             first = True
             for query in queries:
                 if not first:
-                    statement += f" AND"
+                    statement += " AND"
                 statement += f" {query[0]}=\'{query[1]}\'"
                 first = False
 
@@ -125,6 +125,56 @@ class MariaDBClient:
 
             self.cursor.execute(query, values)
             self.connection.commit()
+
+    def __parse_columns(self, data: list[tuple], without_default: bool, primary_key: bool):
+        parsed_data = []
+
+        for record in data:
+            auto_increment = "auto_increment" in record[3]
+            is_primary_key = record[4] == "PRI"
+            if without_default and (record[2] or auto_increment):
+                continue
+            if primary_key and not is_primary_key:
+                continue
+            parsed_data.append(record[0])
+
+        return parsed_data
+
+    def get_columns(self, table_name: str, not_null: bool = False, without_default: bool = False, primary_key: bool = False):
+        """Returns list of str in format [column_name]."""
+        statement = f"SELECT COLUMN_NAME, DATA_TYPE, COLUMN_DEFAULT, EXTRA, COLUMN_KEY FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = '{table_name}'"
+        if not_null:
+            statement += " AND IS_NULLABLE = 'NO'"
+
+        try:
+            self.cursor.execute(statement)
+        except mariadb.Error as error:
+            raise NotFoundError("ERROR: Could not execute db statement. Are you sure you loaded all database"
+                                f" data correctly? Detailed message: {error}")
+
+        parsed_data = self.__parse_columns(self.cursor.fetchall(), without_default, primary_key)
+        return parsed_data
+
+    def __parse_column_data_types(self, data: list[tuple]):
+        parsed_data = {}
+
+        for record in data:
+            parsed_data.update({record[0]: record[1]})
+
+        return parsed_data
+
+    def get_column_data_types(self, table_name: str):
+        """Returns list of str in format [column_name]."""
+        statement = f"SELECT COLUMN_NAME, DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = '{table_name}'"
+
+        try:
+            self.cursor.execute(statement)
+        except mariadb.Error as error:
+            raise NotFoundError("ERROR: Could not execute db statement. Are you sure you loaded all database"
+                                f" data correctly? Detailed message: {error}")
+
+        parsed_data = self.__parse_column_data_types(self.cursor.fetchall())
+        return parsed_data
 
     def commit(self):
         self.connection.commit()
