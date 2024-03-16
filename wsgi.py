@@ -2,8 +2,8 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 import path
 import main
-from modules import asset_mapper, topology_updater
-from modules.exceptions import DuplicitDBEntry, CommonDBError
+from modules import asset_mapper, scheme_import_librenms
+from modules.exceptions import DuplicitDBEntry
 
 app = Flask(__name__)
 CORS(app)
@@ -165,11 +165,15 @@ def scheme_update():
     req_json = request.json
     result = {}
     try:
-        topology_updater.update_db_from_scheme(req_json)
+        scheme_importer = scheme_import_librenms.SchemeImportLibreNMS(req_json)
+        scheme_importer.update_db_from_scheme()
         result["code"] = 200
     except DuplicitDBEntry as error:
         result["error"] = str(error)
         result["code"] = 409
+    except KeyError as error:
+        result["error"] = f"Key error somewhere in the code: {error}. Can't tell you more without debugging..."
+        result["code"] = 500
     except Exception as error:
         result["error"] = str(error)
         result["code"] = 500
@@ -187,8 +191,12 @@ def scheme_replace():
     req_json = request.json
     result = {}
     try:
-        topology_updater.update_db_from_scheme(req_json, True)
+        scheme_importer = scheme_import_librenms.SchemeImportLibreNMS(req_json)
+        scheme_importer.update_db_from_scheme(True)
         result["code"] = 200
+    except KeyError as error:
+        result["error"] = f"Key error somewhere in the code: {error}. Can't tell you more without debugging..."
+        result["code"] = 500
     except Exception as error:
         result["error"] = str(error)
         result["code"] = 500

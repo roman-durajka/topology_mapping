@@ -22,16 +22,8 @@
       "ifVlan": "10"
     }
   ],
-  "ipv4_networks": [
-    {
-      "ipv4_network_id": 15,
-      "ipv4_network": "192.168.1.0/24"
-    }
-  ],
   "ipv4_addresses": [
     {
-      "ipv4_address_id": 5,
-      "ipv4_network_id": 15,
       "port_id": 100,
       "ipv4_address": "192.168.1.1",
       "ipv4_prefixlen": 24
@@ -58,7 +50,7 @@
     {
       "port_id": 100,
       "mac_address": "99999a01ab0a",
-      "vlan_id": 10,
+      "vlan_vlan": 10,
       "device_id": 1
     }
   ],

@@ -28,3 +28,13 @@ class DuplicitDBEntry(Exception):
 
 class CommonDBError(Exception):
     pass
+
+
+class MissingFKError(CommonDBError):
+    def __init__(self, table_name: str, record_index: int, key: str):
+        self.table_name = table_name
+        self.record_index = record_index
+        self.key = key
+
+    def __str__(self):
+        return f"FK does not exist for table: {self.table_name}, record: {self.record_index}, key: {self.key}"
