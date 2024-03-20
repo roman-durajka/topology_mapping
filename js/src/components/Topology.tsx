@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Button, Flex, message } from "antd";
+import { Button, Flex, message, notification } from "antd";
 
 import request from "./Requester";
 import { messageError, messageSuccess, messageLoading } from "./message";
@@ -69,6 +69,15 @@ function Topology() {
     responseData
       .then((response) => response.json())
       .then((data) => {
+        if (data.code != 200) {
+          notification.error({
+            message: "Could not add path to topology",
+            description: data.error,
+            placement: "top",
+            duration: 0,
+          });
+          return;
+        }
         //add paths to topology
         connector.current.addPath(data.data);
         //add paths to path table
