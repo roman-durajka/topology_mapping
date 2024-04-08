@@ -1,6 +1,15 @@
 import React, { ReactNode, useState } from "react";
-import { Form, Input, InputNumber, Popconfirm, Table, Typography } from "antd";
-import { ColumnItem, SubColumnGroup } from "./types";
+import {
+  Button,
+  Form,
+  Input,
+  InputNumber,
+  Popconfirm,
+  Table,
+  Typography,
+} from "antd";
+import { PlusOutlined } from "@ant-design/icons";
+import { ColumnItem } from "./types";
 
 interface Item {
   key: string;
@@ -57,7 +66,7 @@ interface InterfaceEditableTable {
   data: object[];
   columns: ColumnItem[];
   onSave: (...args: any) => void;
-  subColumns?: SubColumnGroup[];
+  allowAdditions?: boolean;
   title?: ReactNode;
 }
 
@@ -65,7 +74,7 @@ const EditableTable: React.FC<InterfaceEditableTable> = ({
   data,
   columns,
   onSave,
-  subColumns,
+  allowAdditions,
   title,
 }) => {
   const [form] = Form.useForm();
@@ -115,69 +124,131 @@ const EditableTable: React.FC<InterfaceEditableTable> = ({
     }
   };
 
-  const tableColumns: ColumnItem[] | { [index: string]: any }[] = [
-    ...columns,
-    {
-      title: "operation",
-      dataIndex: "operation",
-      render: (_: any, record: { [index: string]: any }) => {
-        const editable = isEditing(record);
-        return editable ? (
-          <span>
-            <Typography.Link
-              onClick={() => save(record.key)}
-              style={{ marginRight: 8 }}
-            >
-              Save
-            </Typography.Link>
-            <Popconfirm title="Sure to cancel?" onConfirm={cancel}>
-              <a>Cancel</a>
-            </Popconfirm>
-          </span>
-        ) : (
-          <Typography.Link
-            disabled={editingKey !== ""}
-            onClick={() => edit(record)}
-          >
-            Edit
-          </Typography.Link>
-        );
+  const tableColumnsFun: () => object[] = () => {
+    let allowEditing: boolean = false;
+    Object.keys(columns).map((columnKey: string) => {
+      if (columns[columnKey]["editable"]) {
+        allowEditing = true;
+      }
+    });
+
+    if (!allowEditing) {
+      return columns;
+    }
+
+    return [
+      ...columns,
+      {
+        title: "operation",
+        dataIndex: "operation",
+        render: (_: any, record: { [index: string]: any }) => {
+          const editable = isEditing(record);
+          return editable ? (
+            <span>
+              <Typography.Link
+                onClick={() => save(record.key)}
+                style={{ marginRight: 8 }}
+              >
+                Save
+              </Typography.Link>
+              <Popconfirm title="Sure to cancel?" onConfirm={cancel}>
+                <a>Cancel</a>
+              </Popconfirm>
+            </span>
+          ) : (
+            <span>
+              <Typography.Link
+                disabled={editingKey !== ""}
+                onClick={() => edit(record)}
+                style={{ marginRight: 8 }}
+              >
+                Edit
+              </Typography.Link>
+              <Popconfirm
+                title="Sure to delete?"
+                onConfirm={() => {
+                  return;
+                }}
+              >
+                <a>Delete</a>
+              </Popconfirm>
+            </span>
+          );
+        },
       },
-    },
-  ];
-
-  const mergedColumns = tableColumns.map((col) => {
-    if (!col.editable) {
-      return col;
-    }
-    return {
-      ...col,
-      onCell: (record: object) => ({
-        record,
-        inputType: col.dataIndex === "age" ? "number" : "text",
-        dataIndex: col.dataIndex,
-        title: col.title,
-        editing: isEditing(record),
-      }),
-    };
-  });
-
-  const expandedRowRender = (props: object) => {
-    if (props && "subItems" in props && subColumns) {
-      const subItems: any = props["subItems"];
-      return (
-        <Table columns={subColumns} dataSource={subItems} pagination={false} />
-      );
-    }
-    return undefined;
+    ];
   };
+
+  const mergedColumns = tableColumnsFun().map(
+    (col: { [index: string]: any }) => {
+      if (!col.editable) {
+        return col;
+      }
+      return {
+        ...col,
+        onCell: (record: object) => ({
+          record,
+          inputType: col.dataIndex === "age" ? "number" : "text",
+          dataIndex: col.dataIndex,
+          title: col.title,
+          editing: isEditing(record),
+        }),
+      };
+    },
+  );
+
+  const expandedRowRender: (props: object) => ReactNode = (props: object) => {
+    if (props && "subComponent" in props) {
+      return props["subComponent"] as ReactNode;
+    }
+  };
+
+  const isExpandable: () => boolean = () => {
+    let expandable = false;
+    data.map((item: object) => {
+      if ("subComponent" in item) {
+        expandable = true;
+      }
+    });
+
+    if (expandable) {
+      return true;
+    }
+    return false;
+  };
+
+  // appends new row to table for user to add new data
+  const addNewRow: ReactNode | null = (() => {
+    if (!allowAdditions) {
+      return null;
+    }
+
+    return (
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          padding: "12px",
+          border: "1px solid #e8e8e8",
+          borderTop: "none",
+          backgroundColor: "#ffffff",
+          marginInline: "32px -16px",
+          marginTop: "18px",
+        }}
+      >
+        <Button
+          icon={<PlusOutlined />}
+          type="text"
+          className="ant-table-bordered"
+        />
+      </div>
+    );
+  })();
 
   return (
     <Form form={form} component={false}>
       <Table
-        expandable={{
-          expandedRowRender,
-        }}
+        expandable={isExpandable() ? { expandedRowRender } : undefined}
         components={{
           body: {
             cell: EditableCell,
@@ -190,6 +261,7 @@ const EditableTable: React.FC<InterfaceEditableTable> = ({
         pagination={false}
         title={title ? () => title : undefined}
       />
+      {addNewRow}
     </Form>
   );
 };

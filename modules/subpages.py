@@ -1,5 +1,5 @@
 from modules.clients import MariaDBClient
-from modules.exceptions import DuplicitDBEntry, CommonDBError, MissingFKError
+from modules.exceptions import DuplicitDBEntry, CommonDBError, MissingFKError, NotFoundError
 
 import ipaddress
 
@@ -335,3 +335,207 @@ class SchemeImportLibreNMS:
         topology_db_client = MariaDBClient("topology")
         topology_db_client.remove_data([("1", "1")], "relations")
         topology_db_client.remove_data([("1", "1")], "nodes")
+
+
+class Devices:
+    def __init__(self):
+        self.topology_db_client = MariaDBClient("topology")
+        self.librenms_db_client = MariaDBClient("librenms")
+
+    def __get_device_data(self, device_id: int):
+        """
+        Returns dict that contains basic data about device.
+
+        :param device_id: id of device
+        :return: dict containing basic device data
+        """
+        device_record = self.librenms_db_client.get_data("devices", [("device_id", device_id)])
+        if not device_record:
+            raise NotFoundError("Could not find device from topology inside librenms DB. How could this happen?")
+        device_record = device_record[0]
+
+        device_details = {
+            1: {
+                "detail_name": "Hardware Model",
+                "value": device_record["hardware"]
+            },
+            2: {
+                "detail_name": "OS",
+                "value": device_record["os"]
+            },
+            3: {
+                "detail_name": "Hostname",
+                "value": device_record["hostname"]
+            },
+            4: {
+                "detail_name": "Software Version",
+                "value": device_record["version"]
+            },
+            5: {
+                "detail_name": "Software",
+                "value": device_record["sysDescr"]
+            }
+        }
+
+        device_data = {
+            "name": device_record["sysName"],
+            "details": device_details
+        }
+
+        return device_data
+
+    def __get_device_interfaces(self, device_id: int):
+        """
+        Returns dict that contains device interfaces.
+
+        :param device_id: id of device
+        :return: dict containing device if data
+        """
+        interfaces = {}
+
+        interface_records = self.librenms_db_client.get_data("ports", [("device_id", device_id)])
+        for interface_record in interface_records:
+            interface_id = interface_record["port_id"]
+            ip_address_record = self.librenms_db_client.get_data("ipv4_addresses", [("port_id", interface_id)])
+            ip_address = "" if not ip_address_record else ip_address_record[0]["ipv4_address"]
+
+            interface_data = {
+                "if_id": interface_id,
+                "status": interface_record["ifOperStatus"],
+                "mac_address": interface_record["ifPhysAddress"],
+                "name": interface_record["ifName"],
+                "ip_address": ip_address
+            }
+
+            interfaces.update({interface_id: interface_data})
+
+        return interfaces
+
+    def __get_device_routing_table(self, device_id: int):
+        """
+        Returns device routing table.
+
+        :param device_id: id of device
+        :return: dict containing device routing table
+        """
+        routing_table = {}
+
+        routing_table_records = self.librenms_db_client.get_data("route", [("device_id", device_id)])
+        for record in routing_table_records:
+            route_id = record["route_id"]
+            if_record = self.librenms_db_client.get_data("ports", [("port_id", record["port_id"])])[0]
+
+            nexthop = record["inetCidrRouteNextHop"]
+            nexthop_device_name = ""
+            if nexthop not in ["0.0.0.0", "127.0.0.1"]:
+                ip_address_record = self.librenms_db_client.get_data("ipv4_addresses", [("ipv4_address", nexthop)])
+                if ip_address_record:
+                    ip_address_record = ip_address_record[0]
+                    nexthop_port_record = self.librenms_db_client.get_data("ports", [("port_id", ip_address_record["port_id"])])[0]
+                    nexthop_device_record = self.librenms_db_client.get_data("devices", [("device_id", nexthop_port_record["device_id"])])[0]
+                    nexthop_device_name = nexthop_device_record["sysName"]
+
+            route = {
+                "interface_id": record["port_id"],
+                "interface_name": if_record["ifName"],
+                "destination": record["inetCidrRouteDest"],
+                "destination_prefix": record["inetCidrRoutePfxLen"],
+                "nexthop": record["inetCidrRouteNextHop"],
+                "nexthop_name": nexthop_device_name
+            }
+
+            routing_table.update({route_id: route})
+
+        return routing_table
+
+    def __get_device_mac_table(self, device_id: int):
+        """
+        Returns device mac table.
+
+        :param device_id: id of device
+        :return: dict containing device mac table
+        """
+        mac_table = {}
+
+        mac_table_records = self.librenms_db_client.get_data("ports_fdb", [("device_id", device_id)])
+        for record in mac_table_records:
+            route_id = record["ports_fdb_id"]
+            vlan_id = record["vlan_id"]
+            vlan = self.librenms_db_client.get_data("vlans", [("vlan_id", vlan_id)])[0]["vlan_vlan"]
+
+            local_if_record = self.librenms_db_client.get_data("ports", [("port_id", record["port_id"])])[0]
+            remote_if_record = self.librenms_db_client.get_data("ports", [("ifPhysAddress", record["mac_address"])])
+            if not remote_if_record:  # there is no point in showing record that points to non-existing interface
+                continue
+            remote_if_record = remote_if_record[0]
+            remote_device_record = self.librenms_db_client.get_data("devices", [("device_id", remote_if_record["device_id"])])[0]
+
+            route = {
+                # local
+                "local_if_id": record["port_id"],
+                "local_if_name": local_if_record["ifName"],
+                "local_if_mac": local_if_record["ifPhysAddress"],
+                # destination
+                "destination_device": remote_device_record["sysName"],
+                "destination_if_id": remote_if_record["port_id"],
+                "destination_if_name": remote_if_record["ifName"],
+                "destination_mac": record["mac_address"],
+                "vlan": vlan
+            }
+
+            mac_table.update({route_id: route})
+
+        return mac_table
+
+    def __get_device_arp_table(self, device_id: int):
+        """
+        Returns device arp table. Every ARP record has to be tied to an interface (not neccessarily device).
+
+        :param device_id: id of device
+        :return: dict containing device arp table
+        """
+        arp_table = {}
+
+        arp_table_records = self.librenms_db_client.get_data("ipv4_mac", [("device_id", device_id)])
+        for record in arp_table_records:
+            arp_id = record["id"]
+            if_record = self.librenms_db_client.get_data("ports", [("port_id", record["port_id"])])[0]
+            if_name = if_record["ifName"]
+            arp_record = {
+                "outgoing_if_id": record["port_id"],
+                "outgoing_if": if_name,
+                "mac_address": record["mac_address"],
+                "ip_address": record["ipv4_address"]
+            }
+
+            arp_table.update({arp_id: arp_record})
+
+        return arp_table
+
+    def get_devices(self):
+        """
+        Returns all data about devices needed by subpage `devices`.Devices()
+
+        :return: dict
+        """
+        devices = {}
+        records = self.topology_db_client.get_data("nodes", None, "id")
+        for record in records:
+            device_id = record["id"]
+            device_data = self.__get_device_data(device_id)
+
+            interfaces = self.__get_device_interfaces(device_id)
+            device_data.update({"interfaces": interfaces})
+
+            routing_table = self.__get_device_routing_table(device_id)
+            device_data.update({"routing_table": routing_table})
+
+            mac_table = self.__get_device_mac_table(device_id)
+            device_data.update({"mac_table": mac_table})
+
+            arp_table = self.__get_device_arp_table(device_id)
+            device_data.update({"arp_table": arp_table})
+
+            devices.update({device_id: device_data})
+
+        return devices

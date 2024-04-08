@@ -60,15 +60,20 @@ export const addDeviceFormObject = [
 export class TopologyConnector {
   constructor() {
     this.topology = null;
+    this.application = null;
   }
 
-  init(componentElement) {
+  init() {
     let application = new window.nx.ui.Application();
     let topology = new window.nx.graphic.Topology(topologyConfig);
-    application.container(componentElement);
-    topology.attach(application, 0);
 
     this.topology = topology;
+    this.application = application;
+  }
+
+  attach(componentElement) {
+    this.application.container(componentElement);
+    this.topology.attach(this.application, 0);
   }
 
   loadTopology(topologyData) {

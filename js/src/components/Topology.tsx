@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Button, Flex, message, notification } from "antd";
 
 import request from "./Requester";
-import { messageError, messageSuccess, messageLoading } from "./message";
+import { messageSuccess, messageLoading } from "./message";
 import {
   TopologyConnector,
   addPathFormObject,
@@ -17,17 +17,21 @@ import { PathTableItem } from "./types";
 import { DownloadOutlined } from "@ant-design/icons";
 import UploadButton from "./UploadButton";
 import { generateJsonFile, SchemeUploadButtonProps } from "./Scheme";
+import { addDeviceFormSubmit } from "../helpers/addDevice";
 
-function Topology() {
+interface InterfaceTopology {
+  connector: TopologyConnector;
+}
+
+const Topology: React.FC<InterfaceTopology> = ({ connector }) => {
   const [messageApi, contextHolder] = message.useMessage();
   const topologyContainer = useRef(null);
   const [pathTableData, setPathTableData] = useState<PathTableItem[]>([]);
-  const connector = useRef(new TopologyConnector());
 
   //load once on startup
   useEffect(() => {
     if (topologyContainer.current) {
-      connector.current.init(topologyContainer.current);
+      connector.attach(topologyContainer.current);
       const responseData: Promise<Response> = request({
         url: "http://localhost:5000/topology",
         method: "GET",
@@ -35,7 +39,7 @@ function Topology() {
       messageLoading(messageApi, "Loading topology...");
       responseData
         .then((response) => response.json())
-        .then((data) => connector.current.loadTopology(data))
+        .then((data) => connector.loadTopology(data))
         .then(() => {
           const pathResponseData: Promise<Response> = request({
             url: "http://localhost:5000/load-paths",
@@ -45,9 +49,10 @@ function Topology() {
         })
         .then((response) => response.json())
         .then((data) => {
-          connector.current.loadPaths(data.data);
-          const pathTableData: PathTableItem[] =
-            connector.current.formatPathTableData(data.data);
+          connector.loadPaths(data.data);
+          const pathTableData: PathTableItem[] = connector.formatPathTableData(
+            data.data,
+          );
           setPathTableData(pathTableData);
           messageApi.destroy();
           messageSuccess(messageApi, "Topology loaded.");
@@ -58,7 +63,7 @@ function Topology() {
   const addPathFormSubmit = (props: object) => {
     const formData = {
       ...props,
-      startingIndex: connector.current.getPathStartingIndex(),
+      startingIndex: connector.getPathStartingIndex(),
     };
     const responseData: Promise<Response> = request({
       url: "http://localhost:5000/add-path",
@@ -79,42 +84,14 @@ function Topology() {
           return;
         }
         //add paths to topology
-        connector.current.addPath(data.data);
+        connector.addPath(data.data);
         //add paths to path table
-        const newPathTableData: PathTableItem[] =
-          connector.current.formatPathTableData([{ ...data.data, formData }]);
+        const newPathTableData: PathTableItem[] = connector.formatPathTableData(
+          [{ ...data.data, formData }],
+        );
         setPathTableData([...pathTableData, ...newPathTableData]);
         //make alert
         messageSuccess(messageApi, "Path was successfully added.");
-      });
-  };
-
-  const addDeviceFormSubmit = (props: { [key: string]: any }) => {
-    const formData = {
-      ...props,
-      icon: props.type,
-      "asset-value": 0,
-      "asset-values": [0],
-      id: connector.current.getNodeStartingIndex(),
-    };
-    const responseData: Promise<Response> = request({
-      url: "http://localhost:5000/add-device",
-      method: "POST",
-      postData: formData,
-    });
-
-    responseData
-      .then((response) => response.json())
-      .then((data) => {
-        //add device to topology
-        connector.current.addDevice(formData);
-        //make alert
-        if (data.code === 200) {
-          messageSuccess(messageApi, "Device was successfully added.");
-        } else {
-          messageError(messageApi, "Could not add device: ${data.error}");
-        }
-        console.log(formData);
       });
   };
 
@@ -130,7 +107,9 @@ function Topology() {
       children={
         <Form
           formItems={addDeviceFormObject}
-          onFinishFun={addDeviceFormSubmit}
+          onFinishFun={(data: { [key: string]: any }) =>
+            addDeviceFormSubmit(data, connector, messageApi)
+          }
         />
       }
     />,
@@ -142,7 +121,7 @@ function Topology() {
             <Button
               icon={<DownloadOutlined />}
               size="large"
-              href={generateJsonFile(connector.current)}
+              href={generateJsonFile(connector)}
               download
             >
               Download blank scheme
@@ -161,6 +140,6 @@ function Topology() {
       <PathTable items={pathTableData} setPathTableData={setPathTableData} />
     </CustomLayout>
   );
-}
+};
 
 export default Topology;

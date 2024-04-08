@@ -2,7 +2,7 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 import path
 import main
-from modules import asset_mapper, scheme_import_librenms
+from modules import asset_mapper, subpages
 from modules.exceptions import DuplicitDBEntry
 
 app = Flask(__name__)
@@ -165,7 +165,7 @@ def scheme_update():
     req_json = request.json
     result = {}
     try:
-        scheme_importer = scheme_import_librenms.SchemeImportLibreNMS(req_json)
+        scheme_importer = subpages.SchemeImportLibreNMS(req_json)
         scheme_importer.update_db_from_scheme()
         result["code"] = 200
     except DuplicitDBEntry as error:
@@ -191,12 +191,33 @@ def scheme_replace():
     req_json = request.json
     result = {}
     try:
-        scheme_importer = scheme_import_librenms.SchemeImportLibreNMS(req_json)
+        scheme_importer = subpages.SchemeImportLibreNMS(req_json)
         scheme_importer.update_db_from_scheme(True)
         result["code"] = 200
     except KeyError as error:
         result["error"] = f"Key error somewhere in the code: {error}. Can't tell you more without debugging..."
         result["code"] = 500
+    except Exception as error:
+        result["error"] = str(error)
+        result["code"] = 500
+
+    return jsonify(result)
+
+
+# ENDPOINTS FOR DEVICES SUBPAGE
+
+@app.route('/devices-get', methods=['GET'])
+def devices_get():
+    """
+    Endpoint to return all data used when loading subpage 'devices'.
+
+    :return: data in json format and status code
+    """
+    result = {}
+    try:
+        devices = subpages.Devices()
+        result["data"] = devices.get_devices()
+        result["code"] = 200
     except Exception as error:
         result["error"] = str(error)
         result["code"] = 500

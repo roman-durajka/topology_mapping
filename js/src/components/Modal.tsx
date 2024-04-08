@@ -23,7 +23,6 @@ const CustomModal: React.FC<InterfaceModal> = ({ title, children }) => {
   };
 
   const handleCancel = () => {
-    console.log("Clicked cancel button");
     setOpen(false);
   };
 

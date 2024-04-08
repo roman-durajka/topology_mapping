@@ -36,10 +36,17 @@ const CustomLayout: React.FC<InterfaceLayout> = ({ children, modals }) => {
             <Menu.Item key="2">
               <Link to="/business-process">Business Process</Link>
             </Menu.Item>
+            <Menu.Item key="3">
+              <Link to="/devices">Devices</Link>
+            </Menu.Item>
+          </Space>
+        </Menu>
+        <div style={{ marginLeft: "auto" }}>
+          <Space>
             {modals && modals.length > 0 && <RightOutlined />}
             {modals?.map((value) => <>{value}</>)}
           </Space>
-        </Menu>
+        </div>
       </Header>
       <Content style={{ padding: "0 50px" }}>
         <Breadcrumb style={{ margin: "16px 0" }}>

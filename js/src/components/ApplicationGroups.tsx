@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { message, Empty } from "antd";
+import { message, Empty, Table } from "antd";
 
 import CustomLayout from "./CustomLayout";
 import { messageLoading, messageSuccess } from "./message";
@@ -95,7 +95,13 @@ export default function ApplicationGroups() {
             pathId: pathId,
             pathName: pathItem.path_name,
             informationSystems: pathItem.information_systems.join(","),
-            subItems: devices,
+            subComponent: (
+              <Table
+                columns={subColumns}
+                dataSource={devices}
+                pagination={false}
+              />
+            ),
           };
         },
       );
@@ -144,7 +150,6 @@ export default function ApplicationGroups() {
                 data={group["paths"]}
                 onSave={onTableSave}
                 columns={columns}
-                subColumns={subColumns}
                 title={
                   <div style={{ textAlign: "center" }}>
                     <EditableText
