@@ -38,3 +38,7 @@ export type SubColumnGroup = {
   title: string;
   children: SubColumnItem[];
 };
+
+export type StringIndexedObject = {
+  [index: string]: any;
+};

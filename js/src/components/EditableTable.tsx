@@ -9,7 +9,7 @@ import {
   Typography,
 } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
-import { ColumnItem } from "./types";
+import { ColumnItem, StringIndexedObject } from "./types";
 
 interface Item {
   key: string;
@@ -66,7 +66,8 @@ interface InterfaceEditableTable {
   data: object[];
   columns: ColumnItem[];
   onSave: (...args: any) => void;
-  allowAdditions?: boolean;
+  onDelete?: (...args: any) => void;
+  onAdd?: (...args: any) => void;
   title?: ReactNode;
 }
 
@@ -74,20 +75,20 @@ const EditableTable: React.FC<InterfaceEditableTable> = ({
   data,
   columns,
   onSave,
-  allowAdditions,
+  onDelete,
+  onAdd,
   title,
 }) => {
   const [form] = Form.useForm();
   const [tableData, setTableData] = useState(data);
   const [editingKey, setEditingKey] = useState<string | React.Key>("");
 
-  const isEditing = (record: { [index: string]: any }) =>
-    record.key === editingKey;
+  const isEditing = (record: StringIndexedObject) => record.key === editingKey;
 
   const edit = (
     record:
-      | Partial<{ [index: string]: any }>
-      | ({ [index: string]: any } & { key: React.Key }),
+      | Partial<StringIndexedObject>
+      | (StringIndexedObject & { key: React.Key }),
   ) => {
     form.setFieldsValue(record);
     setEditingKey(record.key);
@@ -101,9 +102,9 @@ const EditableTable: React.FC<InterfaceEditableTable> = ({
     try {
       const row = (await form.validateFields()) as Item;
 
-      const newData = [...tableData];
+      const newData: StringIndexedObject[] = [...tableData];
       const index = newData.findIndex(
-        (item: { [index: string]: any }) => key === item.key,
+        (item: StringIndexedObject) => key === item.key,
       );
       if (index > -1) {
         const item = newData[index];
@@ -118,7 +119,13 @@ const EditableTable: React.FC<InterfaceEditableTable> = ({
         setTableData(newData);
         setEditingKey("");
       }
-      onSave(newData[index]);
+      onSave(newData[index], (responseData: StringIndexedObject) => {
+        //TODO: make this more generic. Maybe always set all responseData to newData ?
+        if (!("id" in newData[index])) {
+          newData[index]["id"] = responseData["id"];
+          setTableData(newData);
+        }
+      });
     } catch (errInfo) {
       console.log("Validate Failed:", errInfo);
     }
@@ -126,8 +133,8 @@ const EditableTable: React.FC<InterfaceEditableTable> = ({
 
   const tableColumnsFun: () => object[] = () => {
     let allowEditing: boolean = false;
-    Object.keys(columns).map((columnKey: string) => {
-      if (columns[columnKey]["editable"]) {
+    columns.map((column: ColumnItem) => {
+      if (column["editable"]) {
         allowEditing = true;
       }
     });
@@ -141,7 +148,7 @@ const EditableTable: React.FC<InterfaceEditableTable> = ({
       {
         title: "operation",
         dataIndex: "operation",
-        render: (_: any, record: { [index: string]: any }) => {
+        render: (_: any, record: StringIndexedObject, index: number) => {
           const editable = isEditing(record);
           return editable ? (
             <span>
@@ -164,14 +171,22 @@ const EditableTable: React.FC<InterfaceEditableTable> = ({
               >
                 Edit
               </Typography.Link>
-              <Popconfirm
-                title="Sure to delete?"
-                onConfirm={() => {
-                  return;
-                }}
-              >
-                <a>Delete</a>
-              </Popconfirm>
+              {onDelete && (
+                <Popconfirm
+                  title="Sure to delete?"
+                  onConfirm={() =>
+                    onDelete(index, () => {
+                      console.log(tableData[index]);
+                      const newData = tableData.filter(
+                        (_, tableIndex) => tableIndex !== index,
+                      );
+                      setTableData(newData);
+                    })
+                  }
+                >
+                  <a>Delete</a>
+                </Popconfirm>
+              )}
             </span>
           );
         },
@@ -179,23 +194,21 @@ const EditableTable: React.FC<InterfaceEditableTable> = ({
     ];
   };
 
-  const mergedColumns = tableColumnsFun().map(
-    (col: { [index: string]: any }) => {
-      if (!col.editable) {
-        return col;
-      }
-      return {
-        ...col,
-        onCell: (record: object) => ({
-          record,
-          inputType: col.dataIndex === "age" ? "number" : "text",
-          dataIndex: col.dataIndex,
-          title: col.title,
-          editing: isEditing(record),
-        }),
-      };
-    },
-  );
+  const mergedColumns = tableColumnsFun().map((col: StringIndexedObject) => {
+    if (!col.editable) {
+      return col;
+    }
+    return {
+      ...col,
+      onCell: (record: object) => ({
+        record,
+        inputType: col.dataIndex === "age" ? "number" : "text",
+        dataIndex: col.dataIndex,
+        title: col.title,
+        editing: isEditing(record),
+      }),
+    };
+  });
 
   const expandedRowRender: (props: object) => ReactNode = (props: object) => {
     if (props && "subComponent" in props) {
@@ -219,7 +232,7 @@ const EditableTable: React.FC<InterfaceEditableTable> = ({
 
   // appends new row to table for user to add new data
   const addNewRow: ReactNode | null = (() => {
-    if (!allowAdditions) {
+    if (!onAdd) {
       return null;
     }
 
@@ -240,6 +253,13 @@ const EditableTable: React.FC<InterfaceEditableTable> = ({
           icon={<PlusOutlined />}
           type="text"
           className="ant-table-bordered"
+          onClick={() =>
+            onAdd((newRow: StringIndexedObject) => {
+              newRow["key"] = `newRow${tableData.length}`;
+              setTableData([...tableData, newRow]);
+              edit(newRow);
+            })
+          }
         />
       </div>
     );

@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
-import { Empty, message } from "antd";
+import { Empty, message, notification } from "antd";
 
 import EditableTable from "./EditableTable";
 import CustomLayout from "./CustomLayout";
 import request from "./Requester";
 import { messageLoading, messageSuccess } from "./message";
-import { ColumnItem } from "./types";
+import { ColumnItem, StringIndexedObject } from "./types";
 import { TopologyConnector, addDeviceFormObject } from "../TopologyConnector";
 import { addDeviceFormSubmit } from "../helpers/addDevice";
 import Form from "./Form";
@@ -68,9 +68,9 @@ const Devices: React.FC<InterfaceDevices> = ({ connector }) => {
     details: "Device details",
   };
 
-  const groupedDevices: object[] = Object.keys(devices).map(
+  const groupedDevices: StringIndexedObject[] = Object.keys(devices).map(
     (deviceId: string) => {
-      let deviceData: { [index: string]: any } = devices[deviceId];
+      let deviceData: StringIndexedObject = devices[deviceId];
       deviceData["id"] = deviceId;
       deviceData["key"] = "device " + deviceId;
 
@@ -82,7 +82,7 @@ const Devices: React.FC<InterfaceDevices> = ({ connector }) => {
             propertyName: propertyMap[item],
           };
 
-          let propertyData: object[] = [];
+          let propertyData: { [index: string]: any }[] = [];
           let propertyColumns: ColumnItem[] = [];
           Object.keys(devices[deviceId][item]).map((propertyId: string) => {
             const propertyValue: { [index: string]: any } =
@@ -91,11 +91,13 @@ const Devices: React.FC<InterfaceDevices> = ({ connector }) => {
             //dynamically generate columns
             if (propertyColumns.length == 0) {
               const columnSize = 100 / propertyValue.length;
+              const editable =
+                "editable" in propertyValue ? propertyValue["editable"] : true;
               Object.keys(propertyValue).map((propertyColumnKey: string) => {
                 propertyColumns.push({
                   title: propertyColumnKey,
                   dataIndex: propertyColumnKey,
-                  editable: true,
+                  editable: editable,
                   width: `${columnSize}%`,
                 });
               });
@@ -104,17 +106,83 @@ const Devices: React.FC<InterfaceDevices> = ({ connector }) => {
             propertyData.push({
               ...propertyValue,
               key: `property ${item} ${deviceId} ${propertyId}`,
+              table: item,
+              id: propertyId,
             });
           });
 
           propertyItem["subComponent"] = (
             <EditableTable
               data={propertyData}
-              onSave={() => {
-                return;
+              onSave={(
+                newData: object,
+                editExisting: (responseData: object) => void,
+              ) => {
+                //make request and return id
+                //add returned id to item object in table, and also new key
+
+                if ("id" in newData && Number(newData["id"]) < 0) {
+                  delete newData["id"];
+                }
+
+                const responseData: Promise<Response> = request({
+                  url: "http://localhost:5000/XXXXXX",
+                  method: "POST",
+                  postData: newData,
+                });
+
+                responseData
+                  .then((response) => response.json())
+                  .then((data) => {
+                    if (data["code"] == 200) {
+                      data["data"]["key"] =
+                        `property ${item} ${deviceId} ${data["data"]["id"]}`;
+                      editExisting(data["data"]);
+                    } else {
+                      notification.error({
+                        message: "Error saving edited row",
+                        description: data["error"],
+                        placement: "top",
+                        duration: 0,
+                      });
+                    }
+                  });
+              }}
+              onDelete={(index: number, deleteRow: () => void) => {
+                const postData = {
+                  table: propertyData[index]["table"],
+                  id: propertyData[index]["id"],
+                };
+
+                const responseData: Promise<Response> = request({
+                  url: "http://localhost:5000/XXXXXX",
+                  method: "POST",
+                  postData: postData,
+                });
+
+                responseData
+                  .then((response) => response.json())
+                  .then((data) => {
+                    if (data["code"] == 200) {
+                      deleteRow();
+                    } else {
+                      notification.error({
+                        message: "Error deleting row",
+                        description: data["error"],
+                        placement: "top",
+                        duration: 0,
+                      });
+                    }
+                  });
               }}
               columns={propertyColumns}
-              allowAdditions
+              onAdd={(addRow: (newRow: object) => void) => {
+                let dataToAdd: object = {
+                  table: item,
+                  key: "newItem",
+                };
+                addRow(dataToAdd);
+              }}
             />
           );
           properties.push(propertyItem);
@@ -157,8 +225,64 @@ const Devices: React.FC<InterfaceDevices> = ({ connector }) => {
           <div style={{ marginBottom: "50px" }}>
             <EditableTable
               data={groupedDevices}
-              onSave={() => {
-                return;
+              onSave={(
+                newData: StringIndexedObject,
+                editExisting: (responseData: object) => void,
+              ) => {
+                const postData = {
+                  id: newData["id"],
+                  name: newData["name"],
+                  table: "devices",
+                };
+
+                const responseData: Promise<Response> = request({
+                  url: "http://localhost:5000/XXXXXX",
+                  method: "POST",
+                  postData: postData,
+                });
+
+                responseData
+                  .then((response) => response.json())
+                  .then((data) => {
+                    if (data["code"] == 200) {
+                      data["data"]["key"] = `device ${newData["id"]}`;
+                      editExisting(data["data"]);
+                    } else {
+                      notification.error({
+                        message: "Error saving edited row",
+                        description: data["error"],
+                        placement: "top",
+                        duration: 0,
+                      });
+                    }
+                  });
+              }}
+              onDelete={(index: number, deleteRow: () => void) => {
+                const postData = {
+                  table: "devices",
+                  id: groupedDevices[index]["id"],
+                };
+
+                const responseData: Promise<Response> = request({
+                  url: "http://localhost:5000/XXXXXX",
+                  method: "POST",
+                  postData: postData,
+                });
+
+                responseData
+                  .then((response) => response.json())
+                  .then((data) => {
+                    if (data["code"] == 200) {
+                      deleteRow();
+                    } else {
+                      notification.error({
+                        message: "Error deleting row",
+                        description: data["error"],
+                        placement: "top",
+                        duration: 0,
+                      });
+                    }
+                  });
               }}
               columns={columns}
               title={<div style={{ textAlign: "center" }}>Devices</div>}

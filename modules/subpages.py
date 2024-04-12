@@ -357,23 +357,23 @@ class Devices:
         device_details = {
             1: {
                 "detail_name": "Hardware Model",
-                "value": device_record["hardware"]
+                "value": device_record["hardware"],
             },
             2: {
                 "detail_name": "OS",
-                "value": device_record["os"]
+                "value": device_record["os"],
             },
             3: {
                 "detail_name": "Hostname",
-                "value": device_record["hostname"]
+                "value": device_record["hostname"],
             },
             4: {
                 "detail_name": "Software Version",
-                "value": device_record["version"]
+                "value": device_record["version"],
             },
             5: {
                 "detail_name": "Software",
-                "value": device_record["sysDescr"]
+                "value": device_record["sysDescr"],
             }
         }
 
@@ -408,6 +408,16 @@ class Devices:
             }
 
             interfaces.update({interface_id: interface_data})
+        if not interfaces:
+            interfaces = {-1: {
+                "if_id": "",
+                "status": "",
+                "mac_address": "",
+                "name": "",
+                "ip_address": ""
+
+            }}
+
 
         return interfaces
 
@@ -445,6 +455,15 @@ class Devices:
             }
 
             routing_table.update({route_id: route})
+        if not routing_table:
+            routing_table = {-1: {
+                "interface_id": "",
+                "interface_name": "",
+                "destination": "",
+                "destination_prefix": "",
+                "nexthop": "",
+                "nexthop_name": ""
+            }}
 
         return routing_table
 
@@ -484,6 +503,17 @@ class Devices:
             }
 
             mac_table.update({route_id: route})
+        if not mac_table:
+            mac_table = {-1: {
+                "local_if_id": "",
+                "local_if_name": "",
+                "local_if_mac": "",
+                "destination_device": "",
+                "destination_if_id": "",
+                "destination_if_name": "",
+                "destination_mac": "",
+                "vlan": ""
+            }}
 
         return mac_table
 
@@ -502,13 +532,20 @@ class Devices:
             if_record = self.librenms_db_client.get_data("ports", [("port_id", record["port_id"])])[0]
             if_name = if_record["ifName"]
             arp_record = {
-                "outgoing_if_id": record["port_id"],
-                "outgoing_if": if_name,
+                "interface_id": record["port_id"],
+                "interface": if_name,
                 "mac_address": record["mac_address"],
                 "ip_address": record["ipv4_address"]
             }
 
             arp_table.update({arp_id: arp_record})
+        if not arp_table:
+            arp_table = {-1: {
+                "interface_id": "",
+                "interface": "",
+                "mac_address": "",
+                "ip_address": ""
+            }}
 
         return arp_table
 

@@ -7,6 +7,7 @@ let ILLEGAL_ATTRIBUTES = [
   "py",
   "icon",
   "asset-values",
+  "id",
 ];
 
 nx.define("NodeTooltipExtension", nx.ui.Component, {
@@ -18,6 +19,10 @@ nx.define("NodeTooltipExtension", nx.ui.Component, {
         let ifData = {};
 
         for (const [key, value] of Object.entries(data)) {
+          if (key == "id") {
+            nodeData["device-id"] = value;
+            continue;
+          }
           if (ILLEGAL_ATTRIBUTES.indexOf(key) === -1) {
             if (key === "interfaces") {
               for (const [ifKey, ifValue] of Object.entries(value)) {
@@ -99,7 +104,7 @@ nx.define("NodeTooltipExtension", nx.ui.Component, {
                 },
                 {
                   tag: "span",
-                  content: "(id/status/ip/mac)",
+                  content: "(interface id/status/ip/mac)",
                 },
                 {
                   name: "if-list",
