@@ -928,6 +928,7 @@ class Devices:
 
     def __update_table_interfaces(self, data: dict):
         data_to_update = {}
+        data_to_return = {}
 
         for key, value in data.items():
             if key == "Status":
@@ -935,6 +936,7 @@ class Devices:
             if key == "MAC Address":
                 self.__check_mac_addr_validity(value, False)
                 data_to_update["ifPhysAddress"] = value
+                data_to_return["MAC Address"] = value
             if key == "Interface name":
                 data_to_update["ifName"] = value
             if key == "IP Address":
@@ -943,8 +945,8 @@ class Devices:
                 ip_addr_record = self.librenms_db_client.get_data("ipv4_addresses", [("ipv4_address", ip_addr)])
                 if ip_addr_record:
                     raise DuplicitDBEntry("IP address you entered is already used by another device.")
+                data_to_return["IP Address"] = value
 
-        data_to_return = {}
         port_id = ""
         if "id" in data.keys():
             if data_to_update:
@@ -957,7 +959,7 @@ class Devices:
                 data_to_update["device_id"] = data["deviceId"]
                 self.librenms_db_client.insert_data([data_to_update], "ports")
                 new_record_id = self.librenms_db_client.get_data("ports", [("ifPhysAddress", data["MAC Address"])])[0]["port_id"]
-                data_to_return = {"id": new_record_id, "Interface ID": new_record_id}
+                data_to_return.update({"id": new_record_id, "Interface ID": new_record_id})
                 port_id = new_record_id
 
         if "IP Address" in data.keys():
