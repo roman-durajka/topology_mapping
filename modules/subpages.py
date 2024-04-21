@@ -1,7 +1,30 @@
 from modules.clients import MariaDBClient
-from modules.exceptions import DuplicitDBEntry, CommonDBError, MissingFKError, NotFoundError
+from modules.exceptions import DuplicitDBEntry, CommonDBError, MissingFKError, NotFoundError, NotImplementedError, InvalidInsertedData
 
 import ipaddress
+
+
+def insert_into_table_route(db_client: MariaDBClient, data_to_insert: dict):
+    """Inserts data into table `route` using Librenms DB connection.
+    This function is supposed to fill in any unneccessary columns into the
+    inserting dict, because many of them are marked as NOT NULL.
+    Only necessary columns that have to be in the data_to_insert param are:
+    device_id, port_id, inetCidrRouteDest, inetCidrRouteNextHop,
+    inetCidrRoutePfxLen.
+
+    TODO: use this function on places where manual column insertion
+    is already present"""
+    data_to_insert.update({
+        "inetCidrRouteIfIndex": 0,
+        "inetCidrRouteType": 0,
+        "inetCidrRouteProto": 0,
+        "inetCidrRouteNextHopAS": 0,
+        "inetCidrRouteMetric1": 0,
+        "inetCidrRouteDestType": "ipv4",
+        "inetCidrRouteNextHopType": "ipv4",
+        "inetCidrRoutePolicy": ""
+    })
+    db_client.insert_data([data_to_insert], "route")
 
 
 class SchemeImportLibreNMS:
@@ -356,24 +379,64 @@ class Devices:
 
         device_details = {
             1: {
-                "detail_name": "Hardware Model",
-                "value": device_record["hardware"],
+                "hardware_title": {
+                    "name": "Device detail",
+                    "value": "Hardware",
+                    "editable": False
+                },
+                "hardware": {
+                    "name": "Value",
+                    "value": device_record["hardware"],
+                    "editable": True
+                }
             },
             2: {
-                "detail_name": "OS",
-                "value": device_record["os"],
+                "os_title": {
+                    "name": "Device detail",
+                    "value": "OS",
+                    "editable": False
+                },
+                "os": {
+                    "name": "Value",
+                    "value": device_record["os"],
+                    "editable": True
+                }
             },
             3: {
-                "detail_name": "Hostname",
-                "value": device_record["hostname"],
+                "hostname_title": {
+                    "name": "Device detail",
+                    "value": "Hostname",
+                    "editable": False
+                },
+                "hostname": {
+                    "name": "Value",
+                    "value": device_record["hostname"],
+                    "editable": True
+                }
             },
             4: {
-                "detail_name": "Software Version",
-                "value": device_record["version"],
+                "version_title": {
+                    "name": "Device detail",
+                    "value": "Version",
+                    "editable": False
+                },
+                "version": {
+                    "name": "Value",
+                    "value": device_record["version"],
+                    "editable": True
+                }
             },
             5: {
-                "detail_name": "Software",
-                "value": device_record["sysDescr"],
+                "description_title": {
+                    "name": "Device detail",
+                    "value": "Description",
+                    "editable": False
+                },
+                "description": {
+                    "name": "Value",
+                    "value": device_record["sysDescr"],
+                    "editable": True
+                }
             }
         }
 
@@ -397,27 +460,65 @@ class Devices:
         for interface_record in interface_records:
             interface_id = interface_record["port_id"]
             ip_address_record = self.librenms_db_client.get_data("ipv4_addresses", [("port_id", interface_id)])
-            ip_address = "" if not ip_address_record else ip_address_record[0]["ipv4_address"]
+            ip_address = "" if not ip_address_record else f"{ip_address_record[0]['ipv4_address']}/{ip_address_record[0]['ipv4_prefixlen']}"
 
             interface_data = {
-                "if_id": interface_id,
-                "status": interface_record["ifOperStatus"],
-                "mac_address": interface_record["ifPhysAddress"],
-                "name": interface_record["ifName"],
-                "ip_address": ip_address
+                "if_id": {
+                    "value": interface_id,
+                    "name": "Interface ID",
+                    "editable": False
+                },
+                "status": {
+                    "value": interface_record["ifOperStatus"],
+                    "name": "Status",
+                    "editable": True
+                },
+                "mac_address": {
+                    "value": interface_record["ifPhysAddress"],
+                    "name": "MAC Address",
+                    "editable": True
+                },
+                "if_name": {
+                    "value": interface_record["ifName"],
+                    "name": "Interface name",
+                    "editable": True
+                },
+                "ip_address": {
+                    "value": ip_address,
+                    "name": "IP Address",
+                    "editable": True
+                }
             }
 
             interfaces.update({interface_id: interface_data})
         if not interfaces:
             interfaces = {-1: {
-                "if_id": "",
-                "status": "",
-                "mac_address": "",
-                "name": "",
-                "ip_address": ""
-
+                "if_id": {
+                    "value": "",
+                    "name": "Interface ID",
+                    "editable": False
+                },
+                "status": {
+                    "value": "",
+                    "name": "Status",
+                    "editable": True
+                },
+                "mac_address": {
+                    "value": "",
+                    "name": "MAC Address",
+                    "editable": True
+                },
+                "if_name": {
+                    "value": "",
+                    "name": "Interface name",
+                    "editable": True
+                },
+                "ip_address": {
+                    "value": "",
+                    "name": "IP Address",
+                    "editable": True
+                }
             }}
-
 
         return interfaces
 
@@ -445,24 +546,69 @@ class Devices:
                     nexthop_device_record = self.librenms_db_client.get_data("devices", [("device_id", nexthop_port_record["device_id"])])[0]
                     nexthop_device_name = nexthop_device_record["sysName"]
 
+            destionation = f"{record['inetCidrRouteDest']}/{record['inetCidrRoutePfxLen']}"
+
             route = {
-                "interface_id": record["port_id"],
-                "interface_name": if_record["ifName"],
-                "destination": record["inetCidrRouteDest"],
-                "destination_prefix": record["inetCidrRoutePfxLen"],
-                "nexthop": record["inetCidrRouteNextHop"],
-                "nexthop_name": nexthop_device_name
+                "if_id": {
+                    "value": record["port_id"],
+                    "name": "Interface ID",
+                    "editable": False
+                },
+                "if_name": {
+                    "value": if_record["ifName"],
+                    "name": "Interface name",
+                    "editable": True
+                },
+                "destination": {
+                    "value": destionation,
+                    "name": "Destination",
+                    "editable": True
+                },
+                "nexthop": {
+                    "value": record["inetCidrRouteNextHop"],
+                    "name": "Nexthop",
+                    "editable": True
+                },
+                "nexthop_name": {
+                    "value": nexthop_device_name,
+                    "name": "Nexthop name",
+                    "editable": False
+                }
             }
 
             routing_table.update({route_id: route})
         if not routing_table:
             routing_table = {-1: {
-                "interface_id": "",
-                "interface_name": "",
-                "destination": "",
-                "destination_prefix": "",
-                "nexthop": "",
-                "nexthop_name": ""
+                "if_id": {
+                    "value": "",
+                    "name": "Interface ID",
+                    "editable": False
+                },
+                "if_name": {
+                    "value": "",
+                    "name": "Interface name",
+                    "editable": True
+                },
+                "destination": {
+                    "value": "",
+                    "name": "Destination",
+                    "editable": True
+                },
+                "prefix_len": {
+                    "value": "",
+                    "name": "Destination prefix",
+                    "editable": True
+                },
+                "nexthop": {
+                    "value": "",
+                    "name": "Nexthop",
+                    "editable": True
+                },
+                "nexthop_name": {
+                    "value": "",
+                    "name": "Nexthop name",
+                    "editable": False
+                }
             }}
 
         return routing_table
@@ -491,28 +637,93 @@ class Devices:
 
             route = {
                 # local
-                "local_if_id": record["port_id"],
-                "local_if_name": local_if_record["ifName"],
-                "local_if_mac": local_if_record["ifPhysAddress"],
+                "local_if_id": {
+                    "value": record["port_id"],
+                    "name": "Local IF ID",
+                    "editable": False
+                },
+                "local_if_name": {
+                    "value": local_if_record["ifName"],
+                    "name": "Local IF name",
+                    "editable": False
+                },
+                "local_if_mac": {
+                    "value": local_if_record["ifPhysAddress"],
+                    "name": "Local IF MAC",
+                    "editable": True
+                },
                 # destination
-                "destination_device": remote_device_record["sysName"],
-                "destination_if_id": remote_if_record["port_id"],
-                "destination_if_name": remote_if_record["ifName"],
-                "destination_mac": record["mac_address"],
-                "vlan": vlan
+                "destination_name": {
+                    "value": remote_device_record["sysName"],
+                    "name": "Destination device",
+                    "editable": False
+                },
+                "destination_if_id": {
+                    "value": remote_if_record["port_id"],
+                    "name": "Destination IF ID",
+                    "editable": False
+                },
+                "destination_if_name": {
+                    "value": remote_if_record["ifName"],
+                    "name": "Destination IF name",
+                    "editable": False
+                },
+                "destination_if_mac": {
+                    "value": record["mac_address"],
+                    "name": "Destination IF MAC",
+                    "editable": True
+                },
+                "vlan": {
+                    "value": vlan,
+                    "name": "VLAN",
+                    "editable": True
+                }
             }
 
             mac_table.update({route_id: route})
         if not mac_table:
             mac_table = {-1: {
-                "local_if_id": "",
-                "local_if_name": "",
-                "local_if_mac": "",
-                "destination_device": "",
-                "destination_if_id": "",
-                "destination_if_name": "",
-                "destination_mac": "",
-                "vlan": ""
+                "local_if_id": {
+                    "value": "",
+                    "name": "Local IF ID",
+                    "editable": False
+                },
+                "local_if_name": {
+                    "value": "",
+                    "name": "Local IF name",
+                    "editable": False
+                },
+                "local_if_mac": {
+                    "value": "",
+                    "name": "Local IF MAC",
+                    "editable": True
+                },
+                # destination
+                "destination_name": {
+                    "value": "",
+                    "name": "Destination device",
+                    "editable": False
+                },
+                "destination_if_id": {
+                    "value": "",
+                    "name": "Destination IF ID",
+                    "editable": False
+                },
+                "destination_if_name": {
+                    "value": "",
+                    "name": "Destination IF name",
+                    "editable": False
+                },
+                "destination_if_mac": {
+                    "value": "",
+                    "name": "Destination IF MAC",
+                    "editable": True
+                },
+                "vlan": {
+                    "value": "",
+                    "name": "VLAN",
+                    "editable": True
+                }
             }}
 
         return mac_table
@@ -531,20 +742,59 @@ class Devices:
             arp_id = record["id"]
             if_record = self.librenms_db_client.get_data("ports", [("port_id", record["port_id"])])[0]
             if_name = if_record["ifName"]
+
+            ip_record = self.librenms_db_client.get_data("ipv4_addresses", [("ipv4_address", record["ipv4_address"])])
+            if not ip_record:
+                continue
+            ip_record = ip_record[0]
+            ip_address = f"{ip_record['ipv4_address']}/{ip_record['ipv4_prefixlen']}"
+
             arp_record = {
-                "interface_id": record["port_id"],
-                "interface": if_name,
-                "mac_address": record["mac_address"],
-                "ip_address": record["ipv4_address"]
+                "if_id": {
+                    "value": record["port_id"],
+                    "name": "Interface ID",
+                    "editable": False
+                },
+                "if_name": {
+                    "value": if_name,
+                    "name": "Interface name",
+                    "editable": True
+                },
+                "mac_address": {
+                    "value": record["mac_address"],
+                    "name": "MAC Address",
+                    "editable": True
+                },
+                "ip_address": {
+                    "value": ip_address,
+                    "name": "IP Address",
+                    "editable": True
+                }
             }
 
             arp_table.update({arp_id: arp_record})
         if not arp_table:
             arp_table = {-1: {
-                "interface_id": "",
-                "interface": "",
-                "mac_address": "",
-                "ip_address": ""
+                "if_id": {
+                    "value": "",
+                    "name": "Interface ID",
+                    "editable": False
+                },
+                "if_name": {
+                    "value": "",
+                    "name": "Interface name",
+                    "editable": True
+                },
+                "mac_address": {
+                    "value": "",
+                    "name": "MAC Address",
+                    "editable": True
+                },
+                "ip_address": {
+                    "value": "",
+                    "name": "IP Address",
+                    "editable": True
+                }
             }}
 
         return arp_table
@@ -576,3 +826,318 @@ class Devices:
             devices.update({device_id: device_data})
 
         return devices
+
+    def __update_table_devices(self, data: dict):
+        self.librenms_db_client.update_data("devices", [{"sysName": data["name"]}], [("device_id", data["id"])])
+        return {}
+
+    def __update_table_device_details(self, data: dict):
+        device_id = data["deviceId"]
+        match data["Device detail"]:
+            case "Hardware":
+                column_name = "hardware"
+            case "OS":
+                column_name = "os"
+            case "Hostname":
+                column_name = "hostname"
+            case "Version":
+                column_name = "version"
+            case "Description":
+                column_name = "sysDescr"
+            case _:
+                raise InvalidInsertedData("Attribute name you entered is invalid.")
+
+        self.librenms_db_client.update_data("devices", [{column_name: data["Value"]}], [("device_id", device_id)])
+        return {}
+
+    def __check_ip_addr_existence(self, ip_addr: str):
+        """Checks whether IP address already exists. Returns true
+        if it exists, and false if not."""
+        ip_addr_record = self.librenms_db_client.get_data("ipv4_addresses", [("ipv4_address", ip_addr)])
+        if ip_addr_record:
+            return True
+        return False
+
+    def __check_network_existence(self, ip_addr_with_mask: str):
+        """Checks whether IP network already exists. Returns true
+        if it exists, and false if not. IP address of the network should
+        be passed with mask, fe. 10.0.0.0/30."""
+        network_record = self.librenms_db_client.get_data("ipv4_networks", [("ipv4_network", ip_addr_with_mask)])
+        if network_record:
+            return True
+        return False
+
+
+    def __check_ip_addr_validity(self, ip_addr_with_mask: str) -> None:
+        error_str = "IP address you inserted is not in valid format. It should be in format IP/MASK PREFIX."
+        if "/" not in ip_addr_with_mask:
+            raise InvalidInsertedData(error_str)
+        ip_addr_parts = ip_addr_with_mask.split("/")
+        ip_addr = ip_addr_parts[0]
+        mask = ip_addr_parts[1]
+        if not ip_addr or not mask:
+            raise InvalidInsertedData(error_str)
+
+        if len(ip_addr_with_mask) > 19:
+            raise InvalidInsertedData("IP address you entered is too long. IP and MASK PREFIX including dots should be max. 19 characters long.")
+
+        try:
+            ipaddress.IPv4Network(f"{ip_addr}/{mask}", strict=False)
+        except (ipaddress.AddressValueError, ipaddress.NetmaskValueError):
+            raise InvalidInsertedData("IP address you entered is invalid.")
+
+    def __insert_ip_addr_record(self, ip_addr_with_mask: str, port_id: str) -> None:
+        ip_addr_parts = ip_addr_with_mask.split("/")
+        ip_addr = ip_addr_parts[0]
+        mask = ip_addr_parts[1]
+
+        # first check if network exists, if not, then create new
+        network_obj = ipaddress.IPv4Network(f"{ip_addr}/{mask}", strict=False)
+        network = f"{network_obj.network_address}/{mask}"
+        network_record = self.librenms_db_client.get_data("ipv4_networks", [("ipv4_network", network)])
+        if not network_record:  # create new
+            self.librenms_db_client.insert_data([{"ipv4_network": network}], "ipv4_networks")
+            network_id = self.librenms_db_client.get_data("ipv4_networks", [("ipv4_network", network)])[0]["ipv4_network_id"]
+        else:  # use existing
+            network_id = network_record[0]["ipv4_network_id"]
+
+        data_to_insert = {
+            "ipv4_network_id": network_id,
+            "ipv4_address": ip_addr,
+            "ipv4_prefixlen": mask,
+            "port_id": port_id
+        }
+        self.librenms_db_client.insert_data([data_to_insert], "ipv4_addresses")
+
+    def __check_mac_addr_validity(self, mac_address: str, requireExisting: bool):
+        """
+        Checks if MAC has the right length and also checks it's existence in DB.
+        If requireExisting is True, raises error if MAC does not exist in DB,
+        and if requireExisting is False, raises error if MAC is used by
+        another device.
+
+        TODO: split into validity and existence methods (like IP)
+        """
+        if len(mac_address) != 12:
+            raise InvalidInsertedData("MAC address is not the right length.")
+        mac_addr_record = self.librenms_db_client.get_data("ports", [("ifPhysAddress", mac_address)])
+        if mac_addr_record and not requireExisting:
+            raise DuplicitDBEntry("MAC address you entered is already used by another device.")
+        if not mac_addr_record and requireExisting:
+            raise InvalidInsertedData("MAC address you entered does not belong to any device.")
+
+    def __update_table_interfaces(self, data: dict):
+        data_to_update = {}
+
+        for key, value in data.items():
+            if key == "Status":
+                data_to_update["ifOperStatus"] = value
+            if key == "MAC Address":
+                self.__check_mac_addr_validity(value, False)
+                data_to_update["ifPhysAddress"] = value
+            if key == "Interface name":
+                data_to_update["ifName"] = value
+            if key == "IP Address":
+                self.__check_ip_addr_validity(value)
+                ip_addr = value.split("/")[0]
+                ip_addr_record = self.librenms_db_client.get_data("ipv4_addresses", [("ipv4_address", ip_addr)])
+                if ip_addr_record:
+                    raise DuplicitDBEntry("IP address you entered is already used by another device.")
+
+        data_to_return = {}
+        port_id = ""
+        if "id" in data.keys():
+            if data_to_update:
+                self.librenms_db_client.update_data("ports", [data_to_update], [("port_id", data["id"])])
+            port_id = data["id"]
+        else:
+            if "MAC Address" not in data.keys():
+                raise InvalidInsertedData("You have to insert atleast MAC for the new interface to be uniquely identified.")
+            if data_to_update:
+                data_to_update["device_id"] = data["deviceId"]
+                self.librenms_db_client.insert_data([data_to_update], "ports")
+                new_record_id = self.librenms_db_client.get_data("ports", [("ifPhysAddress", data["MAC Address"])])[0]["port_id"]
+                data_to_return = {"id": new_record_id, "Interface ID": new_record_id}
+                port_id = new_record_id
+
+        if "IP Address" in data.keys():
+            self.__insert_ip_addr_record(data["IP Address"], port_id)
+        return data_to_return
+
+    def __update_table_arp(self, data: dict):
+        """TODO: maybe remove IP addressing creation? and make it same as MAC"""
+        data_to_update = {}
+        data_to_return = {}
+
+        for key, value in data.items():
+            if key == "MAC Address":
+                self.__check_mac_addr_validity(value, True)
+                data_to_update["mac_address"] = value
+            if key == "IP Address":
+                self.__check_ip_addr_validity(value)
+                ip_addr_parts = value.split("/")
+                if not self.__check_ip_addr_existence(ip_addr_parts[0]):
+                    raise InvalidInsertedData("IP address does not exist on any device/interface.")
+                data_to_update["ipv4_address"] = value.split("/")[0]
+            if key == "Interface name":
+                port_records = self.librenms_db_client.get_data("ports", [("device_id", data["deviceId"])])
+                port_id = ""
+                for record in port_records:
+                    if record["ifName"] == value:
+                        port_id = record["port_id"]
+                        break
+                if not port_id:
+                    raise InvalidInsertedData("Interface name you entered does not belong to any interface on this device.")
+                data_to_update["port_id"] = port_id
+                data_to_return["Interface ID"] = port_id
+
+        if "id" not in data.keys():
+            for colname in ["MAC Address", "IP Address", "Interface name"]:
+                if colname not in data.keys():
+                    raise InvalidInsertedData("You must enter all optional columns.")
+            data_to_update["context_name"] = ""  # this is needed because librenms
+            self.librenms_db_client.insert_data([data_to_update], "ipv4_mac")
+            record_id = self.librenms_db_client.get_data("ipv4_mac", [(key, value) for key, value in data_to_update.items()])[-1]["id"]
+            data_to_return["id"] = record_id
+        else:
+            if data_to_update:
+                self.librenms_db_client.update_data("ipv4_mac", [data_to_update], [("id", data["id"])])
+
+        return data_to_return
+
+    def __check_vlan_validity(self, vlan):
+        vlan_number = int(vlan)
+        if len(str(vlan_number)) > 11:  # remove trailing 0's
+            raise InvalidInsertedData("VLAN number you entered is too long.")
+
+    def __get_vlan_id(self, vlan: str, device_id: int) -> int:
+        """Returns vlan id from DB. If no record exists for given vlan,
+        insert it and return the new ID."""
+        self.__check_vlan_validity(vlan)
+        vlan_records = self.librenms_db_client.get_data("vlans", [("vlan_vlan", vlan)])
+        if not vlan_records:
+            self.librenms_db_client.insert_data([{"vlan_vlan": vlan, "device_id": device_id}], "vlans")
+            vlan_record = self.librenms_db_client.get_data("vlans", [("vlan_vlan", vlan)])[-1]
+            vlan_id = vlan_record["vlan_id"]
+        else:
+            vlan_id = vlan_records[-1]["vlan_id"]
+
+        return vlan_id
+
+    def __update_table_mac(self, data: dict):
+        data_to_update = {}
+        data_to_return = {}
+
+        for key, value in data.items():
+            if key == "Destination IF MAC":  # TODO: make generic method for interfaces and MACs and use everywhere
+                port_records = self.librenms_db_client.get_data("ports", [("ifPhysAddress", value)])
+                if not port_records:
+                    raise InvalidInsertedData("MAC address you entered does not belong to device/interface.")
+                valid_port_record = port_records[-1]
+                device_record = self.librenms_db_client.get_data("devices", [("device_id", valid_port_record["device_id"])])[0]
+                data_to_update["mac_address"] = value
+                data_to_return.update({
+                    "Destination IF ID": valid_port_record["port_id"],
+                    "Destination IF MAC": value,
+                    "Destination IF name": valid_port_record["ifName"],
+                    "Destination device": device_record["sysName"]
+                })
+
+            if key == "Local IF MAC":
+                port_records = self.librenms_db_client.get_data("ports", [("ifPhysAddress", value), ("device_id", data["deviceId"])])
+                if not port_records:
+                    raise InvalidInsertedData("MAC address you entered does not belong to any interface on this device.")
+                valid_port_record = port_records[0]
+                data_to_update["port_id"] = valid_port_record["port_id"]
+                data_to_return.update({
+                    "Local IF ID": valid_port_record["port_id"],
+                    "Local IF name": valid_port_record["ifName"],
+                    "Local IF MAC": value
+                })
+
+        if "id" not in data.keys():
+            for colname in ["VLAN", "Local IF MAC", "Destination IF MAC"]:
+                if colname not in data.keys():
+                    raise InvalidInsertedData("You must enter all optional columns.")
+            data_to_update["device_id"] = data["deviceId"]
+
+            vlan_id = self.__get_vlan_id(data["VLAN"], data["deviceId"])
+            data_to_update["vlan_id"] = vlan_id
+
+            self.librenms_db_client.insert_data([data_to_update], "ports_fdb")
+            record_id = self.librenms_db_client.get_data("ports_fdb", [(key, value) for key, value in data_to_update.items()])[-1]["ports_fdb_id"]
+
+            data_to_return["id"] = record_id
+        else:
+            if "VLAN" in data.keys():
+                vlan_id = self.__get_vlan_id(data["VLAN"], data["deviceId"])
+                data_to_update["vlan_id"] = vlan_id
+            if data_to_update:
+                self.librenms_db_client.update_data("ports_fdb", [data_to_update], [("ports_fdb_id", data["id"])])
+
+        return data_to_return
+
+    def __update_table_routing(self, data: dict):
+        data_to_update = {}
+        data_to_return = {}
+
+        for key, value in data.items():
+            if key == "Destination":
+                if not self.__check_network_existence(value):
+                    raise InvalidInsertedData("Network (destination) does not exist.")
+                ip_addr_split = value.split("/")
+                data_to_update["inetCidrRouteDest"] = ip_addr_split[0]
+                data_to_update["inetCidrRoutePfxLen"] = ip_addr_split[1]
+            if key == "Nexthop":
+                if not self.__check_ip_addr_existence(value):
+                    raise InvalidInsertedData("Nexthop address does not exist on any device/interface.")
+                data_to_update["inetCidrRouteNextHop"] = value
+
+                if value != "0.0.0.0":
+                    nexthop_record = self.librenms_db_client.get_data("ipv4_addresses", [("ipv4_address", value)])[0]
+                    port_record = self.librenms_db_client.get_data("ports", [("port_id", nexthop_record["port_id"])])[0]
+                    data_to_return["Nexthop name"] = port_record["ifName"]
+            if key == "Interface name":
+                port_records = self.librenms_db_client.get_data("ports", [("device_id", data["deviceId"])])
+                port_id = ""
+                for record in port_records:
+                    if record["ifName"] == value:
+                        port_id = record["port_id"]
+                        break
+                if not port_id:
+                    raise InvalidInsertedData("Interface name you entered does not belong to any interface on this device.")
+                data_to_update["port_id"] = port_id
+                data_to_return["Interface ID"] = port_id
+
+        if "id" not in data.keys():
+            for colname in ["Destination", "Nexthop", "Interface name"]:
+                if colname not in data.keys():
+                    raise InvalidInsertedData("You must enter all optional columns.")
+            data_to_update["device_id"] = data["deviceId"]
+            insert_into_table_route(self.librenms_db_client, data_to_update)
+            record_id = self.librenms_db_client.get_data("route", [(key, value) for key, value in data_to_update.items()])[-1]["route_id"]
+
+            data_to_return["id"] = record_id
+        else:
+            if data_to_update:
+                self.librenms_db_client.update_data("route", [data_to_update], [("route_id", data["id"])])
+
+        return data_to_return
+
+    def update_devices(self, req_json: dict) -> dict:
+        table_name = req_json.pop("table")
+        match table_name:
+            case "devices":
+                return self.__update_table_devices(req_json)
+            case "details":
+                return self.__update_table_device_details(req_json)
+            case "arp_table":
+                return self.__update_table_arp(req_json)
+            case "interfaces":
+                return self.__update_table_interfaces(req_json)
+            case "mac_table":
+                return self.__update_table_mac(req_json)
+            case "routing_table":
+                return self.__update_table_routing(req_json)
+            case _:
+                raise NotImplementedError("This update option is not implemented...")

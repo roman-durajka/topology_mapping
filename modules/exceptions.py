@@ -30,6 +30,14 @@ class CommonDBError(Exception):
     pass
 
 
+class NotImplementedError(Exception):
+    pass
+
+
+class InvalidInsertedData(Exception):
+    pass
+
+
 class MissingFKError(CommonDBError):
     def __init__(self, table_name: str, record_index: int, key: str):
         self.table_name = table_name

@@ -225,5 +225,25 @@ def devices_get():
     return jsonify(result)
 
 
+@app.route('/devices-update', methods=['POST'])
+def devices_update():
+    """
+    Endpoint to update data using the 'devices' subpage.
+
+    :return: data in json format and status code
+    """
+    req_json = request.json
+    result = {}
+    try:
+        devices = subpages.Devices()
+        result["data"] = devices.update_devices(req_json)
+        result["code"] = 200
+    except Exception as error:
+        result["error"] = str(error)
+        result["code"] = 500
+
+    return jsonify(result)
+
+
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5000, debug=True)

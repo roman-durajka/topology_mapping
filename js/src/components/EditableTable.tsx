@@ -119,12 +119,16 @@ const EditableTable: React.FC<InterfaceEditableTable> = ({
         setTableData(newData);
         setEditingKey("");
       }
-      onSave(newData[index], (responseData: StringIndexedObject) => {
-        //TODO: make this more generic. Maybe always set all responseData to newData ?
-        if (!("id" in newData[index])) {
-          newData[index]["id"] = responseData["id"];
-          setTableData(newData);
-        }
+      onSave(newData[index], index, (responseData: StringIndexedObject) => {
+        const updatedData: StringIndexedObject = {
+          ...newData[index],
+          ...responseData,
+        };
+
+        const updatedNewData: StringIndexedObject[] = [...newData];
+        updatedNewData[index] = updatedData;
+
+        setTableData([...updatedNewData]);
       });
     } catch (errInfo) {
       console.log("Validate Failed:", errInfo);
