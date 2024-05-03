@@ -385,10 +385,10 @@ class Devices:
             1: {
                 "hardware_title": {
                     "name": "Device detail",
-                    "value": "Hardware",
+                    "value": "Model",
                     "editable": False
                 },
-                "hardware": {
+                "hardware_value": {
                     "name": "Value",
                     "value": device_record["hardware"],
                     "editable": True
@@ -397,34 +397,22 @@ class Devices:
             2: {
                 "os_title": {
                     "name": "Device detail",
-                    "value": "OS",
+                    "value": "Operating system",
                     "editable": False
                 },
-                "os": {
+                "os_value": {
                     "name": "Value",
                     "value": device_record["os"],
-                    "editable": True
-                }
-            },
-            3: {
-                "hostname_title": {
-                    "name": "Device detail",
-                    "value": "Hostname",
-                    "editable": False
-                },
-                "hostname": {
-                    "name": "Value",
-                    "value": device_record["hostname"],
                     "editable": True
                 }
             },
             4: {
                 "version_title": {
                     "name": "Device detail",
-                    "value": "Version",
+                    "value": "OS version",
                     "editable": False
                 },
-                "version": {
+                "version_value": {
                     "name": "Value",
                     "value": device_record["version"],
                     "editable": True
@@ -436,7 +424,7 @@ class Devices:
                     "value": "Description",
                     "editable": False
                 },
-                "description": {
+                "description_value": {
                     "name": "Value",
                     "value": device_record["sysDescr"],
                     "editable": True
@@ -949,13 +937,11 @@ class Devices:
     def __update_table_device_details(self, data: dict):
         device_id = data["deviceId"]
         match data["Device detail"]:
-            case "Hardware":
+            case "Model":
                 column_name = "hardware"
-            case "OS":
+            case "Operating system":
                 column_name = "os"
-            case "Hostname":
-                column_name = "hostname"
-            case "Version":
+            case "OS version":
                 column_name = "version"
             case "Description":
                 column_name = "sysDescr"

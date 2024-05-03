@@ -207,35 +207,39 @@ const Devices: React.FC<InterfaceDevices> = ({ connector }) => {
                     }
                   });
               }}
-              onDelete={(index: number, deleteRow: () => void) => {
-                const postData = {
-                  table: propertyData[index]["table"],
-                  id: propertyData[index]["id"],
-                };
+              onDelete={
+                propertyData[0]["table"] === "details"
+                  ? undefined
+                  : (index: number, deleteRow: () => void) => {
+                      const postData = {
+                        table: propertyData[index]["table"],
+                        id: propertyData[index]["id"],
+                      };
 
-                const responseData: Promise<Response> = request({
-                  url: "http://localhost:5000/devices-delete",
-                  method: "POST",
-                  postData: postData,
-                });
-
-                responseData
-                  .then((response) => response.json())
-                  .then((data) => {
-                    if (data["code"] == 200) {
-                      deleteRow();
-                      propertyData.splice(index, 1);
-                      message.success("Row successfully deleted.");
-                    } else {
-                      notification.error({
-                        message: "Error deleting row",
-                        description: data["error"],
-                        placement: "top",
-                        duration: 0,
+                      const responseData: Promise<Response> = request({
+                        url: "http://localhost:5000/devices-delete",
+                        method: "POST",
+                        postData: postData,
                       });
+
+                      responseData
+                        .then((response) => response.json())
+                        .then((data) => {
+                          if (data["code"] == 200) {
+                            deleteRow();
+                            propertyData.splice(index, 1);
+                            message.success("Row successfully deleted.");
+                          } else {
+                            notification.error({
+                              message: "Error deleting row",
+                              description: data["error"],
+                              placement: "top",
+                              duration: 0,
+                            });
+                          }
+                        });
                     }
-                  });
-              }}
+              }
               columns={propertyColumns}
               onAdd={(addRow: (newRow: object) => void) => {
                 let dataToAdd: object = {
