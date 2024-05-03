@@ -362,10 +362,6 @@ class SchemeImportLibreNMS:
         topology_obj.create_topology()
         # force X, Y coords calculation
         topology_obj.update_uninitialized_coords()
-        # erase some tables in topology DB so that DP algorithm can be run with new data
-        #topology_db_client = MariaDBClient("topology")
-        #topology_db_client.remove_data([("1", "1")], "relations")
-        #topology_db_client.remove_data([("1", "1")], "nodes")
 
 
 class Devices:
