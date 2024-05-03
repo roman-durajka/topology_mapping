@@ -21,7 +21,7 @@ const CustomLayout: React.FC<InterfaceLayout> = ({ children, modals }) => {
         style={{
           display: "flex",
           alignItems: "center",
-          width: "100vw",
+          width: "99vw",
           position: "sticky",
           top: 0,
           zIndex: 1,

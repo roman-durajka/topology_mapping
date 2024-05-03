@@ -76,8 +76,37 @@ export class TopologyConnector {
     this.topology.attach(this.application, 0);
   }
 
+  getNodeCoords() {
+    let coords = {};
+
+    let nodes = this.topology.getLayer("nodes").nodes();
+    nodes.map((node) => {
+      const nodeId = node.id();
+      const x = node.x();
+      const y = node.y();
+      coords[nodeId] = { x_coord: x, y_coord: y };
+    });
+
+    return coords;
+  }
+
   loadTopology(topologyData) {
+    const processor = topologyData.data.dataProcessor;
+    delete topologyData.data.dataProcessor;
+    this.topology.sets({ dataProcessor: processor });
     this.topology.setData(topologyData.data);
+
+    // if building topo for the first time
+    // (using algorithm to get x and y coords)
+    // save x,y coord to DB
+    if (processor === "force") {
+      const postData = { nodes: this.getNodeCoords() };
+      request({
+        url: "http://localhost:5000/topology-update",
+        method: "POST",
+        postData: postData,
+      });
+    }
   }
 
   updateAssetValue(node) {

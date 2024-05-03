@@ -1,27 +1,10 @@
 import { TopologyConnector } from "../TopologyConnector";
 import originalJson from "../config/import-scheme.json";
 import type { UploadProps } from "antd";
-import { Space, message, notification, Button } from "antd";
+import { Space, message, notification, Button, Flex } from "antd";
 import request from "./Requester";
-
-function generateJsonFile(
-  topologyConnector: TopologyConnector,
-): string | undefined {
-  if (topologyConnector.topology) {
-    let resultingJson: string =
-      "########## START WITH THESE VALUES WHEN ADDING NEW NODES AND INTERFACES, THEN DELETE THIS COMMMENT\n";
-    resultingJson += `device_id: ${topologyConnector.getNodeStartingIndex()}\n`;
-    resultingJson += `port_id: ${topologyConnector.getIfStartingIndex()}\n`;
-    resultingJson += "##########\n\n";
-
-    resultingJson += JSON.stringify(originalJson);
-
-    const blob = new Blob([resultingJson], {
-      type: "application/json",
-    });
-    return URL.createObjectURL(blob);
-  }
-}
+import { DownloadOutlined } from "@ant-design/icons";
+import UploadButton from "./UploadButton";
 
 const notificationButton = (onClick: () => void) => {
   return (
@@ -128,4 +111,43 @@ const SchemeUploadButtonProps: UploadProps = {
   },
 };
 
-export { generateJsonFile, SchemeUploadButtonProps };
+interface InterfaceSchemeWindow {
+  connector: TopologyConnector;
+}
+
+const SchemeWindow: React.FC<InterfaceSchemeWindow> = ({ connector }) => {
+  const generateJsonFile: () => string | undefined = () => {
+    if (connector.topology) {
+      let resultingJson: string =
+        "########## START WITH THESE VALUES WHEN ADDING NEW NODES AND INTERFACES, THEN DELETE THIS COMMMENT\n";
+      resultingJson += `device_id: ${connector.getNodeStartingIndex()}\n`;
+      resultingJson += `port_id: ${connector.getIfStartingIndex()}\n`;
+      resultingJson += "##########\n\n";
+
+      resultingJson += JSON.stringify(originalJson);
+
+      const blob = new Blob([resultingJson], {
+        type: "application/json",
+      });
+      return URL.createObjectURL(blob);
+    }
+  };
+
+  return (
+    <>
+      <Flex vertical gap="middle" justify="center" align="center">
+        <Button
+          icon={<DownloadOutlined />}
+          size="large"
+          href={generateJsonFile()}
+          download
+        >
+          Download example scheme
+        </Button>
+        <UploadButton props={SchemeUploadButtonProps} />
+      </Flex>
+    </>
+  );
+};
+
+export { SchemeWindow };

@@ -386,7 +386,8 @@ def load_paths():
 
 
 def remove_path(req_json):
-    """Function to remove path from database. Also removes associated information systems."""
+    """Function to remove path from database. Also removes associated
+    information systems and application groups."""
     topology_db_client = MariaDBClient("topology")
     topology_db_client.remove_data([("path_id", req_json["pathId"])], "paths")
     topology_db_client.remove_data([("path_id", req_json["pathId"])], "information_systems")

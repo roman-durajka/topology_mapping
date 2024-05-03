@@ -180,11 +180,10 @@ const EditableTable: React.FC<InterfaceEditableTable> = ({
                   title="Sure to delete?"
                   onConfirm={() =>
                     onDelete(index, () => {
-                      console.log(tableData[index]);
                       const newData = tableData.filter(
                         (_, tableIndex) => tableIndex !== index,
                       );
-                      setTableData(newData);
+                      setTableData([...newData]);
                     })
                   }
                 >

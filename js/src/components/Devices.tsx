@@ -85,6 +85,7 @@ const Devices: React.FC<InterfaceDevices> = ({ connector }) => {
     routing_table: "Routing Table",
     mac_table: "MAC Table",
     arp_table: "ARP Table",
+    dp_table: "DP Table",
     details: "Device details",
   };
 
@@ -213,7 +214,7 @@ const Devices: React.FC<InterfaceDevices> = ({ connector }) => {
                 };
 
                 const responseData: Promise<Response> = request({
-                  url: "http://localhost:5000/XXXXXX",
+                  url: "http://localhost:5000/devices-delete",
                   method: "POST",
                   postData: postData,
                 });
@@ -223,6 +224,7 @@ const Devices: React.FC<InterfaceDevices> = ({ connector }) => {
                   .then((data) => {
                     if (data["code"] == 200) {
                       deleteRow();
+                      propertyData.splice(index, 1);
                       message.success("Row successfully deleted.");
                     } else {
                       notification.error({
@@ -307,10 +309,10 @@ const Devices: React.FC<InterfaceDevices> = ({ connector }) => {
                     if (data["code"] == 200) {
                       data["data"]["key"] = `device ${newData["id"]}`;
                       editExisting(data["data"]);
-                      message.success("Row successfully edited.");
+                      message.success("Device successfully edited.");
                     } else {
                       notification.error({
-                        message: "Error saving edited row",
+                        message: "Error saving edited device",
                         description: data["error"],
                         placement: "top",
                         duration: 0,
@@ -325,7 +327,7 @@ const Devices: React.FC<InterfaceDevices> = ({ connector }) => {
                 };
 
                 const responseData: Promise<Response> = request({
-                  url: "http://localhost:5000/XXXXXX",
+                  url: "http://localhost:5000/devices-delete",
                   method: "POST",
                   postData: postData,
                 });
@@ -335,10 +337,11 @@ const Devices: React.FC<InterfaceDevices> = ({ connector }) => {
                   .then((data) => {
                     if (data["code"] == 200) {
                       deleteRow();
-                      message.success("Row successfully deleted.");
+                      groupedDevices.splice(index, 1);
+                      message.success("Device successfully deleted.");
                     } else {
                       notification.error({
-                        message: "Error deleting row",
+                        message: "Error deleting device",
                         description: data["error"],
                         placement: "top",
                         duration: 0,

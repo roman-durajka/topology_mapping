@@ -24,10 +24,11 @@ const addDeviceFormSubmit = (
   responseData
     .then((response) => response.json())
     .then((data) => {
-      //add device to topology
-      connector.addDevice(formData);
       //make alert
       if (data.code === 200) {
+        //add device to topology
+        connector.addDevice(data.data);
+
         messageSuccess(messageApi, "Device was successfully added.");
       } else {
         messageError(messageApi, `Could not add device: ${data.error}`);

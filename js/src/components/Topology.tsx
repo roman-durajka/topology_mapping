@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Button, Flex, message, notification } from "antd";
+import { Button, message, notification, Popconfirm } from "antd";
 
 import request from "./Requester";
 import { messageSuccess, messageLoading } from "./message";
@@ -14,9 +14,7 @@ import Modal from "./Modal";
 import Form from "./Form";
 import PathTable from "./PathTable";
 import { PathTableItem } from "./types";
-import { DownloadOutlined } from "@ant-design/icons";
-import UploadButton from "./UploadButton";
-import { generateJsonFile, SchemeUploadButtonProps } from "./Scheme";
+import { SchemeWindow } from "./Scheme";
 import { addDeviceFormSubmit } from "../helpers/addDevice";
 
 interface InterfaceTopology {
@@ -27,6 +25,30 @@ const Topology: React.FC<InterfaceTopology> = ({ connector }) => {
   const [messageApi, contextHolder] = message.useMessage();
   const topologyContainer = useRef(null);
   const [pathTableData, setPathTableData] = useState<PathTableItem[]>([]);
+
+  const saveNodeCoords: () => void = () => {
+    const postData = { nodes: connector.getNodeCoords() };
+    const responseData = request({
+      url: "http://localhost:5000/topology-update",
+      method: "POST",
+      postData: postData,
+    });
+
+    responseData
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.code != 200) {
+          notification.error({
+            message: "Error occurred when saving topology layout.",
+            description: data.error,
+            placement: "top",
+            duration: 0,
+          });
+          return;
+        }
+        messageSuccess(messageApi, "Topology layout was successfully updated.");
+      });
+  };
 
   //load once on startup
   useEffect(() => {
@@ -115,22 +137,21 @@ const Topology: React.FC<InterfaceTopology> = ({ connector }) => {
     />,
     <Modal
       title="Import scheme"
-      children={
-        <>
-          <Flex vertical gap="middle" justify="center" align="center">
-            <Button
-              icon={<DownloadOutlined />}
-              size="large"
-              href={generateJsonFile(connector)}
-              download
-            >
-              Download blank scheme
-            </Button>
-            <UploadButton props={SchemeUploadButtonProps} />
-          </Flex>
-        </>
-      }
+      children={<SchemeWindow connector={connector} />}
     />,
+    <Popconfirm
+      title="Sure to save current topology layout?"
+      onConfirm={saveNodeCoords}
+      okText="Yes"
+      cancelText="No"
+    >
+      <Button
+        type="primary"
+        style={{ backgroundColor: "green", borderColor: "green" }}
+      >
+        Save topology layout
+      </Button>
+    </Popconfirm>,
   ];
 
   return (

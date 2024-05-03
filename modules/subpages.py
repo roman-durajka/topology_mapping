@@ -1,5 +1,7 @@
 from modules.clients import MariaDBClient
 from modules.exceptions import DuplicitDBEntry, CommonDBError, MissingFKError, NotFoundError, NotImplementedError, InvalidInsertedData
+import path
+import topology
 
 import ipaddress
 
@@ -336,6 +338,7 @@ class SchemeImportLibreNMS:
                 if attr in self.FK_CHECK_MAP:
                     self.__check_fk_existence(data_to_insert, attr)
 
+
         # insert data
         for attr in self.SCHEME_ATTRS_IN_ORDER:
             if attr not in self.scheme_json.keys():
@@ -354,10 +357,15 @@ class SchemeImportLibreNMS:
                     self.db_client.rollback()
                     raise e
 
+        topology_obj = topology.Topology()
+        # force DP algorithm with new data
+        topology_obj.create_topology()
+        # force X, Y coords calculation
+        topology_obj.update_uninitialized_coords()
         # erase some tables in topology DB so that DP algorithm can be run with new data
-        topology_db_client = MariaDBClient("topology")
-        topology_db_client.remove_data([("1", "1")], "relations")
-        topology_db_client.remove_data([("1", "1")], "nodes")
+        #topology_db_client = MariaDBClient("topology")
+        #topology_db_client.remove_data([("1", "1")], "relations")
+        #topology_db_client.remove_data([("1", "1")], "nodes")
 
 
 class Devices:
@@ -799,6 +807,114 @@ class Devices:
 
         return arp_table
 
+    def __get_device_discovery_protocols(self, device_id: int) -> dict:
+        """
+        Returns device DP (cdp/lldp) table.
+
+        :param device_id: id of device
+        :return: dict containing device dp table
+        """
+        dp_table = {}
+
+        dp_table_records = self.librenms_db_client.get_data("links", [("local_device_id", device_id)])
+        for record in dp_table_records:
+            record_id = record["id"]
+
+            # local device data
+            local_port_id = record["local_port_id"]
+            local_port_record = self.librenms_db_client.get_data("ports", [("port_id", local_port_id)])[0]
+            local_port_name = local_port_record["ifName"]
+            local_port_mac = local_port_record["ifPhysAddress"]
+
+            # remote device data
+            remote_port_id = record["remote_port_id"]
+            remote_port_record = self.librenms_db_client.get_data("ports", [("port_id", remote_port_id)])[0]
+            remote_port_name = remote_port_record["ifName"]
+            remote_port_mac = remote_port_record["ifPhysAddress"]
+            remote_device_id = remote_port_record["device_id"]
+            remote_device_record = self.librenms_db_client.get_data("devices", [("device_id", remote_device_id)])[0]
+            remote_device_name = remote_device_record["sysName"]
+
+            dp_record = {
+                "local_if_id": {
+                    "value": local_port_id,
+                    "name": "Local IF ID",
+                    "editable": True
+                },
+                "remote_if_id": {
+                    "value": remote_port_id,
+                    "name": "Remote IF ID",
+                    "editable": True
+                },
+                "local_if_name": {
+                    "value": local_port_name,
+                    "name": "Local IF name",
+                    "editable": False
+                },
+                "remote_if_name": {
+                    "value": remote_port_name,
+                    "name": "Remote IF name",
+                    "editable": False
+                },
+                "local_mac_address": {
+                    "value": local_port_mac,
+                    "name": "Local IF MAC",
+                    "editable": False
+                },
+                "remote_mac_address": {
+                    "value": remote_port_mac,
+                    "name": "Remote IF MAC",
+                    "editable": False
+                },
+                "remote_device_name": {
+                    "value": remote_device_name,
+                    "name": "Remote device",
+                    "editable": False
+                }
+            }
+
+            dp_table.update({record_id: dp_record})
+        if not dp_table:
+            dp_table = {-1: {
+                "local_if_id": {
+                    "value": "",
+                    "name": "Local IF ID",
+                    "editable": False
+                },
+                "remote_if_id": {
+                    "value": "",
+                    "name": "Remote IF ID",
+                    "editable": False
+                },
+                "local_if_name": {
+                    "value": "",
+                    "name": "Local IF name",
+                    "editable": False
+                },
+                "remote_if_name": {
+                    "value": "",
+                    "name": "Remote IF name",
+                    "editable": False
+                },
+                "local_mac_address": {
+                    "value": "",
+                    "name": "Local IF MAC",
+                    "editable": True
+                },
+                "remote_mac_address": {
+                    "value": "",
+                    "name": "Remote IF MAC",
+                    "editable": True
+                },
+                "remote_device_name": {
+                    "value": "",
+                    "name": "Remote device",
+                    "editable": False
+                }
+            }}
+
+        return dp_table
+
     def get_devices(self):
         """
         Returns all data about devices needed by subpage `devices`.Devices()
@@ -822,6 +938,9 @@ class Devices:
 
             arp_table = self.__get_device_arp_table(device_id)
             device_data.update({"arp_table": arp_table})
+
+            dp_table = self.__get_device_discovery_protocols(device_id)
+            device_data.update({"dp_table": dp_table})
 
             devices.update({device_id: device_data})
 
@@ -1034,7 +1153,7 @@ class Devices:
             if key == "Destination IF MAC":  # TODO: make generic method for interfaces and MACs and use everywhere
                 port_records = self.librenms_db_client.get_data("ports", [("ifPhysAddress", value)])
                 if not port_records:
-                    raise InvalidInsertedData("MAC address you entered does not belong to device/interface.")
+                    raise InvalidInsertedData("MAC address you entered does not belong to any device/interface.")
                 valid_port_record = port_records[-1]
                 device_record = self.librenms_db_client.get_data("devices", [("device_id", valid_port_record["device_id"])])[0]
                 data_to_update["mac_address"] = value
@@ -1126,6 +1245,76 @@ class Devices:
 
         return data_to_return
 
+    def __update_table_dp(self, data: dict) -> dict:
+        data_to_update = {}
+        data_to_return = {}
+
+        for key, value in data.items():
+            if key == "Remote IF ID":  # TODO: make generic method for interfaces and MACs and use everywhere
+                port_records = self.librenms_db_client.get_data("ports", [("port_id", value)])
+                if not port_records:
+                    raise InvalidInsertedData("Interface ID you entered does not belong to any device/interface.")
+                valid_port_record = port_records[-1]
+                device_id = valid_port_record["device_id"]
+                device_record = self.librenms_db_client.get_data("devices", [("device_id", valid_port_record["device_id"])])[0]
+
+                port_id = value
+                port_name = valid_port_record["ifName"]
+                mac_addr = valid_port_record["ifPhysAddress"]
+                device_name = device_record["sysName"]
+                device_version = device_record["sysDescr"]
+
+                data_to_update.update({
+                    "remote_hostname": device_name,
+                    "remote_device_id": device_id,
+                    "remote_port": port_name,
+                    "remote_version": device_version,
+                    "remote_port_id": port_id
+                })
+                data_to_return.update({
+                    "Remote IF ID": port_id,
+                    "Remote IF MAC": mac_addr,
+                    "Remote IF name": port_name,
+                    "Remote device": device_name
+                })
+
+            if key == "Local IF ID":
+                port_records = self.librenms_db_client.get_data("ports", [("port_id", value), ("device_id", data["deviceId"])])
+                if not port_records:
+                    raise InvalidInsertedData("Interface ID you entered does not belong to any interface on this device.")
+                valid_port_record = port_records[-1]
+
+                port_id = value
+                port_name = valid_port_record["ifName"]
+                mac_addr = valid_port_record["ifPhysAddress"]
+                device_id = valid_port_record["device_id"]
+
+                data_to_update.update({
+                    "active": 1,
+                    "local_port_id": port_id,
+                    "local_device_id": device_id
+                })
+                data_to_return.update({
+                    "Local IF ID": port_id,
+                    "Local IF name": port_name,
+                    "Local IF MAC": mac_addr
+                })
+
+        if "id" not in data.keys():
+            for colname in ["Local IF ID", "Remote IF ID"]:
+                if colname not in data.keys():
+                    raise InvalidInsertedData("You must enter all optional columns.")
+
+            self.librenms_db_client.insert_data([data_to_update], "links")
+            record_id = self.librenms_db_client.get_data("links", [(key, value) for key, value in data_to_update.items()])[-1]["id"]
+
+            data_to_return["id"] = record_id
+        else:
+            if data_to_update:
+                self.librenms_db_client.update_data("links", [data_to_update], [("id", data["id"])])
+
+        return data_to_return
+
     def update_devices(self, req_json: dict) -> dict:
         table_name = req_json.pop("table")
         match table_name:
@@ -1141,5 +1330,121 @@ class Devices:
                 return self.__update_table_mac(req_json)
             case "routing_table":
                 return self.__update_table_routing(req_json)
+            case "dp_table":
+                return self.__update_table_dp(req_json)
             case _:
                 raise NotImplementedError("This update option is not implemented...")
+
+    def __purge_device_from_topology(self, device_id: int) -> None:
+        """Removes device from DB `topology` completely, including relations,
+        inf. systems, paths...
+        TODO: maybe move somewhere else?"""
+        relation_records = []
+        for query in ["source", "target"]:
+            relation_records.extend(self.topology_db_client.get_data("relations", [(query, device_id)]))
+
+        path_data = []
+        for record in relation_records:
+            relation_id = record["id"]
+            # gather all path ids
+            path_records = self.topology_db_client.get_data("paths", [("relation_id", relation_id)])
+            for path_record in path_records:
+                path_id = path_record["path_id"]
+                group_id = path_record["application_group_id"]
+                path_group_tuple = (path_id, group_id)
+                if path_group_tuple not in path_data:
+                    path_data.append(path_group_tuple)
+            # remove records, we don't need them anymore
+            self.topology_db_client.remove_data([("id", relation_id)], "relations")
+
+        # remove paths, appl. groups, and inf. systems
+        for path_record in path_data:
+            path.remove_path({"pathId": path_record[0], "groupId": path_record[1]})
+
+        # remove device
+        self.topology_db_client.remove_data([("id", device_id)], "nodes")
+
+    def __delete_row_table_devices(self, data: dict) -> None:
+        """Deletes records from all tables that refer to given
+        device and it's ports."""
+        device_id = data["id"]
+
+        # get all ports of device
+        port_records = self.librenms_db_client.get_data("ports", [("device_id", device_id)])
+        for port_record in port_records:
+            port_id = port_record["port_id"]
+            mac_address = port_record["ifPhysAddress"]
+
+            # delete data from `ipv4_mac`
+            self.librenms_db_client.remove_data([("port_id", port_id)], "ipv4_mac")
+            self.librenms_db_client.remove_data([("mac_address", mac_address)], "ipv4_mac")
+            # delete data from `links`
+            self.librenms_db_client.remove_data([("local_port_id", port_id)], "links")
+            self.librenms_db_client.remove_data([("remote_port_id", port_id)], "links")
+            # delete data from `ports_fdb`
+            self.librenms_db_client.remove_data([("port_id", port_id)], "ports_fdb")
+            self.librenms_db_client.remove_data([("mac_address", mac_address)], "ports_fdb")
+            # delete data from `route`
+            self.librenms_db_client.remove_data([("port_id", port_id)], "route")
+            ip_addr_records = self.librenms_db_client.get_data("ipv4_addresses", [("port_id", port_id)])
+            for ip_addr_record in ip_addr_records:
+                ip_addr = ip_addr_record["ipv4_address"]
+                self.librenms_db_client.remove_data([("inetCidrRouteNextHop", ip_addr)], "route")
+            # delete data from `ipv4_addresses`
+            self.librenms_db_client.remove_data([("port_id", port_id)], "ipv4_addresses")
+
+        # delete device data from table `devices`
+        self.librenms_db_client.remove_data([("device_id", device_id)], "devices")
+
+        # delete device `topology` DB
+        self.__purge_device_from_topology(device_id)
+
+    def __delete_row_arp_table(self, data: dict) -> None:
+        record_id = data["id"]
+
+        # delete record from arp table
+        self.librenms_db_client.remove_data([("id", record_id)], "ipv4_mac")
+
+    def __delete_row_interfaces(self, data: dict) -> None:
+        port_id = data["id"]
+
+        # delete port ip address
+        self.librenms_db_client.remove_data([("port_id", port_id)], "ipv4_addresses")
+        # delete port record
+        self.librenms_db_client.remove_data([("port_id", port_id)], "ports")
+
+    def __delete_row_mac_table(self, data: dict) -> None:
+        record_id = data["id"]
+
+        # delete mac table record
+        self.librenms_db_client.remove_data([("ports_fdb_id", record_id)], "ports_fdb")
+
+    def __delete_row_routing_table(self, data: dict) -> None:
+        record_id = data["id"]
+
+        # delete routing table record
+        self.librenms_db_client.remove_data([("route_id", record_id)], "route")
+
+    def __delete_row_table_links(self, data: dict) -> None:
+        record_id = data["id"]
+
+        # delete routing table record
+        self.librenms_db_client.remove_data([("id", record_id)], "links")
+
+    def delete_row(self, req_json: dict) -> dict:
+        table_name = req_json.pop("table")
+        match table_name:
+            case "devices":
+                self.__delete_row_table_devices(req_json)
+            case "arp_table":
+                self.__delete_row_arp_table(req_json)
+            case "interfaces":
+                self.__delete_row_interfaces(req_json)
+            case "mac_table":
+                self.__delete_row_mac_table(req_json)
+            case "routing_table":
+                self.__delete_row_routing_table(req_json)
+            case "links":
+                self.__delete_row_table_links(req_json)
+            case _:
+                raise NotImplementedError("This delete option is not implemented...")

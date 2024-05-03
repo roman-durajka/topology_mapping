@@ -1,7 +1,7 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 import path
-import main
+import topology
 from modules import asset_mapper, subpages
 from modules.exceptions import DuplicitDBEntry
 
@@ -86,8 +86,29 @@ def create_topology():
     """
     result = {}
     try:
-        js_data = main.main()
+        topology_obj = topology.Topology()
+        js_data = topology_obj.decide_and_return_topology()
         result["data"] = js_data
+        result["code"] = 200
+    except Exception as error:
+        result["error"] = str(error)
+        result["code"] = 500
+
+    return jsonify(result)
+
+
+@app.route('/topology-update', methods=['POST'])
+def topology_update():
+    """
+    Endpoint to update topology data, specifically DB `topology`.
+
+    :return: data in json format and status code
+    """
+    req_json = request.json
+    result = {}
+    try:
+        topology_obj = topology.Topology()
+        topology_obj.topology_update(req_json)
         result["code"] = 200
     except Exception as error:
         result["error"] = str(error)
@@ -144,7 +165,9 @@ def add_device():
     req_json = request.json
     result = {}
     try:
-        main.add_device(req_json)
+        topology_obj = topology.Topology()
+        data = topology_obj.add_device(req_json)
+        result["data"] = data
         result["code"] = 200
     except Exception as error:
         result["error"] = str(error)
@@ -237,6 +260,26 @@ def devices_update():
     try:
         devices = subpages.Devices()
         result["data"] = devices.update_devices(req_json)
+        result["code"] = 200
+    except Exception as error:
+        result["error"] = str(error)
+        result["code"] = 500
+
+    return jsonify(result)
+
+
+@app.route('/devices-delete', methods=['POST'])
+def devices_delete():
+    """
+    Endpoint to delete data using the 'devices' subpage.
+
+    :return: data in json format and status code
+    """
+    req_json = request.json
+    result = {}
+    try:
+        devices = subpages.Devices()
+        devices.delete_row(req_json)
         result["code"] = 200
     except Exception as error:
         result["error"] = str(error)

@@ -2,80 +2,6 @@ from modules.entities import RelationsContainer, Interface, Relation
 import json
 
 
-def save_topology_to_db(devices: list, relations: RelationsContainer, db_client):
-    devices_data = []
-    for device in devices:
-        devices_data.append({"id": device.device_id,
-                             "type": device.device_type,
-                             "asset": device.asset,
-                             "asset_value": 0,
-                             "asset_values": [0]})
-    db_client.insert_data(devices_data, "nodes")
-
-    relations_data = []
-    for index, relation in enumerate(relations):
-        relations_data.append({"id": index,
-                               "source": relation.interface1.device_id,
-                               "source_if": relation.interface1.port_id,
-                               "target": relation.interface2.device_id,
-                               "target_if": relation.interface2.port_id})
-    db_client.insert_data(relations_data, "relations")
-
-
-def load_topology_from_db(topology_db_client, librenms_db_client) -> dict:
-    nodes = topology_db_client.get_data("nodes")
-    output = {"nodes": [], "links": []}
-
-    for node in nodes:
-        node_data = librenms_db_client.get_data("devices", [("device_id", node["id"])])[0]
-        device_to_add = {"id": node["id"],
-                         "name": node_data["sysName"],
-                         "icon": node["type"],
-                         "type": node["type"],
-                         "os": node_data["os"],
-                         "model": node_data["hardware"],
-                         "asset": node["asset"],
-                         "asset-value": node["asset_value"],
-                         "asset-values": json.loads(node["asset_values"])}
-
-        interfaces = {}
-
-        for interface_data in librenms_db_client.get_data("ports", [("device_id", node["id"])]):
-            port_id = interface_data["port_id"]
-            status = interface_data["ifOperStatus"]
-            mac_address = interface_data["ifPhysAddress"]
-            ip_address = None
-            ip_address_record = librenms_db_client.get_data("ipv4_addresses", [("port_id", port_id)])
-            if ip_address_record:
-                ip_address = ip_address_record[0]["ipv4_address"]
-            interface_string = f"{port_id}/{status}/{ip_address}/{mac_address}"
-            interface_name = interface_data["ifName"]
-
-            interfaces.update({interface_name: interface_string})
-
-        device_to_add.update({"interfaces": interfaces})
-        output["nodes"].append(device_to_add)
-
-    relations = topology_db_client.get_data("relations")
-
-    for relation in relations:
-        if1_data = librenms_db_client.get_data("ports", [("port_id", relation["source_if"])])[0]
-        if2_data = librenms_db_client.get_data("ports", [("port_id", relation["target_if"])])[0]
-        relation_to_add = {"id": relation["id"],
-                           "srcIfID": relation["source_if"],
-                           "tgtIfID": relation["target_if"],
-                           "source": relation["source"],
-                           "target": relation["target"],
-                           "srcIfName": if1_data["ifName"],
-                           "tgtIfName": if2_data["ifName"],
-                           "srcMac": if1_data["ifPhysAddress"],
-                           "tgtMac": if2_data["ifPhysAddress"]}
-
-        output["links"].append(relation_to_add)
-
-    return output
-
-
 def save_path_to_db(path: RelationsContainer, starting_index: int, color: str, asset_value: int, path_name: str, group_id: int, topology_db_client):
     path_relations = []
 
@@ -170,6 +96,8 @@ def generate_js_data_json(devices: list, relations: RelationsContainer) -> dict:
     :return: dict
     """
     output = {"nodes": [], "links": []}
+    # set data processor
+    output["dataProcessor"] = "force"
 
     for device in devices:
         device_to_add = {"id": device.device_id,

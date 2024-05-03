@@ -20,6 +20,8 @@ CREATE TABLE `nodes` (
   `asset` varchar(255) DEFAULT NULL,
   `asset_value` int(11) DEFAULT NULL,
   `asset_values` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`asset_values`)),
+  `x_coord` DECIMAL(20, 14) DEFAULT 0,
+  `y_coord` DECIMAL(20, 14) DEFAULT 0,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
