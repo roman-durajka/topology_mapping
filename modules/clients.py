@@ -177,6 +177,18 @@ class MariaDBClient:
         parsed_data = self.__parse_column_data_types(self.cursor.fetchall())
         return parsed_data
 
+    def remove_gaps_in_ids(self, table_name: str, column_name: str = "id", start_from: int = 0):
+        """Re-orders table based on id, removing missing ID values, fe. makes
+        ids 1, 2, 3, 5, 6 into 1, 2, 3, 4, 5."""
+        data = self.get_data(table_name)
+        sorted_data = sorted(data, key=lambda x: x[column_name])
+
+        for index, record in enumerate(sorted_data):
+            record[column_name] = index + start_from
+
+        self.remove_data([(1, 1)], table_name)
+        self.insert_data(sorted_data, table_name)
+
     def commit(self):
         self.connection.commit()
 

@@ -1291,6 +1291,20 @@ class Devices:
             record_id = self.librenms_db_client.get_data("links", [(key, value) for key, value in data_to_update.items()])[-1]["id"]
 
             data_to_return["id"] = record_id
+
+            relations_ids_records = self.topology_db_client.get_data("relations", [])
+            relations_ids = [record["id"] for record in relations_ids_records]
+            new_relation_id = max(relations_ids) + 1
+
+            self.topology_db_client.insert_data([
+                {
+                    "id": new_relation_id,
+                    "source": data_to_update["local_device_id"],
+                    "target": data_to_update["remote_device_id"],
+                    "source_if": data_to_update["local_port_id"],
+                    "target_if": data_to_update["remote_port_id"]
+                }
+            ], "relations")
         else:
             if data_to_update:
                 self.librenms_db_client.update_data("links", [data_to_update], [("id", data["id"])])
@@ -1410,8 +1424,15 @@ class Devices:
     def __delete_row_table_links(self, data: dict) -> None:
         record_id = data["id"]
 
-        # delete routing table record
+        # delete DP record
         self.librenms_db_client.remove_data([("id", record_id)], "links")
+
+        data_to_delete = [("source_if", data["Local IF ID"]),
+                          ("target_if", data["Remote IF ID"])]
+        record_to_delete = self.topology_db_client.get_data("relations", data_to_delete)[0]
+
+        self.topology_db_client.remove_data([("id", record_to_delete["id"])], "relations")
+        self.topology_db_client.remove_gaps_in_ids("relations")
 
     def delete_row(self, req_json: dict) -> dict:
         table_name = req_json.pop("table")
@@ -1426,7 +1447,7 @@ class Devices:
                 self.__delete_row_mac_table(req_json)
             case "routing_table":
                 self.__delete_row_routing_table(req_json)
-            case "links":
+            case "dp_table":
                 self.__delete_row_table_links(req_json)
             case _:
                 raise NotImplementedError("This delete option is not implemented...")

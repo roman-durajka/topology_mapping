@@ -211,10 +211,7 @@ const Devices: React.FC<InterfaceDevices> = ({ connector }) => {
                 propertyData[0]["table"] === "details"
                   ? undefined
                   : (index: number, deleteRow: () => void) => {
-                      const postData = {
-                        table: propertyData[index]["table"],
-                        id: propertyData[index]["id"],
-                      };
+                      const postData = propertyData[index];
 
                       const responseData: Promise<Response> = request({
                         url: "http://localhost:5000/devices-delete",
