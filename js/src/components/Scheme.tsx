@@ -73,7 +73,15 @@ const SchemeUploadButtonProps: UploadProps = {
               <Space direction="vertical" size="large">
                 {info.file.error.message}
                 {"Do you want to replace the existing data?"}
-                <Space direction="horizontal" size="large">
+                <Space
+                  direction="horizontal"
+                  size="large"
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    width: "85%",
+                  }}
+                >
                   {notificationButton(
                     () => {
                       notification.destroy();
