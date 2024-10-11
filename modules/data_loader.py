@@ -1,10 +1,12 @@
+from modules.clients import MariaDBClient
+
 import requests
 import re
 
 
 class DataLoader:
-    def __init__(self, db_connection):
-        self.db_connection = db_connection
+    def __init__(self):
+        self.db_connection = MariaDBClient("risk_management")
 
     def load_assets(self):
         asset_objects = self.__load_mosp_api_data({"schema": "Assets"}, {"X-Fields": "data{name, json_object}"})["data"]
@@ -71,3 +73,20 @@ class DataLoader:
         raw_text = re.search(regexp_str, raw_data).group(1)
 
         return raw_text
+
+    def decide_and_returnd_data(self):
+        """
+        Checks if risk management data are already present in DB, if yes,
+        just return them in needed format, if not, load them first and then
+        return.
+        """
+        if not self.db_connection.get_data("assets"):
+            self.load_assets()
+            self.load_risks()
+            self.load_measures()
+            self.load_measures_to_risks_mapping()
+
+        # TODO: transform data into dict with correct format
+        data_to_return = {}
+
+        return data_to_return

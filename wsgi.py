@@ -2,7 +2,7 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 import path
 import topology
-from modules import asset_mapper, subpages
+from modules import asset_mapper, subpages, data_loader
 from modules.exceptions import DuplicitDBEntry
 
 app = Flask(__name__)
@@ -280,6 +280,29 @@ def devices_delete():
     try:
         devices = subpages.Devices()
         devices.delete_row(req_json)
+        result["code"] = 200
+    except Exception as error:
+        result["error"] = str(error)
+        result["code"] = 500
+
+    return jsonify(result)
+
+
+# ENDPOINTS FOR RISK MANAGEMENT SUBPAGE
+
+@app.route('/risk-management', methods=["GET"])
+def risk_management_load():
+    """
+    Returns all risk management data. If fired for the first time,
+    loads all risk management data from MOSP and other sources
+    into local DB first. This might take from few seconds up to tens of
+    seconds.
+    """
+    # TODO: integrate into UI when it's done
+    result = {}
+    try:
+        data_load = data_loader.DataLoader()
+        result["data"] = data_load.decide_and_returnd_data()
         result["code"] = 200
     except Exception as error:
         result["error"] = str(error)
