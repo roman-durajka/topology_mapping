@@ -2,7 +2,6 @@ from extractors import DeviceExtractor, DPExtractor
 from modules.clients import MariaDBClient
 from modules import entities
 import math
-import random
 import json
 
 
@@ -203,13 +202,6 @@ class Topology:
         create topology data from scratch, but add missing/new data."""
         device_extractor = DeviceExtractor(self.librenms_db_client)
         devices = device_extractor.extract()
-
-        # TODO: integrate into UI when it's done
-        #data_load = DataLoader(risk_mgmt_db_client)
-        #data_load.load_assets()
-        #data_load.load_risks()
-        #data_load.load_measures()
-        #data_load.load_measures_to_risks_mapping()
 
         relations = entities.RelationsContainer()
 
