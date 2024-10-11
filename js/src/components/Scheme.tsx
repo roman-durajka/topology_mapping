@@ -6,7 +6,11 @@ import request from "./Requester";
 import { DownloadOutlined } from "@ant-design/icons";
 import UploadButton from "./UploadButton";
 
-const notificationButton = (onClick: () => void, text: string, buttonType: "link" | "text" | "default" | "primary" | "dashed" | undefined) => {
+const notificationButton = (
+  onClick: () => void,
+  text: string,
+  buttonType: "link" | "text" | "default" | "primary" | "dashed" | undefined,
+) => {
   return (
     <>
       <Button type={buttonType} size="large" onClick={() => onClick()}>
@@ -70,30 +74,38 @@ const SchemeUploadButtonProps: UploadProps = {
                 {info.file.error.message}
                 {"Do you want to replace the existing data?"}
                 <Space direction="horizontal" size="large">
-                  {notificationButton(() => {
-                    notification.destroy();
-                    const responseData: Promise<Response> = request({
-                      url: "http://localhost:5000/scheme-replace",
-                      method: "POST",
-                      postData: info.file.error.fileData,
-                    });
-
-                    responseData
-                      .then((response) => response.json())
-                      .then((data) => {
-                        if (data.code != 200) {
-                          message.error(
-                            `ERROR - Check console for more details.`,
-                          );
-                          console.log(data.error);
-                        } else {
-                          message.success(`Data replaced successfully.`);
-                        }
+                  {notificationButton(
+                    () => {
+                      notification.destroy();
+                      const responseData: Promise<Response> = request({
+                        url: "http://localhost:5000/scheme-replace",
+                        method: "POST",
+                        postData: info.file.error.fileData,
                       });
-                  }, "Confirm", "primary")}
-                  {notificationButton(() => {
-                    notification.destroy();
-                  }, "Cancel", "default")}
+
+                      responseData
+                        .then((response) => response.json())
+                        .then((data) => {
+                          if (data.code != 200) {
+                            message.error(
+                              `ERROR - Check console for more details.`,
+                            );
+                            console.log(data.error);
+                          } else {
+                            message.success(`Data replaced successfully.`);
+                          }
+                        });
+                    },
+                    "Confirm",
+                    "primary",
+                  )}
+                  {notificationButton(
+                    () => {
+                      notification.destroy();
+                    },
+                    "Cancel",
+                    "default",
+                  )}
                 </Space>
               </Space>
             </>
