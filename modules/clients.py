@@ -5,7 +5,11 @@ from modules.exceptions import NotFoundError
 
 
 class MariaDBClient:
-    """Client to establish connection with MariaDB database and offer basic statement actions."""
+    """Client to establish connection with MariaDB database and offer basic
+    statement actions.
+
+    To make connection inside docker container, choose host="db_con". To run
+    DB in docker and python API outside docker, choose host="0.0.0.0"."""
     def __init__(self, database):
         self.connection = mariadb.connect(
             database=database,
