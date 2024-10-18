@@ -1,7 +1,13 @@
 import mariadb
 import json
+from dotenv import load_dotenv
+import os
+import sys
 
 from modules.exceptions import NotFoundError
+
+
+load_dotenv(os.path.join(sys.path[0], '..', '.env'))
 
 
 class MariaDBClient:
@@ -13,10 +19,10 @@ class MariaDBClient:
     def __init__(self, database):
         self.connection = mariadb.connect(
             database=database,
-            user="root",
-            password="password",
+            user=os.getenv("DB_USER"),
+            password=os.getenv("DB_PASSWORD"),
             host="db_con",
-            port=3306
+            port=int(os.getenv("DB_PORT"))
         )
         self.cursor = self.connection.cursor()
 

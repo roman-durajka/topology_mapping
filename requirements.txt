@@ -5,3 +5,4 @@ pymosp
 bs4
 requests
 lxml
+python-dotenv

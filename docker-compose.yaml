@@ -28,10 +28,10 @@ services:
         image: mariadb
         container_name: db_con
         environment:
-         - MYSQL_ROOT_PASSWORD=password
-         - MYSQL_DATABASE=relations
-         - MYSQL_USER=user
-         - MYSQL_PASSWORD=password
+         - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+         - MYSQL_DATABASE=${MYSQL_DATABASE}
+         - MYSQL_USER=${MYSQL_USER}
+         - MYSQL_PASSWORD=${MYSQL_PASSWORD}
         ports:
          - "3306:3306"
         volumes:
