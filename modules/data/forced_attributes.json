@@ -1,0 +1,23 @@
+{
+  "devices": {
+    "status_reason": ""
+  },
+  "ipv4_mac": {
+    "context_name": ""
+  },
+  "links": {
+    "remote_version": "",
+    "remote_port": "",
+    "remote_hostname": ""
+  },
+  "route": {
+    "inetCidrRouteIfIndex": 0,
+    "inetCidrRouteType": 0,
+    "inetCidrRouteProto": 0,
+    "inetCidrRouteNextHopAS": 0,
+    "inetCidrRouteMetric1": 0,
+    "inetCidrRouteDestType": "ipv4",
+    "inetCidrRouteNextHopType": "ipv4",
+    "inetCidrRoutePolicy": ""
+  }
+}

@@ -4,6 +4,8 @@ import path
 import topology
 
 import ipaddress
+import json
+import copy
 
 
 def insert_into_table_route(db_client: MariaDBClient, data_to_insert: dict):
@@ -79,6 +81,9 @@ class SchemeImportLibreNMS:
         self.db_client = MariaDBClient("librenms")
         self.scheme_json = scheme_json
 
+        with open("modules/data/forced_attributes.json", "r") as json_file:
+            self.forced_attributes = json.load(json_file)
+
     def __map_optional_attribute(self, table_name: str, id_key: str,
                                  attribute_key: str,
                                  attribute_value: str | int,
@@ -126,34 +131,7 @@ class SchemeImportLibreNMS:
         needed to be put in by user. Without them it would not be possible to
         insert data into DB, but also it would not be wise to ask user to
         fill in fe. status_reason etc..."
-        TODO: make more generic
         """
-        if table_name == "devices":
-            for record in data_to_insert:
-                record.update({"status_reason": ""})
-        if table_name == "ipv4_mac":
-            for record in data_to_insert:
-                record.update({"context_name": ""})
-        if table_name == "links":
-            for record in data_to_insert:
-                record.update({
-                    "remote_version": "",
-                    "remote_port": "",
-                    "remote_hostname": ""
-                })
-        if table_name == "route":
-            for record in data_to_insert:
-                record.update({
-                    "inetCidrRouteIfIndex": 0,
-                    "inetCidrRouteType": 0,
-                    "inetCidrRouteProto": 0,
-                    "inetCidrRouteNextHopAS": 0,
-                    "inetCidrRouteMetric1": 0,
-                    "inetCidrRouteDestType": "ipv4",
-                    "inetCidrRouteNextHopType": "ipv4",
-                    "inetCidrRoutePolicy": ""
-                })
-
         # map IPs and vlan_ids
         if table_name == "ipv4_addresses":
             for index, record in enumerate(data_to_insert):
@@ -173,7 +151,7 @@ class SchemeImportLibreNMS:
                     network_address, {"ipv4_network": network_address})
                 data_to_insert[index]["ipv4_network_id"] = str(network_id)
 
-        if table_name == "ports_fdb":
+        elif table_name == "ports_fdb":
             for index, record in enumerate(data_to_insert):
                 if "vlan_vlan" not in record.keys():
                     raise CommonDBError(
@@ -186,6 +164,11 @@ class SchemeImportLibreNMS:
                     {"vlan_vlan": vlan})
                 data_to_insert[index]["vlan_id"] = vlan_id
                 del data_to_insert[index]["vlan_vlan"]
+
+        elif table_name in self.forced_attributes.keys():
+            data_to_update = self.forced_attributes[table_name]
+            for record in data_to_insert:
+                record.update(data_to_update)
 
     def __fk_custom_checks(self, table_name: str, data_to_insert: dict):
         """Complements the `check_fk_existence` method with custom checks that
@@ -253,7 +236,6 @@ class SchemeImportLibreNMS:
                              table_name: str):
         """Checks if FK values (fe. port_id or device_id) exist in others
         tables (as PK)."""
-
         for index, record in enumerate(data_to_insert):
             for record_name, fk_attributes in self.FK_CHECK_MAP[
                     table_name].items():
@@ -338,7 +320,6 @@ class SchemeImportLibreNMS:
                 if attr in self.FK_CHECK_MAP:
                     self.__check_fk_existence(data_to_insert, attr)
 
-
         # insert data
         for attr in self.SCHEME_ATTRS_IN_ORDER:
             if attr not in self.scheme_json.keys():
@@ -369,6 +350,9 @@ class Devices:
         self.topology_db_client = MariaDBClient("topology")
         self.librenms_db_client = MariaDBClient("librenms")
 
+        with open("modules/data/devices_data.json", "r") as raw_json:
+            self.devices_data = json.load(raw_json)
+
     def __get_device_data(self, device_id: int):
         """
         Returns dict that contains basic data about device.
@@ -381,56 +365,11 @@ class Devices:
             raise NotFoundError("Could not find device from topology inside librenms DB. How could this happen?")
         device_record = device_record[0]
 
-        device_details = {
-            1: {
-                "hardware_title": {
-                    "name": "Device detail",
-                    "value": "Model",
-                    "editable": False
-                },
-                "hardware_value": {
-                    "name": "Value",
-                    "value": device_record["hardware"],
-                    "editable": True
-                }
-            },
-            2: {
-                "os_title": {
-                    "name": "Device detail",
-                    "value": "Operating system",
-                    "editable": False
-                },
-                "os_value": {
-                    "name": "Value",
-                    "value": device_record["os"],
-                    "editable": True
-                }
-            },
-            4: {
-                "version_title": {
-                    "name": "Device detail",
-                    "value": "OS version",
-                    "editable": False
-                },
-                "version_value": {
-                    "name": "Value",
-                    "value": device_record["version"],
-                    "editable": True
-                }
-            },
-            5: {
-                "description_title": {
-                    "name": "Device detail",
-                    "value": "Description",
-                    "editable": False
-                },
-                "description_value": {
-                    "name": "Value",
-                    "value": device_record["sysDescr"],
-                    "editable": True
-                }
-            }
-        }
+        device_details = copy.deepcopy(self.devices_data["device_details"])
+        device_details["1"]["hardware_value"]["value"] = device_record["hardware"]
+        device_details["2"]["os_value"]["value"] = device_record["os"]
+        device_details["4"]["version_value"]["value"] = device_record["version"]
+        device_details["5"]["description_value"]["value"] = device_record["sysDescr"]
 
         device_data = {
             "name": device_record["sysName"],
@@ -454,63 +393,16 @@ class Devices:
             ip_address_record = self.librenms_db_client.get_data("ipv4_addresses", [("port_id", interface_id)])
             ip_address = "" if not ip_address_record else f"{ip_address_record[0]['ipv4_address']}/{ip_address_record[0]['ipv4_prefixlen']}"
 
-            interface_data = {
-                "if_id": {
-                    "value": interface_id,
-                    "name": "Interface ID",
-                    "editable": False
-                },
-                "status": {
-                    "value": interface_record["ifOperStatus"],
-                    "name": "Status",
-                    "editable": True
-                },
-                "mac_address": {
-                    "value": interface_record["ifPhysAddress"],
-                    "name": "MAC Address",
-                    "editable": True
-                },
-                "if_name": {
-                    "value": interface_record["ifName"],
-                    "name": "Interface name",
-                    "editable": True
-                },
-                "ip_address": {
-                    "value": ip_address,
-                    "name": "IP Address",
-                    "editable": True
-                }
-            }
-
+            interface_data = copy.deepcopy(self.devices_data["interface_data"])
+            interface_data["if_id"]["value"] = interface_id
+            interface_data["status"]["value"] = interface_record["ifOperStatus"]
+            interface_data["mac_address"]["value"] = interface_record["ifPhysAddress"]
+            interface_data["if_name"]["value"] = interface_record["ifName"]
+            interface_data["ip_address"]["value"] = ip_address
             interfaces.update({interface_id: interface_data})
+
         if not interfaces:
-            interfaces = {-1: {
-                "if_id": {
-                    "value": "",
-                    "name": "Interface ID",
-                    "editable": False
-                },
-                "status": {
-                    "value": "",
-                    "name": "Status",
-                    "editable": True
-                },
-                "mac_address": {
-                    "value": "",
-                    "name": "MAC Address",
-                    "editable": True
-                },
-                "if_name": {
-                    "value": "",
-                    "name": "Interface name",
-                    "editable": True
-                },
-                "ip_address": {
-                    "value": "",
-                    "name": "IP Address",
-                    "editable": True
-                }
-            }}
+            interfaces = self.devices_data["interface_data_default"]
 
         return interfaces
 
@@ -538,70 +430,18 @@ class Devices:
                     nexthop_device_record = self.librenms_db_client.get_data("devices", [("device_id", nexthop_port_record["device_id"])])[0]
                     nexthop_device_name = nexthop_device_record["sysName"]
 
-            destionation = f"{record['inetCidrRouteDest']}/{record['inetCidrRoutePfxLen']}"
+            destination = f"{record['inetCidrRouteDest']}/{record['inetCidrRoutePfxLen']}"
 
-            route = {
-                "if_id": {
-                    "value": record["port_id"],
-                    "name": "Interface ID",
-                    "editable": False
-                },
-                "if_name": {
-                    "value": if_record["ifName"],
-                    "name": "Interface name",
-                    "editable": True
-                },
-                "destination": {
-                    "value": destionation,
-                    "name": "Destination",
-                    "editable": True
-                },
-                "nexthop": {
-                    "value": record["inetCidrRouteNextHop"],
-                    "name": "Nexthop",
-                    "editable": True
-                },
-                "nexthop_name": {
-                    "value": nexthop_device_name,
-                    "name": "Nexthop name",
-                    "editable": False
-                }
-            }
-
+            route = copy.deepcopy(self.devices_data["routing_table"])
+            route["if_id"]["value"] = record["port_id"]
+            route["if_name"]["value"] = if_record["ifName"]
+            route["destination"]["value"] = destination
+            route["nexthop"]["value"] = record["inetCidrRouteNextHop"]
+            route["nexthop_name"]["value"] = nexthop_device_name
             routing_table.update({route_id: route})
+
         if not routing_table:
-            routing_table = {-1: {
-                "if_id": {
-                    "value": "",
-                    "name": "Interface ID",
-                    "editable": False
-                },
-                "if_name": {
-                    "value": "",
-                    "name": "Interface name",
-                    "editable": True
-                },
-                "destination": {
-                    "value": "",
-                    "name": "Destination",
-                    "editable": True
-                },
-                "prefix_len": {
-                    "value": "",
-                    "name": "Destination prefix",
-                    "editable": True
-                },
-                "nexthop": {
-                    "value": "",
-                    "name": "Nexthop",
-                    "editable": True
-                },
-                "nexthop_name": {
-                    "value": "",
-                    "name": "Nexthop name",
-                    "editable": False
-                }
-            }}
+            routing_table = self.devices_data["routing_table_default"]
 
         return routing_table
 
@@ -627,96 +467,19 @@ class Devices:
             remote_if_record = remote_if_record[0]
             remote_device_record = self.librenms_db_client.get_data("devices", [("device_id", remote_if_record["device_id"])])[0]
 
-            route = {
-                # local
-                "local_if_id": {
-                    "value": record["port_id"],
-                    "name": "Local IF ID",
-                    "editable": False
-                },
-                "local_if_name": {
-                    "value": local_if_record["ifName"],
-                    "name": "Local IF name",
-                    "editable": False
-                },
-                "local_if_mac": {
-                    "value": local_if_record["ifPhysAddress"],
-                    "name": "Local IF MAC",
-                    "editable": True
-                },
-                # destination
-                "destination_name": {
-                    "value": remote_device_record["sysName"],
-                    "name": "Destination device",
-                    "editable": False
-                },
-                "destination_if_id": {
-                    "value": remote_if_record["port_id"],
-                    "name": "Destination IF ID",
-                    "editable": False
-                },
-                "destination_if_name": {
-                    "value": remote_if_record["ifName"],
-                    "name": "Destination IF name",
-                    "editable": False
-                },
-                "destination_if_mac": {
-                    "value": record["mac_address"],
-                    "name": "Destination IF MAC",
-                    "editable": True
-                },
-                "vlan": {
-                    "value": vlan,
-                    "name": "VLAN",
-                    "editable": True
-                }
-            }
-
+            route = copy.deepcopy(self.devices_data["mac_table"])
+            route["local_if_id"]["value"] = record["port_id"]
+            route["local_if_name"]["value"] = local_if_record["ifName"]
+            route["local_if_mac"]["value"] = local_if_record["ifPhysAddress"]
+            route["destination_name"]["value"] = remote_device_record["sysName"]
+            route["destination_if_id"]["value"] = remote_if_record["port_id"]
+            route["destination_if_name"]["value"] = remote_if_record["ifName"]
+            route["destination_if_mac"]["value"] = record["mac_address"]
+            route["vlan"]["value"] = vlan
             mac_table.update({route_id: route})
+
         if not mac_table:
-            mac_table = {-1: {
-                "local_if_id": {
-                    "value": "",
-                    "name": "Local IF ID",
-                    "editable": False
-                },
-                "local_if_name": {
-                    "value": "",
-                    "name": "Local IF name",
-                    "editable": False
-                },
-                "local_if_mac": {
-                    "value": "",
-                    "name": "Local IF MAC",
-                    "editable": True
-                },
-                # destination
-                "destination_name": {
-                    "value": "",
-                    "name": "Destination device",
-                    "editable": False
-                },
-                "destination_if_id": {
-                    "value": "",
-                    "name": "Destination IF ID",
-                    "editable": False
-                },
-                "destination_if_name": {
-                    "value": "",
-                    "name": "Destination IF name",
-                    "editable": False
-                },
-                "destination_if_mac": {
-                    "value": "",
-                    "name": "Destination IF MAC",
-                    "editable": True
-                },
-                "vlan": {
-                    "value": "",
-                    "name": "VLAN",
-                    "editable": True
-                }
-            }}
+            mac_table = self.devices_data["mac_table_default"]
 
         return mac_table
 
@@ -741,53 +504,15 @@ class Devices:
             ip_record = ip_record[0]
             ip_address = f"{ip_record['ipv4_address']}/{ip_record['ipv4_prefixlen']}"
 
-            arp_record = {
-                "if_id": {
-                    "value": record["port_id"],
-                    "name": "Interface ID",
-                    "editable": False
-                },
-                "if_name": {
-                    "value": if_name,
-                    "name": "Interface name",
-                    "editable": True
-                },
-                "mac_address": {
-                    "value": record["mac_address"],
-                    "name": "MAC Address",
-                    "editable": True
-                },
-                "ip_address": {
-                    "value": ip_address,
-                    "name": "IP Address",
-                    "editable": True
-                }
-            }
-
+            arp_record = copy.deepcopy(self.devices_data["arp_table"])
+            arp_record["if_id"]["value"] = record["port_id"]
+            arp_record["if_name"]["value"] = if_name
+            arp_record["mac_address"]["value"] = record["mac_address"]
+            arp_record["ip_address"]["value"] = ip_address
             arp_table.update({arp_id: arp_record})
+
         if not arp_table:
-            arp_table = {-1: {
-                "if_id": {
-                    "value": "",
-                    "name": "Interface ID",
-                    "editable": False
-                },
-                "if_name": {
-                    "value": "",
-                    "name": "Interface name",
-                    "editable": True
-                },
-                "mac_address": {
-                    "value": "",
-                    "name": "MAC Address",
-                    "editable": True
-                },
-                "ip_address": {
-                    "value": "",
-                    "name": "IP Address",
-                    "editable": True
-                }
-            }}
+            arp_table = self.devices_data["arp_table_default"]
 
         return arp_table
 
@@ -819,83 +544,18 @@ class Devices:
             remote_device_record = self.librenms_db_client.get_data("devices", [("device_id", remote_device_id)])[0]
             remote_device_name = remote_device_record["sysName"]
 
-            dp_record = {
-                "local_if_id": {
-                    "value": local_port_id,
-                    "name": "Local IF ID",
-                    "editable": True
-                },
-                "remote_if_id": {
-                    "value": remote_port_id,
-                    "name": "Remote IF ID",
-                    "editable": True
-                },
-                "local_if_name": {
-                    "value": local_port_name,
-                    "name": "Local IF name",
-                    "editable": False
-                },
-                "remote_if_name": {
-                    "value": remote_port_name,
-                    "name": "Remote IF name",
-                    "editable": False
-                },
-                "local_mac_address": {
-                    "value": local_port_mac,
-                    "name": "Local IF MAC",
-                    "editable": False
-                },
-                "remote_mac_address": {
-                    "value": remote_port_mac,
-                    "name": "Remote IF MAC",
-                    "editable": False
-                },
-                "remote_device_name": {
-                    "value": remote_device_name,
-                    "name": "Remote device",
-                    "editable": False
-                }
-            }
-
+            dp_record = copy.deepcopy(self.devices_data["dp_table"])
+            dp_record["local_if_id"]["value"] = local_port_id
+            dp_record["remote_if_id"]["value"] = remote_port_id
+            dp_record["local_if_name"]["value"] = local_port_name
+            dp_record["remote_if_name"]["value"] = remote_port_name
+            dp_record["local_mac_address"]["value"] = local_port_mac
+            dp_record["remote_mac_address"]["value"] = remote_port_mac
+            dp_record["remote_device_name"]["value"] = remote_device_name
             dp_table.update({record_id: dp_record})
+
         if not dp_table:
-            dp_table = {-1: {
-                "local_if_id": {
-                    "value": "",
-                    "name": "Local IF ID",
-                    "editable": False
-                },
-                "remote_if_id": {
-                    "value": "",
-                    "name": "Remote IF ID",
-                    "editable": False
-                },
-                "local_if_name": {
-                    "value": "",
-                    "name": "Local IF name",
-                    "editable": False
-                },
-                "remote_if_name": {
-                    "value": "",
-                    "name": "Remote IF name",
-                    "editable": False
-                },
-                "local_mac_address": {
-                    "value": "",
-                    "name": "Local IF MAC",
-                    "editable": True
-                },
-                "remote_mac_address": {
-                    "value": "",
-                    "name": "Remote IF MAC",
-                    "editable": True
-                },
-                "remote_device_name": {
-                    "value": "",
-                    "name": "Remote device",
-                    "editable": False
-                }
-            }}
+            dp_table = self.devices_data["dp_table_default"]
 
         return dp_table
 
@@ -967,7 +627,6 @@ class Devices:
         if network_record:
             return True
         return False
-
 
     def __check_ip_addr_validity(self, ip_addr_with_mask: str) -> None:
         error_str = "IP address you inserted is not in valid format. It should be in format IP/MASK PREFIX."
@@ -1406,6 +1065,8 @@ class Devices:
 
         # delete port ip address
         self.librenms_db_client.remove_data([("port_id", port_id)], "ipv4_addresses")
+        # delete port from arp records
+        self.librenms_db_client.remove_data(["port_id", port_id], "ipv4_mac")
         # delete port record
         self.librenms_db_client.remove_data([("port_id", port_id)], "ports")
 
@@ -1429,10 +1090,14 @@ class Devices:
 
         data_to_delete = [("source_if", data["Local IF ID"]),
                           ("target_if", data["Remote IF ID"])]
-        record_to_delete = self.topology_db_client.get_data("relations", data_to_delete)[0]
+        record_to_delete = self.topology_db_client.get_data("relations", data_to_delete)
+        if record_to_delete:
+            record_to_delete = record_to_delete[0]
+            topology_obj = topology.Topology()
+            topology_obj.create_topology()
 
-        self.topology_db_client.remove_data([("id", record_to_delete["id"])], "relations")
-        self.topology_db_client.remove_gaps_in_ids("relations")
+        #self.topology_db_client.remove_data([("id", record_to_delete["id"])], "relations")
+        #self.topology_db_client.remove_gaps_in_ids("relations")
 
     def delete_row(self, req_json: dict) -> dict:
         table_name = req_json.pop("table")

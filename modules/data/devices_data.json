@@ -1,0 +1,377 @@
+{
+  "device_details": {
+    "1": {
+      "hardware_title": {
+        "name": "Device detail",
+        "value": "Model",
+        "editable": false
+      },
+      "hardware_value": {
+        "name": "Value",
+        "value": "",
+        "editable": true
+      }
+    },
+    "2": {
+      "os_title": {
+        "name": "Device detail",
+        "value": "Operating system",
+        "editable": false
+      },
+      "os_value": {
+        "name": "Value",
+        "value": "",
+        "editable": true
+      }
+    },
+    "4": {
+      "version_title": {
+        "name": "Device detail",
+        "value": "OS version",
+        "editable": false
+      },
+      "version_value": {
+        "name": "Value",
+        "value": "",
+        "editable": true
+      }
+    },
+    "5": {
+      "description_title": {
+        "name": "Device detail",
+        "value": "Description",
+        "editable": false
+      },
+      "description_value": {
+        "name": "Value",
+        "value": "",
+        "editable": true
+      }
+    }
+  },
+  "interface_data": {
+    "if_id": {
+      "value": "",
+      "name": "Interface ID",
+      "editable": false
+    },
+    "status": {
+      "value": "",
+      "name": "Status",
+      "editable": true
+    },
+    "mac_address": {
+      "value": "",
+      "name": "MAC Address",
+      "editable": true
+    },
+    "if_name": {
+      "value": "",
+      "name": "Interface name",
+      "editable": true
+    },
+    "ip_address": {
+      "value": "",
+      "name": "IP Address",
+      "editable": true
+    }
+  },
+  "interface_data_default": {
+    "-1": {
+      "if_id": {
+        "value": "",
+        "name": "Interface ID",
+        "editable": false
+      },
+      "status": {
+        "value": "",
+        "name": "Status",
+        "editable": true
+      },
+      "mac_address": {
+        "value": "",
+        "name": "MAC Address",
+        "editable": true
+      },
+      "if_name": {
+        "value": "",
+        "name": "Interface name",
+        "editable": true
+      },
+      "ip_address": {
+        "value": "",
+        "name": "IP Address",
+        "editable": true
+      }
+    }
+  },
+  "routing_table": {
+    "if_id": {
+      "value": "",
+      "name": "Interface ID",
+      "editable": false
+    },
+    "if_name": {
+      "value": "",
+      "name": "Interface name",
+      "editable": true
+    },
+    "destination": {
+      "value": "",
+      "name": "Destination",
+      "editable": true
+    },
+    "nexthop": {
+      "value": "",
+      "name": "Nexthop",
+      "editable": true
+    },
+    "nexthop_name": {
+      "value": "",
+      "name": "Nexthop name",
+      "editable": false
+    }
+  },
+  "routing_table_default": {
+    "-1": {
+      "if_id": {
+        "value": "",
+        "name": "Interface ID",
+        "editable": false
+      },
+      "if_name": {
+        "value": "",
+        "name": "Interface name",
+        "editable": true
+      },
+      "destination": {
+        "value": "",
+        "name": "Destination",
+        "editable": true
+      },
+      "prefix_len": {
+        "value": "",
+        "name": "Destination prefix",
+        "editable": true
+      },
+      "nexthop": {
+        "value": "",
+        "name": "Nexthop",
+        "editable": true
+      },
+      "nexthop_name": {
+        "value": "",
+        "name": "Nexthop name",
+        "editable": false
+      }
+    }
+  },
+  "mac_table": {
+    "local_if_id": {
+      "value": "",
+      "name": "Local IF ID",
+      "editable": false
+    },
+    "local_if_name": {
+      "value": "",
+      "name": "Local IF name",
+      "editable": false
+    },
+    "local_if_mac": {
+      "value": "",
+      "name": "Local IF MAC",
+      "editable": true
+    },
+    "destination_name": {
+      "value": "",
+      "name": "Destination device",
+      "editable": false
+    },
+    "destination_if_id": {
+      "value": "",
+      "name": "Destination IF ID",
+      "editable": false
+    },
+    "destination_if_name": {
+      "value": "",
+      "name": "Destination IF name",
+      "editable": false
+    },
+    "destination_if_mac": {
+      "value": "",
+      "name": "Destination IF MAC",
+      "editable": true
+    },
+    "vlan": {
+      "value": "",
+      "name": "VLAN",
+      "editable": true
+    }
+  },
+  "mac_table_default": {
+    "-1": {
+      "local_if_id": {
+        "value": "",
+        "name": "Local IF ID",
+        "editable": false
+      },
+      "local_if_name": {
+        "value": "",
+        "name": "Local IF name",
+        "editable": false
+      },
+      "local_if_mac": {
+        "value": "",
+        "name": "Local IF MAC",
+        "editable": true
+      },
+      "destination_name": {
+        "value": "",
+        "name": "Destination device",
+        "editable": false
+      },
+      "destination_if_id": {
+        "value": "",
+        "name": "Destination IF ID",
+        "editable": false
+      },
+      "destination_if_name": {
+        "value": "",
+        "name": "Destination IF name",
+        "editable": false
+      },
+      "destination_if_mac": {
+        "value": "",
+        "name": "Destination IF MAC",
+        "editable": true
+      },
+      "vlan": {
+        "value": "",
+        "name": "VLAN",
+        "editable": true
+      }
+    }
+  },
+  "arp_table": {
+    "if_id": {
+      "value": "",
+      "name": "Interface ID",
+      "editable": false
+    },
+    "if_name": {
+      "value": "",
+      "name": "Interface name",
+      "editable": true
+    },
+    "mac_address": {
+      "value": "",
+      "name": "MAC Address",
+      "editable": true
+    },
+    "ip_address": {
+      "value": "",
+      "name": "IP Address",
+      "editable": true
+    }
+  },
+  "arp_table_default": {
+    "-1": {
+      "if_id": {
+        "value": "",
+        "name": "Interface ID",
+        "editable": false
+      },
+      "if_name": {
+        "value": "",
+        "name": "Interface name",
+        "editable": true
+      },
+      "mac_address": {
+        "value": "",
+        "name": "MAC Address",
+        "editable": true
+      },
+      "ip_address": {
+        "value": "",
+        "name": "IP Address",
+        "editable": true
+      }
+    }
+  },
+  "dp_table": {
+    "local_if_id": {
+      "value": "",
+      "name": "Local IF ID",
+      "editable": true
+    },
+    "remote_if_id": {
+      "value": "",
+      "name": "Remote IF ID",
+      "editable": true
+    },
+    "local_if_name": {
+      "value": "",
+      "name": "Local IF name",
+      "editable": false
+    },
+    "remote_if_name": {
+      "value": "",
+      "name": "Remote IF name",
+      "editable": false
+    },
+    "local_mac_address": {
+      "value": "",
+      "name": "Local IF MAC",
+      "editable": false
+    },
+    "remote_mac_address": {
+      "value": "",
+      "name": "Remote IF MAC",
+      "editable": false
+    },
+    "remote_device_name": {
+      "value": "",
+      "name": "Remote device",
+      "editable": false
+    }
+  },
+  "dp_table_default": {
+    "-1": {
+      "local_if_id": {
+        "value": "",
+        "name": "Local IF ID",
+        "editable": false
+      },
+      "remote_if_id": {
+        "value": "",
+        "name": "Remote IF ID",
+        "editable": false
+      },
+      "local_if_name": {
+        "value": "",
+        "name": "Local IF name",
+        "editable": false
+      },
+      "remote_if_name": {
+        "value": "",
+        "name": "Remote IF name",
+        "editable": false
+      },
+      "local_mac_address": {
+        "value": "",
+        "name": "Local IF MAC",
+        "editable": true
+      },
+      "remote_mac_address": {
+        "value": "",
+        "name": "Remote IF MAC",
+        "editable": true
+      },
+      "remote_device_name": {
+        "value": "",
+        "name": "Remote device",
+        "editable": false
+      }
+    }
+  }
+}
