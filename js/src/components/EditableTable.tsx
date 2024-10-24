@@ -10,6 +10,7 @@ import {
 } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
 import { ColumnItem, StringIndexedObject } from "./types";
+import {useUnsavedChangesGlobal, useUnsavedChangesRouter} from "./unsavedChanges.tsx";
 
 interface Item {
   key: string;
@@ -82,6 +83,7 @@ const EditableTable: React.FC<InterfaceEditableTable> = ({
   const [form] = Form.useForm();
   const [tableData, setTableData] = useState(data);
   const [editingKey, setEditingKey] = useState<string | React.Key>("");
+  const [isDirty, setIsDirty] = useState(false);
 
   const isEditing = (record: StringIndexedObject) => record.key === editingKey;
 
@@ -92,10 +94,12 @@ const EditableTable: React.FC<InterfaceEditableTable> = ({
   ) => {
     form.setFieldsValue(record);
     setEditingKey(record.key);
+    setIsDirty(true);
   };
 
   const cancel = () => {
     setEditingKey("");
+    setIsDirty(false);
   };
 
   const save = async (key: React.Key) => {
@@ -133,6 +137,7 @@ const EditableTable: React.FC<InterfaceEditableTable> = ({
     } catch (errInfo) {
       console.log("Validate Failed:", errInfo);
     }
+    setIsDirty(false);
   };
 
   const tableColumnsFun: () => object[] = () => {
@@ -268,24 +273,27 @@ const EditableTable: React.FC<InterfaceEditableTable> = ({
     );
   })();
 
+  useUnsavedChangesGlobal(isDirty);
+  useUnsavedChangesRouter(isDirty);
+
   return (
-    <Form form={form} component={false}>
-      <Table
-        expandable={isExpandable() ? { expandedRowRender } : undefined}
-        components={{
-          body: {
-            cell: EditableCell,
-          },
-        }}
-        bordered
-        dataSource={tableData}
-        columns={mergedColumns}
-        rowClassName="editable-row"
-        pagination={false}
-        title={title ? () => title : undefined}
-      />
-      {addNewRow}
-    </Form>
+      <Form form={form} component={false}>
+        <Table
+          expandable={isExpandable() ? { expandedRowRender } : undefined}
+          components={{
+            body: {
+              cell: EditableCell,
+            },
+          }}
+          bordered
+          dataSource={tableData}
+          columns={mergedColumns}
+          rowClassName="editable-row"
+          pagination={false}
+          title={title ? () => title : undefined}
+        />
+        {addNewRow}
+      </Form>
   );
 };
 

@@ -1,7 +1,8 @@
-import React from "react";
-import { Button, Form, Input, Select } from "antd";
+import React, {useEffect, useState} from "react";
+import {Button, Form, Input, Select} from "antd";
 
 import { FormItem } from "./types";
+import {useUnsavedChangesGlobal, useUnsavedChangesRouter} from "./unsavedChanges.tsx";
 
 const onFinishFailed = (errorInfo: any) => {
   console.log("Failed:", errorInfo);
@@ -14,11 +15,28 @@ interface InterfaceForm {
 
 const CustomForm: React.FC<InterfaceForm> = ({ formItems, onFinishFun }) => {
   const [form] = Form.useForm();
+  const [formValues, setFormValues] = useState({});
+  const [isDirty, setIsDirty] = useState(false);
+
+  const handleFormChange = (_: object , allValues: object) => {
+    setFormValues(allValues);
+  }
+
+  useEffect(() => {
+    const isFilled: boolean = Object.values(formValues).some(
+        (value) => typeof value === 'string' && value.trim().length > 0
+    );
+    setIsDirty(isFilled);
+    console.log(isFilled);
+  }, [formValues]);
 
   const onFormFinish = (props: object) => {
     onFinishFun(props);
     form.resetFields();
   };
+
+  useUnsavedChangesGlobal(isDirty);
+  useUnsavedChangesRouter(isDirty);
 
   return (
     <Form
@@ -31,6 +49,7 @@ const CustomForm: React.FC<InterfaceForm> = ({ formItems, onFinishFun }) => {
       onFinish={onFormFinish}
       onFinishFailed={onFinishFailed}
       autoComplete="off"
+      onValuesChange={handleFormChange}
     >
       {formItems.map((item: FormItem, index: number) => (
         <Form.Item

@@ -13,7 +13,7 @@ const EditableText: React.FC<InterfaceEditableText> = ({ text, onChange }) => {
   const initialText = useRef(true);
 
   useEffect(() => {
-    if (initialText.current == true) {
+    if (initialText.current) {
       initialText.current = false;
     } else {
       onChange(editableStr);
