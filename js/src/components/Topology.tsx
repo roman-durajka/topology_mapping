@@ -25,6 +25,7 @@ const Topology: React.FC<InterfaceTopology> = ({ connector }) => {
   const [messageApi, contextHolder] = message.useMessage();
   const topologyContainer = useRef(null);
   const [pathTableData, setPathTableData] = useState<PathTableItem[]>([]);
+  const [forceRefresh, setForceRefresh] = useState<number>(0);
 
   const saveNodeCoords: () => void = () => {
     const postData = { nodes: connector.getNodeCoords() };
@@ -80,7 +81,7 @@ const Topology: React.FC<InterfaceTopology> = ({ connector }) => {
           messageSuccess(messageApi, "Topology loaded.");
         });
     }
-  }, []);
+  }, [forceRefresh]);
 
   const addPathFormSubmit = (props: object) => {
     const formData = {
@@ -137,7 +138,7 @@ const Topology: React.FC<InterfaceTopology> = ({ connector }) => {
     />,
     <Modal
       title="Import scheme"
-      children={<SchemeWindow connector={connector} />}
+      children={<SchemeWindow connector={connector} refresh={setForceRefresh} messageApi={messageApi} />}
     />,
     <Popconfirm
       title="Sure to save current topology layout?"

@@ -1,10 +1,13 @@
 import { TopologyConnector } from "../TopologyConnector";
 import originalJson from "../config/import-scheme.json";
 import type { UploadProps } from "antd";
-import { Space, message, notification, Button, Flex } from "antd";
+import { Space, notification, Button, Flex } from "antd";
 import request from "./Requester";
 import { DownloadOutlined } from "@ant-design/icons";
 import UploadButton from "./UploadButton";
+import React from "react";
+import {MessageInstance} from "antd/es/message/interface";
+import {messageError, messageSuccess} from "./message.tsx";
 
 const notificationButton = (
   onClick: () => void,
@@ -20,7 +23,8 @@ const notificationButton = (
   );
 };
 
-const SchemeUploadButtonProps: UploadProps = {
+const getSchemeUploadButtonProps = (refresh: React.Dispatch<React.SetStateAction<number>>, messageApi: MessageInstance): UploadProps => {
+  return {
   name: "file",
   headers: {
     authorization: "authorization-text",
@@ -60,10 +64,10 @@ const SchemeUploadButtonProps: UploadProps = {
     fileReader.readAsText(file as Blob);
   },
   onChange(info) {
-    if (info.file.status !== "uploading") {
-    }
+    if (info.file.status !== "uploading") { /* empty */ }
     if (info.file.status === "done") {
-      message.success(`${info.file.name} file uploaded successfully.`);
+      messageSuccess(messageApi, `${info.file.name} file uploaded successfully.`)
+      refresh((prevValue) => prevValue + 1);
     } else if (info.file.status === "error") {
       if (info.file.error.code == 409) {
         notification.warning({
@@ -95,12 +99,11 @@ const SchemeUploadButtonProps: UploadProps = {
                         .then((response) => response.json())
                         .then((data) => {
                           if (data.code != 200) {
-                            message.error(
-                              `ERROR - Check console for more details.`,
-                            );
+                            messageError(messageApi, `ERROR - Check console for more details.`);
                             console.log(data.error);
                           } else {
-                            message.success(`Data replaced successfully.`);
+                            messageSuccess(messageApi, `Data replaced successfully.`);
+                            refresh((prevValue) => prevValue + 1);
                           }
                         });
                     },
@@ -134,13 +137,15 @@ const SchemeUploadButtonProps: UploadProps = {
   onDrop(e) {
     console.log("Dropped files", e.dataTransfer.files);
   },
-};
+}};
 
 interface InterfaceSchemeWindow {
   connector: TopologyConnector;
+  refresh: React.Dispatch<React.SetStateAction<number>>;
+  messageApi: MessageInstance;
 }
 
-const SchemeWindow: React.FC<InterfaceSchemeWindow> = ({ connector }) => {
+const SchemeWindow: React.FC<InterfaceSchemeWindow> = ({ connector, refresh, messageApi }) => {
   const generateJsonFile: () => string | undefined = () => {
     if (connector.topology) {
       let resultingJson: string =
@@ -169,7 +174,7 @@ const SchemeWindow: React.FC<InterfaceSchemeWindow> = ({ connector }) => {
         >
           Download example scheme
         </Button>
-        <UploadButton props={SchemeUploadButtonProps} />
+        <UploadButton props={getSchemeUploadButtonProps(refresh, messageApi)} />
       </Flex>
     </>
   );
