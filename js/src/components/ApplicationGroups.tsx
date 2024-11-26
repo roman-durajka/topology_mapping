@@ -24,9 +24,10 @@ export default function ApplicationGroups() {
       .then((response) => response.json())
       .then((data) => {
         setApplicationGroups(data.data);
+
+        messageApi.destroy();
+        messageSuccess(messageApi, "Page loaded.");
       });
-    messageApi.destroy();
-    messageSuccess(messageApi, "Page loaded.");
   }, []);
 
   const columns: ColumnItem[] = [
