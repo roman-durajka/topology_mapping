@@ -74,19 +74,13 @@ class DataLoader:
 
         return raw_text
 
-    def decide_and_returnd_data(self):
+    def decide_and_load_data(self):
         """
         Checks if risk management data are already present in DB, if yes,
-        just return them in needed format, if not, load them first and then
-        return.
+        do nothing, else load them into DB.
         """
         if not self.db_connection.get_data("assets"):
             self.load_assets()
             self.load_risks()
             self.load_measures()
             self.load_measures_to_risks_mapping()
-
-        # TODO: transform data into dict with correct format
-        data_to_return = {}
-
-        return data_to_return

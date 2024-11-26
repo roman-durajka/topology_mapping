@@ -126,7 +126,7 @@ def get_application_groups():
     """
     result = {}
     try:
-        application_groups = asset_mapper.get_application_groups()
+        application_groups = asset_mapper.get_application_groups(False)
         result["data"] = application_groups
         result["code"] = 200
     except Exception as error:
@@ -302,7 +302,8 @@ def risk_management_load():
     result = {}
     try:
         data_load = data_loader.DataLoader()
-        result["data"] = data_load.decide_and_returnd_data()
+        data_load.decide_and_load_data()
+        result["data"] = {}
         result["code"] = 200
     except Exception as error:
         result["error"] = str(error)
