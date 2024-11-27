@@ -6,6 +6,7 @@ import ErrorPage from "./components/Error.tsx";
 import ApplicationGroups from "./components/ApplicationGroups.tsx";
 import Devices from "./components/Devices.tsx";
 import { TopologyConnector } from "./TopologyConnector.js";
+import RiskManagement from "./components/RiskManagement.tsx";
 
 const topologyConnector: TopologyConnector = new TopologyConnector();
 topologyConnector.init();
@@ -19,6 +20,11 @@ const router = createHashRouter([
   {
     path: "business-process",
     element: <ApplicationGroups />,
+    errorElement: <ErrorPage />,
+  },
+  {
+    path: "risk-management",
+    element: <RiskManagement />,
     errorElement: <ErrorPage />,
   },
   {

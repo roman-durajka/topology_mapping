@@ -293,17 +293,17 @@ def devices_delete():
 @app.route('/risk-management', methods=["GET"])
 def risk_management_load():
     """
-    Returns all risk management data. If fired for the first time,
-    loads all risk management data from MOSP and other sources
+    Returns risk management data for all application groups. If fired for the
+    first time, loads all risk management data from MOSP and other sources
     into local DB first. This might take from few seconds up to tens of
     seconds.
     """
-    # TODO: integrate into UI when it's done
     result = {}
     try:
         data_load = data_loader.DataLoader()
         data_load.decide_and_load_data()
-        result["data"] = {}
+        application_groups = asset_mapper.get_application_groups(True)
+        result["data"] = application_groups
         result["code"] = 200
     except Exception as error:
         result["error"] = str(error)
