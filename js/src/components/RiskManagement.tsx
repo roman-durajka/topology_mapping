@@ -49,7 +49,7 @@ const subColumns: SubColumnGroup[] = [
 
 const riskManagementColumns: object[] = [
   {
-    title: "Asset",
+    title: "Asset category",
     dataIndex: "assetName",
     width: "10%",
   },
@@ -75,14 +75,32 @@ const riskManagementColumns: object[] = [
   },
   {
     title: "Threat",
-    dataIndex: "threatName",
+    children: [
+      {
+        title: "Label",
+        dataIndex: "threatName",
+      },
+      {
+        title: "Prob.",
+        dataIndex: "threatProbability",
+      },
+    ],
   },
   {
     title: "Vulnerability",
-    dataIndex: "vulnerabilityName",
+    children: [
+      {
+        title: "Label",
+        dataIndex: "vulnerabilityName",
+      },
+      {
+        title: "Qualif.",
+        dataIndex: "vulnerabilityQualification",
+      },
+    ],
   },
   {
-    title: "Impact",
+    title: "Current risk",
     children: [
       {
         title: "C",
@@ -97,6 +115,39 @@ const riskManagementColumns: object[] = [
       {
         title: "A",
         dataIndex: "currentRiskA",
+        width: "2%",
+      },
+    ],
+  },
+  {
+    title: "Treatment",
+    children: [
+      {
+        title: "Label",
+        dataIndex: "treatmentLabel",
+      },
+      {
+        title: "Effect.",
+        dataIndex: "treatmentEffectiveness",
+      },
+    ],
+  },
+  {
+    title: "Risk after treatment",
+    children: [
+      {
+        title: "C",
+        dataIndex: "riskAfterTreatmentC",
+        width: "2%",
+      },
+      {
+        title: "I",
+        dataIndex: "riskAfterTreatmentI",
+        width: "2%",
+      },
+      {
+        title: "A",
+        dataIndex: "riskAfterTreatmentA",
         width: "2%",
       },
     ],
