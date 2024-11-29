@@ -132,6 +132,10 @@ def get_application_groups(load_risks: bool):
                         device_risk_mgmt = asset_mapper.get_asset_risks(device_asset_type)
                         device_info["asset"] = device_risk_mgmt
 
+                        device_info["confidentality"] = topology_device_data["confidentality_value"]
+                        device_info["integrity"] = topology_device_data["integrity_value"]
+                        device_info["availability"] = topology_device_data["availability_value"]
+
                     application_groups[group_id]["paths"][path_id]["devices"].update({device_id: device_info})
 
     return application_groups

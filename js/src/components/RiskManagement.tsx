@@ -1,5 +1,5 @@
 import { useEffect, useState, ReactNode } from "react";
-import { message, Empty, Table } from "antd";
+import { message, Empty, Table, Select } from "antd";
 
 import CustomLayout from "./CustomLayout";
 import { messageLoading, messageSuccess } from "./message";
@@ -160,11 +160,26 @@ function expandedRowRenderFun(props: object) {
   }
 }
 
-function getRiskManagementData(
-  riskManagementData: StringIndexedObject,
-  deviceId: any,
-) {
+function getSelectableCell(defaultValue: any, values: any[], save: () => void) {
+  return (
+    <Select
+      onChange={save}
+      defaultValue={defaultValue}
+      options={values.map((selectedValue) => ({
+        value: selectedValue,
+        label: selectedValue,
+      }))}
+    ></Select>
+  );
+}
+
+//function getEditableCell(value: any, save: () => void) {
+//  return <EditableText text={value.toString()} onChange={save}></EditableText>;
+//}
+
+function getRiskManagementData(deviceData: StringIndexedObject, deviceId: any) {
   const mappedRiskManagement: object[] = [];
+  const riskManagementData: StringIndexedObject = deviceData["asset"];
 
   //map assets
   Object.keys(riskManagementData).map((assetUUID: string) => {
@@ -184,6 +199,21 @@ function getRiskManagementData(
         assetName: asset,
         threatName: threat,
         vulnerabilityName: vulnerability,
+        impactC: getSelectableCell(
+          deviceData["confidentality"],
+          [1, 2, 3, 4, 5],
+          () => {},
+        ),
+        impactI: getSelectableCell(
+          deviceData["integrity"],
+          [1, 2, 3, 4, 5],
+          () => {},
+        ),
+        impactA: getSelectableCell(
+          deviceData["availability"],
+          [1, 2, 3, 4, 5],
+          () => {},
+        ),
       });
     });
   });
@@ -197,7 +227,7 @@ function getMappedDevices(devices: StringIndexedObject) {
       const device: StringIndexedObject = devices[deviceId];
 
       const riskManagementData: object[] = getRiskManagementData(
-        device["asset"],
+        device,
         deviceId,
       );
 
