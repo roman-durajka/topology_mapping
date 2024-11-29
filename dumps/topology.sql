@@ -18,19 +18,25 @@ CREATE TABLE `nodes` (
   `id` int(11) NOT NULL,
   `type` varchar(255) DEFAULT NULL,
   `asset` varchar(255) DEFAULT NULL,
-  `asset_value` int(11) DEFAULT NULL,
-  `asset_values` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`asset_values`)),
+  `confidentality_value` int(11) DEFAULT NULL,
+  `confidentality_values` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`confidentality_values`)),
+  `integrity_value` int(11) DEFAULT NULL,
+  `integrity_values` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`integrity_values`)),
+  `availability_value` int(11) DEFAULT NULL,
+  `availability_values` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`availability_values`)),
   `x_coord` DECIMAL(20, 14) DEFAULT 0,
   `y_coord` DECIMAL(20, 14) DEFAULT 0,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE TABLE `paths` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `path_id` int(11) DEFAULT NULL,
-  `relation_id` int(11) DEFAULT NULL,
-  `color` text DEFAULT NULL,
-  `asset_value` int(11) DEFAULT NULL,
+`id` int(11) NOT NULL AUTO_INCREMENT,
+`path_id` int(11) DEFAULT NULL,
+`relation_id` int(11) DEFAULT NULL,
+`color` text DEFAULT NULL,
+`confidentality_value` int(11) DEFAULT NULL,
+`integrity_value` int(11) DEFAULT NULL,
+`availability_value` int(11) DEFAULT NULL,
   `name` text DEFAULT NULL,
   `application_group_id` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`)

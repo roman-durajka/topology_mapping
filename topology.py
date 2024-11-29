@@ -76,8 +76,12 @@ class Topology:
         topology_data = {"id": device_data["id"],
                          "type": device_data["type"],
                          "asset": device_data["asset"],
-                         "asset_value": device_data["asset-value"],
-                         "asset_values": device_data["asset-values"],
+                         "confidentality_value": device_data["confidentality-value"],
+                         "confidentality_values": device_data["confidentality-values"],
+                         "integrity_value": device_data["integrity-value"],
+                         "integrity_values": device_data["integrity-values"],
+                         "availability_value": device_data["availability-value"],
+                         "availability_values": device_data["availability-values"],
                          "x_coord": coord_dict["x"],
                          "y_coord": coord_dict["y"]}
 
@@ -120,8 +124,13 @@ class Topology:
                              "os": node_data["os"],
                              "model": node_data["hardware"],
                              "asset": node["asset"],
-                             "asset-value": node["asset_value"],
-                             "asset-values": json.loads(node["asset_values"]),
+                             "confidentalityValue": node["confidentality_value"],
+                             "confidentalityValues": json.loads(node["confidentality_values"]),
+                             "integrityValue": node["integrity_value"],
+                             "integrityValues": json.loads(node["integrity_values"]),
+                             "availabilityValue": node["availability_value"],
+                             "availabilityValues": json.loads(node["availability_values"]),
+
                              "x": float(node["x_coord"]),
                              "y": float(node["y_coord"])}
 
@@ -182,8 +191,13 @@ class Topology:
             devices_data.append({"id": device.device_id,
                                  "type": device.device_type,
                                  "asset": device.asset,
-                                 "asset_value": 0,
-                                 "asset_values": [0]})
+                                 "confidentality_value": 0,
+                                 "confidentality_values": [0],
+                                 "integrity_value": 0,
+                                 "integrity_values": [0],
+                                 "availability_value": 0,
+                                 "availability_values": [0],
+                                 })
         self.topology_db_client.insert_data(devices_data, "nodes")
 
         relations_data = []

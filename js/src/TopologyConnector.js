@@ -8,8 +8,16 @@ export const addPathFormObject = [
     propertyName: "name",
   },
   {
-    label: "Asset value",
-    propertyName: "assetValue",
+    label: "Confidentality",
+    propertyName: "confidentalityValue",
+  },
+  {
+    label: "Integrity",
+    propertyName: "integrityValue",
+  },
+  {
+    label: "Availabilty",
+    propertyName: "availabilityValue",
   },
   {
     label: "Source IP address",
@@ -109,34 +117,96 @@ export class TopologyConnector {
     }
   }
 
-  updateAssetValue(node) {
-    let assetValues = node.model().get("asset-values");
-    let maxValue = Math.max(...assetValues);
-    node.model().set("asset-value", maxValue);
+  updateConfidentalityValues(node) {
+    let confidentalityValues = node.model().get("confidentalityValues");
+    let confidentalityMaxValue = Math.max(...confidentalityValues);
+    node.model().set("confidentalityValue", confidentalityMaxValue);
   }
 
-  addAssetValues(devices, assetValue) {
+  updateIntegrityValues(node) {
+    let integrityValues = node.model().get("integrityValues");
+    let integrityMaxValue = Math.max(...integrityValues);
+    node.model().set("integrityValue", integrityMaxValue);
+  }
+
+  updateAvailabilityValues(node) {
+    let availabilityValues = node.model().get("availabilityValues");
+    let availabilityMaxValue = Math.max(...availabilityValues);
+    node.model().set("availabilityValue", availabilityMaxValue);
+  }
+
+  addConfidentalityValues(devices, confidentalityValue) {
     devices.map((device) => {
       let node = this.topology.getNode(device);
-      let assetValues = node.model().get("asset-values");
-      assetValues.push(assetValue);
-      node.model().set("asset-values", assetValues);
+      let confidentalityValues = node.model().get("confidentalityValues");
+      confidentalityValues.push(confidentalityValue);
+      node.model().set("confidentalityValues", confidentalityValues);
 
-      this.updateAssetValue(node);
+      this.updateConfidentalityValues(node);
     });
   }
 
-  removeAssetValues(devices, assetValue) {
+  addIntegrityValues(devices, integrityValue) {
     devices.map((device) => {
       let node = this.topology.getNode(device);
-      let assetValues = node.model().get("asset-values");
-      let valToRemoveIndex = assetValues.indexOf(assetValue);
-      if (valToRemoveIndex !== -1) {
-        assetValues.splice(valToRemoveIndex, 1);
-      }
-      node.model().set("asset-values", assetValues);
+      let integrityValues = node.model().get("integrityValues");
+      integrityValues.push(integrityValue);
+      node.model().set("integrityValues", integrityValues);
 
-      this.updateAssetValue(node);
+      this.updateIntegrityValues(node);
+    });
+  }
+
+  addAvailabilityValues(devices, availabilityValue) {
+    devices.map((device) => {
+      let node = this.topology.getNode(device);
+      let availabilityValues = node.model().get("availabilityValues");
+      availabilityValues.push(availabilityValue);
+      node.model().set("availabilityValues", availabilityValues);
+
+      this.updateAvailabilityValues(node);
+    });
+  }
+
+  removeConfidentalityValues(devices, confidentalityValue) {
+    devices.map((device) => {
+      let node = this.topology.getNode(device);
+      let confidentalityValues = node.model().get("confidentalityValues");
+      let valToRemoveIndex = confidentalityValues.indexOf(confidentalityValue);
+      if (valToRemoveIndex !== -1) {
+        confidentalityValues.splice(valToRemoveIndex, 1);
+      }
+      node.model().set("confidentalityValues", confidentalityValues);
+
+      this.updateCIAValues(node);
+    });
+  }
+
+  removeIntegrityValues(devices, integrityValue) {
+    devices.map((device) => {
+      let node = this.topology.getNode(device);
+      let integrityValues = node.model().get("integrityValues");
+      let valToRemoveIndex = integrityValues.indexOf(integrityValue);
+      if (valToRemoveIndex !== -1) {
+        integrityValues.splice(valToRemoveIndex, 1);
+      }
+      node.model().set("integrityValues", integrityValues);
+
+      this.updateCIAValues(node);
+    });
+  }
+
+  removeAvailabilityValues(devices, availabilityValue) {
+    devices.map((device) => {
+      let node = this.topology.getNode(device);
+      let availabilityValues = node.model().get("availabilityValues");
+      let valToRemoveIndex = availabilityValues.indexOf(availabilityValue);
+      if (valToRemoveIndex !== -1) {
+        availabilityValues.splice(valToRemoveIndex, 1);
+      }
+      node.model().set("availabilityValues", availabilityValues);
+
+      this.updateCIAValues(node);
     });
   }
 
@@ -146,8 +216,10 @@ export class TopologyConnector {
       item.links.map((link) => {
         this.topology.addLink(link);
       });
-      //add asset values
-      this.addAssetValues(item["nodes"], item["asset_value"]);
+      //add CIA values
+      this.addConfidentalityValues(item["nodes"], item["confidentality_value"]);
+      this.addIntegrityValues(item["nodes"], item["integrity_value"]);
+      this.addAvailabilityValues(item["nodes"], item["availability_value"]);
     });
   }
 
@@ -163,7 +235,9 @@ export class TopologyConnector {
       pathTableItems.push({
         pathId: Math.min(...ids), //unique identifier so that the table record can be later removed
         name: item.name,
-        assetValue: item.asset_value,
+        confidentalityValue: item.confidentality_value,
+        integrityValue: item.integrity_value,
+        availabilityValue: item.availability_value,
         color: item.links[0].color,
         fun: () => {
           //remove links from topology
@@ -178,8 +252,16 @@ export class TopologyConnector {
             method: "POST",
             postData: postData,
           });
-          //remove asset values
-          this.removeAssetValues(item["nodes"], item["asset_value"]);
+          //remove CIA values
+          this.removeConfidentalityValues(
+            item["nodes"],
+            item["confidentality_value"],
+          );
+          this.removeIntegrityValues(item["nodes"], item["integrity_value"]);
+          this.removeAvailabilityValues(
+            item["nodes"],
+            item["availability_value"],
+          );
         },
       });
     });
