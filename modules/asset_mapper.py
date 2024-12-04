@@ -55,12 +55,14 @@ class AssetMapper:
                 vulnerability_records = self.db_connection.get_data("vulnerabilities", [("uuid", vulnerability_uuid)])
                 vulnerability_record = vulnerability_records[0]
                 vulnerability_name = vulnerability_record["label"]
-                vulnerability = {vulnerability_uuid: vulnerability_name}
+                vulnerability_qualification = vulnerability_record["qualification"]
+                vulnerability = {vulnerability_uuid: {"name": vulnerability_name, "qualification": vulnerability_qualification}}
 
                 threat_records = self.db_connection.get_data("threats", [("uuid", threat_uuid)])
                 threat_record = threat_records[0]
                 threat_name = threat_record["label"]
-                threat = {threat_uuid: threat_name}
+                threat_probability = threat_record["probability"]
+                threat = {threat_uuid: {"name": threat_name, "probability": threat_probability}}
 
                 measures = {}
                 measure_risks_map_records = self.db_connection.get_data("measures_risks_map", [("risk_id", risk_uuid)])
@@ -71,7 +73,10 @@ class AssetMapper:
                         continue
 
                     measure_record = measure_record[0]
-                    measures[measure_uuid] = measure_record["label"]
+                    measure_name = measure_record["label"]
+                    measure_efectiveness = measure_record["efectiveness"]
+
+                    measures[measure_uuid] = {"name": measure_record["label"], "efectiveness": measure_efectiveness}
 
                 mapped_risk = {"vulnerability": vulnerability,
                                "threat": threat,

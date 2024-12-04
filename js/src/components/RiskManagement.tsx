@@ -191,8 +191,27 @@ function getRiskManagementData(deviceData: StringIndexedObject, deviceId: any) {
     Object.keys(risks).map((riskUUID: string) => {
       const risk: StringIndexedObject = risks[riskUUID];
 
-      const threat: any = Object.values(risk["threat"])[0];
-      const vulnerability: any = Object.values(risk["vulnerability"])[0];
+      const threatObj: any = Object.values(risk["threat"])[0];
+      const vulnerabilityObj: any = Object.values(risk["vulnerability"])[0];
+
+      const threat: any = threatObj["name"];
+      const vulnerability: any = vulnerabilityObj["name"];
+
+      const threatProb: any = threatObj["probability"];
+      const vulnerabilityQual: any = vulnerabilityObj["qualification"];
+
+      const currentRiskCVal: number =
+        deviceData["confidentality"] * threatProb * vulnerabilityQual;
+      const currentRiskIVal: number =
+        deviceData["integrity"] * threatProb * vulnerabilityQual;
+      const currentRiskAVal: number =
+        deviceData["availability"] * threatProb * vulnerabilityQual;
+
+      const treatments: any = Object.keys(risk["measures"]).map(
+        (measureUUID: string) => {
+          return risk["measures"][measureUUID]["name"];
+        },
+      );
 
       mappedRiskManagement.push({
         key: "risk_management_device-" + deviceId.toString(),
@@ -214,6 +233,20 @@ function getRiskManagementData(deviceData: StringIndexedObject, deviceId: any) {
           [1, 2, 3, 4, 5],
           () => {},
         ),
+        threatProbability: getSelectableCell(
+          threatProb,
+          [1, 2, 3, 4, 5],
+          () => {},
+        ),
+        vulnerabilityQualification: getSelectableCell(
+          vulnerabilityQual,
+          [1, 2, 3, 4, 5],
+          () => {},
+        ),
+        currentRiskC: currentRiskCVal,
+        currentRiskI: currentRiskIVal,
+        currentRiskA: currentRiskAVal,
+        treatmentLabel: getSelectableCell("", treatments, () => {}),
       });
     });
   });
