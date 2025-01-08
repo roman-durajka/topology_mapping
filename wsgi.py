@@ -311,6 +311,22 @@ def risk_management_load():
 
     return jsonify(result)
 
+@app.route('/risk-management-update', methods=["POST"])
+def risk_management_update():
+    """
+    Updates risk management data.
+    """
+    req_json = request.json
+    result = {}
+    try:
+        asset_mapper.update_cia(req_json)
+        result["code"] = 200
+    except Exception as error:
+        result["error"] = str(error)
+        result["code"] = 500
+
+    return jsonify(result)
+
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5000, debug=True)

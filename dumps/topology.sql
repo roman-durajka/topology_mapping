@@ -7,6 +7,14 @@ CREATE TABLE `application_groups` (
     PRIMARY KEY (`id`)
 );
 
+CREATE TABLE `assets` (
+    `uuid` VARCHAR(255) NOT NULL,
+    `c` int(11) DEFAULT 0,
+    `i` int(11) DEFAULT 0,
+    `a` int(11) DEFAULT 0,
+    PRIMARY KEY (`uuid`)
+);
+
 CREATE TABLE `information_systems` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `path_id` int(11) DEFAULT NULL,

@@ -160,7 +160,11 @@ function expandedRowRenderFun(props: object) {
   }
 }
 
-function getSelectableCell(defaultValue: any, values: any[], save: () => void) {
+function getSelectableCell(
+  defaultValue: any,
+  values: any[],
+  save: (value: StringIndexedObject) => void,
+) {
   return (
     <Select
       onChange={save}
@@ -177,164 +181,204 @@ function getSelectableCell(defaultValue: any, values: any[], save: () => void) {
 //  return <EditableText text={value.toString()} onChange={save}></EditableText>;
 //}
 
-function getRiskManagementData(deviceData: StringIndexedObject, deviceId: any) {
-  const mappedRiskManagement: object[] = [];
-  const riskManagementData: StringIndexedObject = deviceData["asset"];
-
-  //map assets
-  Object.keys(riskManagementData).map((assetUUID: string) => {
-    const assetData: StringIndexedObject = riskManagementData[assetUUID];
-    const asset: string = assetData["asset_name"];
-
-    //map risks
-    const risks: StringIndexedObject = assetData["risks"];
-    Object.keys(risks).map((riskUUID: string) => {
-      const risk: StringIndexedObject = risks[riskUUID];
-
-      const threatObj: any = Object.values(risk["threat"])[0];
-      const vulnerabilityObj: any = Object.values(risk["vulnerability"])[0];
-
-      const threat: any = threatObj["name"];
-      const vulnerability: any = vulnerabilityObj["name"];
-
-      const threatProb: any = threatObj["probability"];
-      const vulnerabilityQual: any = vulnerabilityObj["qualification"];
-
-      const currentRiskCVal: number =
-        deviceData["confidentality"] * threatProb * vulnerabilityQual;
-      const currentRiskIVal: number =
-        deviceData["integrity"] * threatProb * vulnerabilityQual;
-      const currentRiskAVal: number =
-        deviceData["availability"] * threatProb * vulnerabilityQual;
-
-      const treatments: any = Object.keys(risk["measures"]).map(
-        (measureUUID: string) => {
-          return risk["measures"][measureUUID]["name"];
-        },
-      );
-
-      mappedRiskManagement.push({
-        key: "risk_management_device-" + deviceId.toString(),
-        assetName: asset,
-        threatName: threat,
-        vulnerabilityName: vulnerability,
-        impactC: getSelectableCell(
-          deviceData["confidentality"],
-          [1, 2, 3, 4, 5],
-          () => {},
-        ),
-        impactI: getSelectableCell(
-          deviceData["integrity"],
-          [1, 2, 3, 4, 5],
-          () => {},
-        ),
-        impactA: getSelectableCell(
-          deviceData["availability"],
-          [1, 2, 3, 4, 5],
-          () => {},
-        ),
-        threatProbability: getSelectableCell(
-          threatProb,
-          [1, 2, 3, 4, 5],
-          () => {},
-        ),
-        vulnerabilityQualification: getSelectableCell(
-          vulnerabilityQual,
-          [1, 2, 3, 4, 5],
-          () => {},
-        ),
-        currentRiskC: currentRiskCVal,
-        currentRiskI: currentRiskIVal,
-        currentRiskA: currentRiskAVal,
-        treatmentLabel: getSelectableCell("", treatments, () => {}),
-      });
-    });
-  });
-
-  return mappedRiskManagement;
-}
-
-function getMappedDevices(devices: StringIndexedObject) {
-  const mappedDevices = Object.keys(devices).map(
-    (deviceId: string, deviceIndex: number) => {
-      const device: StringIndexedObject = devices[deviceId];
-
-      const riskManagementData: object[] = getRiskManagementData(
-        device,
-        deviceId,
-      );
-
-      return {
-        key: deviceIndex.toString() + "_device" + deviceId.toString(),
-        deviceName: device["name"],
-        model: device["model"],
-        os: device["os"],
-        type: device["type"],
-        subComponent: (
-          <Table
-            columns={riskManagementColumns}
-            dataSource={riskManagementData}
-            bordered
-          />
-        ),
-      };
-    },
-  );
-
-  return mappedDevices;
-}
-
-function getMappedPaths(paths: StringIndexedObject) {
-  const mappedPaths = Object.keys(paths).map(
-    (pathId: string, pathIndex: number) => {
-      const pathItem: StringIndexedObject = paths[pathId];
-      const devices: object[] = getMappedDevices(pathItem["devices"]);
-
-      return {
-        key: pathIndex.toString(),
-        pathId: pathId,
-        pathName: pathItem["path_name"],
-        informationSystems: pathItem["information_systems"].join(","),
-        subComponent: (
-          <Table
-            columns={subColumns}
-            dataSource={devices}
-            pagination={false}
-            expandedRowRender={expandedRowRenderFun}
-            bordered
-          />
-        ),
-      };
-    },
-  );
-
-  return mappedPaths;
-}
-
-function getMappedApplicationGroups(applicationGroups: {
-  [index: string]: any;
-}) {
-  const mappedApplicationGroups = Object.keys(applicationGroups).map(
-    (groupId: any) => {
-      const groupItem: StringIndexedObject = applicationGroups[groupId];
-      const paths: object[] = getMappedPaths(groupItem["paths"]);
-      return {
-        applicationGroupName:
-          applicationGroups[groupId]["application_group_name"],
-        applicationGroupId: groupId,
-        paths: paths,
-      };
-    },
-  );
-
-  return mappedApplicationGroups;
-}
-
 export default function RiskManagement() {
   const [messageApi, contextHolder] = message.useMessage();
-  const [riskManagementData, setRiskManagementData] = useState<{
-    [index: string]: any;
-  }>({});
+
+  //custom functions
+
+  const [treatmentEffectivenessVal, setTreatmentEffectivenessVal] =
+    useState<number>(1);
+
+  const getRiskManagementData = (
+    deviceData: StringIndexedObject,
+    deviceId: any,
+  ) => {
+    const mappedRiskManagement: object[] = [];
+    const riskManagementData: StringIndexedObject = deviceData["asset"];
+
+    //map assets
+    Object.keys(riskManagementData).map((assetUUID: string) => {
+      const assetData: StringIndexedObject = riskManagementData[assetUUID];
+      const asset: string = assetData["asset_name"];
+
+      //map risks
+      const risks: StringIndexedObject = assetData["risks"];
+      Object.keys(risks).map((riskUUID: string) => {
+        const risk: StringIndexedObject = risks[riskUUID];
+
+        const threatObj: any = Object.values(risk["threat"])[0];
+        const vulnerabilityObj: any = Object.values(risk["vulnerability"])[0];
+
+        const threat: any = threatObj["name"];
+        const vulnerability: any = vulnerabilityObj["name"];
+
+        const threatProb: any = threatObj["probability"];
+        const vulnerabilityQual: any = vulnerabilityObj["qualification"];
+
+        const currentRiskCVal: number =
+            risk["c"] * threatProb * vulnerabilityQual;
+        const currentRiskIVal: number =
+            risk["i"] * threatProb * vulnerabilityQual;
+        const currentRiskAVal: number =
+            risk["a"] * threatProb * vulnerabilityQual;
+
+        const treatments: any = Object.keys(risk["measures"]).map(
+          (measureUUID: string) => {
+            return risk["measures"][measureUUID]["name"];
+          },
+        );
+
+        mappedRiskManagement.push({
+          key: "risk_management_device-" + deviceId.toString(),
+          assetName: asset,
+          threatName: threat,
+          vulnerabilityName: vulnerability,
+          impactC: getSelectableCell(
+              risk["c"],
+            [1, 2, 3, 4, 5],
+            (newValue: StringIndexedObject) => {
+              request({
+                url: "http://localhost:5000/risk-management-update",
+                method: "POST",
+                postData: {"uuid": `${deviceId}-${riskUUID}`, "c": newValue},
+              });
+            },
+          ),
+          impactI: getSelectableCell(
+            risk["i"],
+            [1, 2, 3, 4, 5],
+              (newValue: StringIndexedObject) => {
+                request({
+                  url: "http://localhost:5000/risk-management-update",
+                  method: "POST",
+                  postData: {"uuid": `${deviceId}-${riskUUID}`, "i": newValue},
+                });
+              },
+          ),
+          impactA: getSelectableCell(
+              risk["a"],
+            [1, 2, 3, 4, 5],
+              (newValue: StringIndexedObject) => {
+                request({
+                  url: "http://localhost:5000/risk-management-update",
+                  method: "POST",
+                  postData: {"uuid": `${deviceId}-${riskUUID}`, "a": newValue},
+                });
+              },
+          ),
+          threatProbability: getSelectableCell(
+            threatProb,
+            [1, 2, 3, 4, 5],
+            () => {},
+          ),
+          vulnerabilityQualification: getSelectableCell(
+            vulnerabilityQual,
+            [1, 2, 3, 4, 5],
+            () => {},
+          ),
+          currentRiskC: currentRiskCVal,
+          currentRiskI: currentRiskIVal,
+          currentRiskA: currentRiskAVal,
+          treatmentLabel: getSelectableCell("", treatments, (value) => {
+            Object.keys(risk["measures"]).map((measureUUID: string) => {
+              if (risk["measures"][measureUUID]["name"] == value["label"]) {
+                //risk["measures"][measureUUID]["effectiveness"],
+                setTreatmentEffectivenessVal(5);
+              }
+              setTreatmentEffectivenessVal(5);
+              console.log(treatmentEffectivenessVal);
+            });
+          }),
+          treatmentEffectiveness: treatmentEffectivenessVal,
+        });
+      });
+    });
+
+    return mappedRiskManagement;
+  };
+
+  const getMappedDevices = (devices: StringIndexedObject) => {
+    const mappedDevices = Object.keys(devices).map(
+      (deviceId: string, deviceIndex: number) => {
+        const device: StringIndexedObject = devices[deviceId];
+
+        const riskManagementData: object[] = getRiskManagementData(
+          device,
+          deviceId,
+        );
+
+        return {
+          key: deviceIndex.toString() + "_device" + deviceId.toString(),
+          deviceName: device["name"],
+          model: device["model"],
+          os: device["os"],
+          type: device["type"],
+          subComponent: (
+            <Table
+              columns={riskManagementColumns}
+              dataSource={riskManagementData}
+              bordered
+            />
+          ),
+        };
+      },
+    );
+
+    return mappedDevices;
+  };
+
+  const getMappedPaths = (paths: StringIndexedObject) => {
+    const mappedPaths = Object.keys(paths).map(
+      (pathId: string, pathIndex: number) => {
+        const pathItem: StringIndexedObject = paths[pathId];
+        const devices: object[] = getMappedDevices(pathItem["devices"]);
+
+        return {
+          key: pathIndex.toString(),
+          pathId: pathId,
+          pathName: pathItem["path_name"],
+          informationSystems: pathItem["information_systems"].join(","),
+          subComponent: (
+            <Table
+              columns={subColumns}
+              dataSource={devices}
+              pagination={false}
+              expandedRowRender={expandedRowRenderFun}
+              bordered
+            />
+          ),
+        };
+      },
+    );
+
+    return mappedPaths;
+  };
+
+  const getMappedApplicationGroups = (
+    applicationGroups: StringIndexedObject,
+  ) => {
+    const mappedApplicationGroups = Object.keys(applicationGroups).map(
+      (groupId: any) => {
+        const groupItem: StringIndexedObject = applicationGroups[groupId];
+        const paths: object[] = getMappedPaths(groupItem["paths"]);
+        return {
+          applicationGroupName:
+            applicationGroups[groupId]["application_group_name"],
+          applicationGroupId: groupId,
+          paths: paths,
+        };
+      },
+    );
+
+    return mappedApplicationGroups;
+  };
+
+  //end of custom functions
+
+  //load page
+
+  const [pageData, setPageData] = useState<StringIndexedObject>({});
+  const [requestedData, setRequestedData] = useState<StringIndexedObject>({});
 
   useEffect(() => {
     const responseData: Promise<Response> = request({
@@ -345,15 +389,19 @@ export default function RiskManagement() {
     responseData
       .then((response) => response.json())
       .then((data) => {
-        setRiskManagementData(data.data);
+        setRequestedData(data.data);
+        const mappedPageData = getMappedApplicationGroups(data.data);
+        setPageData(mappedPageData);
 
         messageApi.destroy();
         messageSuccess(messageApi, "Page loaded.");
       });
   }, []);
 
-  const mappedRiskManagementData: object[] =
-    getMappedApplicationGroups(riskManagementData);
+  useEffect(() => {
+    const mappedPageData = getMappedApplicationGroups(requestedData);
+    setPageData(mappedPageData);
+  }, [treatmentEffectivenessVal]);
 
   const onGroupNameChange = (newName: string, groupId: number) => {
     let formData: object = {
@@ -384,8 +432,8 @@ export default function RiskManagement() {
     <CustomLayout>
       {contextHolder}
       <div style={{ padding: "20px" }}>
-        {mappedRiskManagementData.length > 0 ? (
-          mappedRiskManagementData.map((group: StringIndexedObject) => (
+        {pageData.length > 0 ? (
+          pageData.map((group: StringIndexedObject) => (
             <div style={{ marginBottom: "50px" }}>
               <EditableTable
                 data={group["paths"]}

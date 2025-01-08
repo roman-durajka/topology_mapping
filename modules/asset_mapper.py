@@ -1,4 +1,5 @@
 import json
+import copy
 
 from modules.clients import MariaDBClient
 from extractors import DeviceExtractor
@@ -55,13 +56,15 @@ class AssetMapper:
                 vulnerability_records = self.db_connection.get_data("vulnerabilities", [("uuid", vulnerability_uuid)])
                 vulnerability_record = vulnerability_records[0]
                 vulnerability_name = vulnerability_record["label"]
-                vulnerability_qualification = vulnerability_record["qualification"]
+                #vulnerability_qualification = vulnerability_record["qualification"]
+                vulnerability_qualification = 1
                 vulnerability = {vulnerability_uuid: {"name": vulnerability_name, "qualification": vulnerability_qualification}}
 
                 threat_records = self.db_connection.get_data("threats", [("uuid", threat_uuid)])
                 threat_record = threat_records[0]
                 threat_name = threat_record["label"]
-                threat_probability = threat_record["probability"]
+                #threat_probability = threat_record["probability"]
+                threat_probability = 1
                 threat = {threat_uuid: {"name": threat_name, "probability": threat_probability}}
 
                 measures = {}
@@ -74,7 +77,8 @@ class AssetMapper:
 
                     measure_record = measure_record[0]
                     measure_name = measure_record["label"]
-                    measure_efectiveness = measure_record["efectiveness"]
+                    #measure_efectiveness = measure_record["efectiveness"]
+                    measure_efectiveness = 1
 
                     measures[measure_uuid] = {"name": measure_record["label"], "efectiveness": measure_efectiveness}
 
@@ -88,6 +92,18 @@ class AssetMapper:
 
         return mapped_risks
 
+    def update_cia_values(self, data: dict):
+        if not self.db_connection.get_data("assets", [("uuid", data["uuid"])]):
+            self.db_connection.insert_data([data], "assets")
+        else:
+            uuid = data["uuid"]
+            new_data = {key: data[key] for key in data if key != "uuid"}
+            self.db_connection.update_data("assets", [new_data], [("uuid", f"\'{uuid}\'")])
+
+def update_cia(data: dict):
+    db_client = MariaDBClient("topology")
+    asset_mapper = AssetMapper(db_client)
+    asset_mapper.update_cia_values(data)
 
 # TODO: rework application group functions below into class, fe. ApplicationGroups
 
@@ -135,11 +151,31 @@ def get_application_groups(load_risks: bool):
                     if load_risks:
                         device_asset_type = librenms_device_data["type"]
                         device_risk_mgmt = asset_mapper.get_asset_risks(device_asset_type)
-                        device_info["asset"] = device_risk_mgmt
-
-                        device_info["confidentality"] = topology_device_data["confidentality_value"]
-                        device_info["integrity"] = topology_device_data["integrity_value"]
-                        device_info["availability"] = topology_device_data["availability_value"]
+                        device_info["asset"] = copy.deepcopy(device_risk_mgmt)
+                        topology_group_data = topology_db_client.get_data("paths", [("path_id", path_id)])[0]
+                        for asset_uuid, asset_items in device_info["asset"].items():
+                            risks = asset_items["risks"]
+                            for uuid in risks.keys():
+                                asset_data = topology_db_client.get_data("assets", [("uuid", f"{device_id}-{uuid}")])
+                                if asset_data:
+                                    asset_data = asset_data[0]
+                                    if asset_data["c"] != 0:
+                                        device_info["asset"][asset_uuid]["risks"][uuid]["c"] = asset_data["c"]
+                                    else:
+                                        device_info["asset"][asset_uuid]["risks"][uuid]["c"] = topology_group_data["confidentality_value"]
+                                    if asset_data["i"] != 0:
+                                        device_info["asset"][asset_uuid]["risks"][uuid]["i"] = asset_data["i"]
+                                    else:
+                                        device_info["asset"][asset_uuid]["risks"][uuid]["i"] = topology_group_data["integrity_value"]
+                                    if asset_data["a"] != 0:
+                                        device_info["asset"][asset_uuid]["risks"][uuid]["a"] = asset_data["a"]
+                                    else:
+                                        device_info["asset"][asset_uuid]["risks"][uuid]["a"] = topology_group_data["availability_value"]
+                                else:
+                                    topology_group_data = topology_db_client.get_data("paths", [("path_id", path_id)])[0]
+                                    device_info["asset"][asset_uuid]["risks"][uuid]["c"] = topology_group_data["confidentality_value"]
+                                    device_info["asset"][asset_uuid]["risks"][uuid]["i"] = topology_group_data["integrity_value"]
+                                    device_info["asset"][asset_uuid]["risks"][uuid]["a"] = topology_group_data["availability_value"]
 
                     application_groups[group_id]["paths"][path_id]["devices"].update({device_id: device_info})
 
