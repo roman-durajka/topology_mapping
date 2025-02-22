@@ -56,16 +56,12 @@ class AssetMapper:
                 vulnerability_records = self.db_connection.get_data("vulnerabilities", [("uuid", vulnerability_uuid)])
                 vulnerability_record = vulnerability_records[0]
                 vulnerability_name = vulnerability_record["label"]
-                #vulnerability_qualification = vulnerability_record["qualification"]
-                vulnerability_qualification = 1
-                vulnerability = {vulnerability_uuid: {"name": vulnerability_name, "qualification": vulnerability_qualification}}
+                vulnerability = {vulnerability_uuid: {"name": vulnerability_name}}
 
                 threat_records = self.db_connection.get_data("threats", [("uuid", threat_uuid)])
                 threat_record = threat_records[0]
                 threat_name = threat_record["label"]
-                #threat_probability = threat_record["probability"]
-                threat_probability = 1
-                threat = {threat_uuid: {"name": threat_name, "probability": threat_probability}}
+                threat = {threat_uuid: {"name": threat_name}}
 
                 measures = {}
                 measure_risks_map_records = self.db_connection.get_data("measures_risks_map", [("risk_id", risk_uuid)])
@@ -92,7 +88,7 @@ class AssetMapper:
 
         return mapped_risks
 
-    def update_cia_values(self, data: dict):
+    def update_asset_values(self, data: dict):
         if not self.db_connection.get_data("assets", [("uuid", data["uuid"])]):
             self.db_connection.insert_data([data], "assets")
         else:
@@ -100,10 +96,10 @@ class AssetMapper:
             new_data = {key: data[key] for key in data if key != "uuid"}
             self.db_connection.update_data("assets", [new_data], [("uuid", f"\'{uuid}\'")])
 
-def update_cia(data: dict):
+def update_asset(data: dict):
     db_client = MariaDBClient("topology")
     asset_mapper = AssetMapper(db_client)
-    asset_mapper.update_cia_values(data)
+    asset_mapper.update_asset_values(data)
 
 # TODO: rework application group functions below into class, fe. ApplicationGroups
 
@@ -171,11 +167,21 @@ def get_application_groups(load_risks: bool):
                                         device_info["asset"][asset_uuid]["risks"][uuid]["a"] = asset_data["a"]
                                     else:
                                         device_info["asset"][asset_uuid]["risks"][uuid]["a"] = topology_group_data["availability_value"]
+                                    if asset_data["threat_prob"] != 0:
+                                        device_info["asset"][asset_uuid]["risks"][uuid]["threat_prob"] = asset_data["threat_prob"]
+                                    else:
+                                        device_info["asset"][asset_uuid]["risks"][uuid]["threat_prob"] = 1
+                                    if asset_data["vulnerability_qualif"] != 0:
+                                        device_info["asset"][asset_uuid]["risks"][uuid]["vulnerability_qualif"] = asset_data["vulnerability_qualif"]
+                                    else:
+                                        device_info["asset"][asset_uuid]["risks"][uuid]["vulnerability_qualif"] = 1
                                 else:
                                     topology_group_data = topology_db_client.get_data("paths", [("path_id", path_id)])[0]
                                     device_info["asset"][asset_uuid]["risks"][uuid]["c"] = topology_group_data["confidentality_value"]
                                     device_info["asset"][asset_uuid]["risks"][uuid]["i"] = topology_group_data["integrity_value"]
                                     device_info["asset"][asset_uuid]["risks"][uuid]["a"] = topology_group_data["availability_value"]
+                                    device_info["asset"][asset_uuid]["risks"][uuid]["threat_prob"] = 1
+                                    device_info["asset"][asset_uuid]["risks"][uuid]["vulnerability_qualif"] = 1
 
                     application_groups[group_id]["paths"][path_id]["devices"].update({device_id: device_info})
 

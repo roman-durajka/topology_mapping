@@ -12,6 +12,8 @@ CREATE TABLE `assets` (
     `c` int(11) DEFAULT 0,
     `i` int(11) DEFAULT 0,
     `a` int(11) DEFAULT 0,
+    `threat_prob` int(11) DEFAULT 0,
+    `vulnerability_qualif` int(11) DEFAULT 0,
     PRIMARY KEY (`uuid`)
 );
 

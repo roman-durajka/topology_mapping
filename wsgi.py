@@ -319,7 +319,7 @@ def risk_management_update():
     req_json = request.json
     result = {}
     try:
-        asset_mapper.update_cia(req_json)
+        asset_mapper.update_asset(req_json)
         result["code"] = 200
     except Exception as error:
         result["error"] = str(error)
