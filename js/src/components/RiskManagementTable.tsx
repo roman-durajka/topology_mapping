@@ -81,6 +81,7 @@ const riskManagementColumns: object[] = [
             {
                 title: "Label",
                 dataIndex: "treatmentLabel",
+                width: "10%",
             },
             {
                 title: "Effect.",
@@ -117,6 +118,7 @@ function getSelectableCell(
 ) {
     return (
         <Select
+            key={`${defaultValue}-${Math.random()}`}
             onChange={save}
             defaultValue={defaultValue}
             options={values.map((selectedValue) => ({
@@ -135,23 +137,55 @@ interface InterfaceRiskManagementTable {
 const RiskManagementTable: React.FC<InterfaceRiskManagementTable> = ({ deviceData, deviceId }) => {
     const [tableData, setTableData] = useState<object[]>([]);
 
-    const updateCellValue = useCallback((rowKey: string, field: string, newValue: StringIndexedObject, keyToUpdate: string) => {
+    const updateCellValue = useCallback((rowKey: string, field: string, newValue: StringIndexedObject | string, keyToUpdate: string, values: object, currentUUID: string) => {
         setTableData((prevData: any[]) =>
             prevData.map((row) => {
                 if (row.key === rowKey) {
                     const updatedRow = { ...row };
+                    if (currentUUID) {
+                        updatedRow["currentTreatmentUUID"] = currentUUID;
+                    }
+                    if (Object.keys(values).length > 0 && !updatedRow.treatments) {
+                        updatedRow.treatments = values;
+                    }
 
-                    updatedRow[field] = getSelectableCell(
-                        newValue,
-                        [1, 2, 3, 4, 5],
-                        (updatedValue: StringIndexedObject) => {
-                            request({
-                                url: "http://localhost:5000/risk-management-update",
-                                method: "POST",
-                                postData: { uuid: rowKey, [keyToUpdate]: updatedValue },
-                            });
-                            updateCellValue(rowKey, field, updatedValue, keyToUpdate);}
-                    );
+                    if (keyToUpdate === "treatmentEffectiveness") { //updateCellValue(assetKey, currentTreatmentUUID, newValue, "treatmentEffectiveness", []);
+                        updatedRow["treatments"][field]["effectiveness"] = newValue;
+                    }
+                    else if (field === "currentTreatmentUUID") {
+                        updatedRow["currentTreatmentUUID"] = String(newValue);
+                        updatedRow["treatmentEffectiveness"] = getSelectableCell(
+                            newValue === "" ? 1 : updatedRow["treatments"][String(newValue)]["effectiveness"],
+                            [1, 2, 3, 4, 5],
+                            (newEffectiveness: StringIndexedObject) => {
+                                if (String(newValue) !== "") {
+                                    request({
+                                        url: "http://localhost:5000/risk-management-update",
+                                        method: "POST",
+                                        postData: {uuid: newValue, effectiveness: newEffectiveness},
+                                    });
+                                    //updateTreatmentData(rowKey, String(newValue), Number(newEffectiveness));
+                                    updateCellValue(rowKey, String(newValue), newEffectiveness, "treatmentEffectiveness", [], "");
+                                    updatedRow["treatments"][String(newValue)]["effectiveness"] = newEffectiveness;
+                                    updateCellValue(rowKey, "currentTreatmentUUID", newValue, "uuid", [], "");
+                                }
+                                //updateCellValue(assetKey, "vulnerabilityQualification", newValue, "vulnerability_qualif");
+                            },
+                        )
+                    } else {
+                        updatedRow[field] = getSelectableCell(
+                            newValue,
+                            [1, 2, 3, 4, 5],
+                            (updatedValue: StringIndexedObject) => {
+                                request({
+                                    url: "http://localhost:5000/risk-management-update",
+                                    method: "POST",
+                                    postData: {uuid: rowKey, [keyToUpdate]: updatedValue},
+                                });
+                                updateCellValue(rowKey, field, updatedValue, keyToUpdate, [], "");
+                            }
+                        );
+                    }
 
                     updatedRow.currentRiskC =
                         updatedRow.impactC.props.defaultValue *
@@ -165,6 +199,16 @@ const RiskManagementTable: React.FC<InterfaceRiskManagementTable> = ({ deviceDat
                         updatedRow.impactA.props.defaultValue *
                         updatedRow.threatProbability.props.defaultValue *
                         updatedRow.vulnerabilityQualification.props.defaultValue;
+
+                    updatedRow.riskAfterTreatmentC =
+                        updatedRow["treatments"][updatedRow["currentTreatmentUUID"]]["effectiveness"] *
+                        updatedRow.currentRiskC
+                    updatedRow.riskAfterTreatmentI =
+                        updatedRow["treatments"][updatedRow["currentTreatmentUUID"]]["effectiveness"] *
+                        updatedRow.currentRiskI
+                    updatedRow.riskAfterTreatmentA =
+                        updatedRow["treatments"][updatedRow["currentTreatmentUUID"]]["effectiveness"] *
+                        updatedRow.currentRiskA
 
                     return updatedRow;
                 }
@@ -195,8 +239,38 @@ const RiskManagementTable: React.FC<InterfaceRiskManagementTable> = ({ deviceDat
                 const vulnerabilityQual: any = risk["vulnerability_qualif"];
                 const assetKey: string = `${deviceId}-${riskUUID}`;
 
-                const treatments: any = Object.keys(risk["measures"]).map(
-                    (measureUUID: string) => risk["measures"][measureUUID]["name"],
+                const treatments: any = [
+                    ...Object.keys(risk["measures"]).map(
+                        (measureUUID: string) => risk["measures"][measureUUID]["name"]
+                    ),
+                    ""
+                ];
+                const currentTreatmentUUID: string = risk["treatment"];
+                const currentTreatment: string = currentTreatmentUUID
+                    ? risk["measures"][currentTreatmentUUID]["name"]
+                    : "";
+
+                const currentTreatmentEffectiveness: number = currentTreatmentUUID
+                    ? risk["measures"][currentTreatmentUUID]["effectiveness"]
+                    : 0;
+
+                setTableData((prevData: any[]) =>
+                    prevData.map((row) => {
+                        if (row.key === assetKey) {
+                            const updatedRow = { ...row };
+                            if (!updatedRow["treatments"]) {
+                                updatedRow["treatments"] = {}
+                            }
+                            if (!updatedRow["treatments"][currentTreatmentUUID]) {
+                                updatedRow["treatments"][currentTreatmentUUID] = {}
+                            }
+                            updatedRow["treatments"][currentTreatmentUUID]["effectiveness"] = currentTreatmentEffectiveness;
+                            updatedRow["currentTreatmentUUID"] = currentTreatmentUUID;
+
+                            return updatedRow;
+                        }
+                        return row;
+                    })
                 );
 
                 mappedRiskManagement.push({
@@ -214,7 +288,7 @@ const RiskManagementTable: React.FC<InterfaceRiskManagementTable> = ({ deviceDat
                                 method: "POST",
                                 postData: { uuid: assetKey, c: newValue },
                             });
-                            updateCellValue(assetKey, "impactC", newValue, "c");
+                            updateCellValue(assetKey, "impactC", newValue, "c", risk["measures"], currentTreatmentUUID);
                         },
                     ),
                     impactI: getSelectableCell(
@@ -226,7 +300,7 @@ const RiskManagementTable: React.FC<InterfaceRiskManagementTable> = ({ deviceDat
                                 method: "POST",
                                 postData: { uuid: assetKey, i: newValue },
                             });
-                            updateCellValue(assetKey, "impactI", newValue, "i");
+                            updateCellValue(assetKey, "impactI", newValue, "i", risk["measures"], currentTreatmentUUID);
                         },
                     ),
                     impactA: getSelectableCell(
@@ -238,7 +312,7 @@ const RiskManagementTable: React.FC<InterfaceRiskManagementTable> = ({ deviceDat
                                 method: "POST",
                                 postData: { uuid: assetKey, a: newValue },
                             });
-                            updateCellValue(assetKey, "impactA", newValue, "a");
+                            updateCellValue(assetKey, "impactA", newValue, "a", risk["measures"], currentTreatmentUUID);
                         },
                     ),
                     threatProbability: getSelectableCell(
@@ -250,7 +324,7 @@ const RiskManagementTable: React.FC<InterfaceRiskManagementTable> = ({ deviceDat
                                 method: "POST",
                                 postData: { uuid: assetKey, threat_prob: newValue },
                             });
-                            updateCellValue(assetKey, "threatProbability", newValue, "threat_prob");
+                            updateCellValue(assetKey, "threatProbability", newValue, "threat_prob", risk["measures"], currentTreatmentUUID);
                         },
                     ),
                     vulnerabilityQualification: getSelectableCell(
@@ -262,7 +336,7 @@ const RiskManagementTable: React.FC<InterfaceRiskManagementTable> = ({ deviceDat
                                 method: "POST",
                                 postData: { uuid: assetKey, vulnerability_qualif: newValue },
                             });
-                            updateCellValue(assetKey, "vulnerabilityQualification", newValue, "vulnerability_qualif");
+                            updateCellValue(assetKey, "vulnerabilityQualification", newValue, "vulnerability_qualif", risk["measures"], currentTreatmentUUID);
                         },
                     ),
 
@@ -270,14 +344,41 @@ const RiskManagementTable: React.FC<InterfaceRiskManagementTable> = ({ deviceDat
                     currentRiskI: risk["i"] * threatProb * vulnerabilityQual,
                     currentRiskA: risk["a"] * threatProb * vulnerabilityQual,
 
-                    treatmentLabel: getSelectableCell("", treatments, (value) => {
+                    treatmentLabel: getSelectableCell(currentTreatment, treatments, (value) => {
                         Object.keys(risk["measures"]).forEach((measureUUID: string) => {
-                            if (risk["measures"][measureUUID]["name"] === value["label"]) {
-                                console.log("Measure Effectiveness:", risk["measures"][measureUUID]["effectiveness"]);
+                            if (String(value) === "") {
+                                measureUUID = "";
+                            }
+                            if (String(value) === "" || risk["measures"][measureUUID]["name"] === value) {
+                                //console.log("Measure Effectiveness:", risk["measures"][measureUUID]["effectiveness"]);
+                                request({
+                                    url: "http://localhost:5000/risk-management-update",
+                                    method: "POST",
+                                    postData: { uuid: assetKey, treatment: measureUUID },
+                                });
+                                updateCellValue(assetKey, "currentTreatmentUUID", measureUUID, "uuid", risk["measures"], "");
                             }
                         });
                     }),
-                    treatmentEffectiveness: 1,
+                    treatmentEffectiveness: getSelectableCell(
+                        currentTreatmentEffectiveness,
+                        [1, 2, 3, 4, 5],
+                        (newValue: StringIndexedObject) => {
+                            if (currentTreatmentUUID !== "") {
+                                request({
+                                    url: "http://localhost:5000/risk-management-update",
+                                    method: "POST",
+                                    postData: {uuid: assetKey, effectiveness: newValue},
+                                });
+                                updateCellValue(assetKey, currentTreatmentUUID, newValue, "treatmentEffectiveness", risk["measures"], currentTreatmentUUID);
+                                updateCellValue(assetKey, "currentTreatmentUUID", currentTreatmentUUID, "uuid", risk["measures"], currentTreatmentUUID);
+
+                            }
+                        },
+                    ),
+                    riskAfterTreatmentC: risk["c"] * threatProb * vulnerabilityQual * currentTreatmentEffectiveness,
+                    riskAfterTreatmentI: risk["i"] * threatProb * vulnerabilityQual * currentTreatmentEffectiveness,
+                    riskAfterTreatmentA: risk["a"] * threatProb * vulnerabilityQual * currentTreatmentEffectiveness,
                 });
             });
         });

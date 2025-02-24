@@ -11,6 +11,7 @@ class AssetMapper:
         self.processed_risks = {}
 
         self.db_connection = db_connection
+        self.topology_db_connection = MariaDBClient("topology")
 
     def __read_asset_mapping_json(self):
         with open("./data/asset_mapping.json", "r") as f:
@@ -73,10 +74,12 @@ class AssetMapper:
 
                     measure_record = measure_record[0]
                     measure_name = measure_record["label"]
-                    #measure_efectiveness = measure_record["efectiveness"]
-                    measure_efectiveness = 1
+                    measure_effectiveness = 0
+                    measure_topology_record = self.topology_db_connection.get_data("treatments", [("uuid", measure_uuid)])
+                    if measure_topology_record:
+                        measure_effectiveness = measure_topology_record[0]["effectiveness"]
 
-                    measures[measure_uuid] = {"name": measure_record["label"], "efectiveness": measure_efectiveness}
+                    measures[measure_uuid] = {"name": measure_record["label"], "effectiveness": measure_effectiveness}
 
                 mapped_risk = {"vulnerability": vulnerability,
                                "threat": threat,
@@ -88,18 +91,21 @@ class AssetMapper:
 
         return mapped_risks
 
-    def update_asset_values(self, data: dict):
-        if not self.db_connection.get_data("assets", [("uuid", data["uuid"])]):
-            self.db_connection.insert_data([data], "assets")
+    def update_asset_values(self, table_name: str, data: dict):
+        if not self.db_connection.get_data(table_name, [("uuid", data["uuid"])]):
+            self.db_connection.insert_data([data], table_name)
         else:
             uuid = data["uuid"]
             new_data = {key: data[key] for key in data if key != "uuid"}
-            self.db_connection.update_data("assets", [new_data], [("uuid", f"\'{uuid}\'")])
+            self.db_connection.update_data(table_name, [new_data], [("uuid", f"\'{uuid}\'")])
 
 def update_asset(data: dict):
     db_client = MariaDBClient("topology")
     asset_mapper = AssetMapper(db_client)
-    asset_mapper.update_asset_values(data)
+    if "effectiveness" in data.keys():
+        asset_mapper.update_asset_values("treatments", data)
+    else:
+        asset_mapper.update_asset_values("assets", data)
 
 # TODO: rework application group functions below into class, fe. ApplicationGroups
 
@@ -175,6 +181,10 @@ def get_application_groups(load_risks: bool):
                                         device_info["asset"][asset_uuid]["risks"][uuid]["vulnerability_qualif"] = asset_data["vulnerability_qualif"]
                                     else:
                                         device_info["asset"][asset_uuid]["risks"][uuid]["vulnerability_qualif"] = 1
+                                    if asset_data["treatment"] != "":
+                                        device_info["asset"][asset_uuid]["risks"][uuid]["treatment"] = asset_data["treatment"]
+                                    else:
+                                        device_info["asset"][asset_uuid]["risks"][uuid]["treatment"] = ""
                                 else:
                                     topology_group_data = topology_db_client.get_data("paths", [("path_id", path_id)])[0]
                                     device_info["asset"][asset_uuid]["risks"][uuid]["c"] = topology_group_data["confidentality_value"]
@@ -182,6 +192,7 @@ def get_application_groups(load_risks: bool):
                                     device_info["asset"][asset_uuid]["risks"][uuid]["a"] = topology_group_data["availability_value"]
                                     device_info["asset"][asset_uuid]["risks"][uuid]["threat_prob"] = 1
                                     device_info["asset"][asset_uuid]["risks"][uuid]["vulnerability_qualif"] = 1
+                                    device_info["asset"][asset_uuid]["risks"][uuid]["treatment"] = ""
 
                     application_groups[group_id]["paths"][path_id]["devices"].update({device_id: device_info})
 

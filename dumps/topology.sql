@@ -14,7 +14,14 @@ CREATE TABLE `assets` (
     `a` int(11) DEFAULT 0,
     `threat_prob` int(11) DEFAULT 0,
     `vulnerability_qualif` int(11) DEFAULT 0,
+    `treatment` VARCHAR(255) DEFAULT "",
     PRIMARY KEY (`uuid`)
+);
+
+CREATE TABLE `treatments` (
+  `uuid` VARCHAR(255) NOT NULL,
+  `effectiveness` int(11) DEFAULT 0,
+  PRIMARY KEY (`uuid`)
 );
 
 CREATE TABLE `information_systems` (
