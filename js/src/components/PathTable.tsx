@@ -25,7 +25,9 @@ const PathTable: React.FC<InterfacePathTable> = ({
   >
     <Table pagination={false} dataSource={items}>
       <Column title="Path name" dataIndex="name" key="name" />
-      <Column title="Asset value" dataIndex="assetValue" key="assetValue" />
+      <Column title="Confidentality" dataIndex="confidentalityValue" key="confidentalityValue" />
+      <Column title="Integrity" dataIndex="integrityValue" key="integrityValue" />
+      <Column title="Availability" dataIndex="availabilityValue" key="availabilityValue" />
       <Column
         title="Color"
         dataIndex="color"
