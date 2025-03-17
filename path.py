@@ -340,7 +340,9 @@ def add_path(req_json):
     destination = req_json["target"]
     color = req_json["color"]
     starting_index = req_json["startingIndex"]
-    asset_value = req_json["assetValue"]
+    confidentality_value = req_json["confidentalityValue"]
+    integrity_value = req_json["integrityValue"]
+    availability_value = req_json["availabilityValue"]
     path_name = req_json["name"]
     application_group = req_json["businessProcess"]
 
@@ -354,9 +356,9 @@ def add_path(req_json):
         group_record = topology_db_client.get_data("application_groups", [("name", application_group)])
     group_id = group_record[0]["id"]
 
-    topology_generator.save_path_to_db(path, starting_index, color, asset_value, path_name, group_id, topology_db_client)
+    topology_generator.save_path_to_db(path, starting_index, color, confidentality_value, integrity_value, availability_value, path_name, group_id, topology_db_client)
     path_json = topology_generator.generate_js_path_data_json(path, color, starting_index)
-    path_json.update({"asset_value": asset_value, "name": path_name, "application_group_id": group_id})
+    path_json.update({"confidentality_value": confidentality_value, "integrity_value": integrity_value, "availability_value": availability_value, "name": path_name, "application_group_id": group_id})
 
     return path_json
 
@@ -373,13 +375,15 @@ def load_paths():
         starting_index = path_dict["starting_index"]
         color = path_dict["color"]
         path_container = path_dict["path"]
-        asset_value = path_dict["asset_value"]
+        confidentality_value = path_dict["confidentality_value"]
+        integrity_value = path_dict["integrity_value"]
+        availability_value = path_dict["availability_value"]
         path_name = path_dict["name"]
 
         path_json = topology_generator.generate_js_path_data_json(path_container, color, starting_index)
 
         group_id = topology_db_client.get_data("paths", [("path_id", starting_index)])[0]["application_group_id"]
-        path_json.update({"asset_value": asset_value, "name": path_name, "application_group_id": group_id})
+        path_json.update({"confidentality_value": confidentality_value, "integrity_value": integrity_value, "availability_value": availability_value, "name": path_name, "application_group_id": group_id})
         loaded_paths.append(path_json)
 
     return loaded_paths

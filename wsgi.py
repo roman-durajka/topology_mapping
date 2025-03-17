@@ -126,7 +126,7 @@ def get_application_groups():
     """
     result = {}
     try:
-        application_groups = asset_mapper.get_application_groups()
+        application_groups = asset_mapper.get_application_groups(False)
         result["data"] = application_groups
         result["code"] = 200
     except Exception as error:
@@ -293,16 +293,33 @@ def devices_delete():
 @app.route('/risk-management', methods=["GET"])
 def risk_management_load():
     """
-    Returns all risk management data. If fired for the first time,
-    loads all risk management data from MOSP and other sources
+    Returns risk management data for all application groups. If fired for the
+    first time, loads all risk management data from MOSP and other sources
     into local DB first. This might take from few seconds up to tens of
     seconds.
     """
-    # TODO: integrate into UI when it's done
     result = {}
     try:
         data_load = data_loader.DataLoader()
-        result["data"] = data_load.decide_and_returnd_data()
+        data_load.decide_and_load_data()
+        application_groups = asset_mapper.get_application_groups(True)
+        result["data"] = application_groups
+        result["code"] = 200
+    except Exception as error:
+        result["error"] = str(error)
+        result["code"] = 500
+
+    return jsonify(result)
+
+@app.route('/risk-management-update', methods=["POST"])
+def risk_management_update():
+    """
+    Updates risk management data.
+    """
+    req_json = request.json
+    result = {}
+    try:
+        asset_mapper.update_asset(req_json)
         result["code"] = 200
     except Exception as error:
         result["error"] = str(error)

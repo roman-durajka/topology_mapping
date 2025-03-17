@@ -8,6 +8,108 @@ import { ColumnItem, SubColumnGroup } from "./types";
 import EditableTable from "./EditableTable";
 import EditableText from "./EditableText";
 
+const columns: ColumnItem[] = [
+  {
+    title: "path name",
+    dataIndex: "pathName",
+    width: "50%",
+    editable: true,
+  },
+  {
+    title: "information systems",
+    dataIndex: "informationSystems",
+    width: "50%",
+    editable: true,
+  },
+];
+
+const subColumns: SubColumnGroup[] = [
+  {
+    title: "Devices",
+    children: [
+      {
+        title: "device name",
+        dataIndex: "deviceName",
+      },
+      {
+        title: "model",
+        dataIndex: "model",
+      },
+      {
+        title: "operating system",
+        dataIndex: "os",
+      },
+      {
+        title: "type",
+        dataIndex: "type",
+      },
+    ],
+  },
+];
+
+function getMappedDevices(devices: object[]) {
+  const mappedDevices = Object.keys(devices).map(
+    (deviceId: any, deviceIndex: number) => {
+      const device: { [index: string]: any } = devices[deviceId];
+
+      return {
+        key: deviceIndex.toString() + "_device" + deviceIndex.toString(),
+        deviceName: device["name"],
+        model: device["model"],
+        os: device["os"],
+        type: device["type"],
+      };
+    },
+  );
+
+  return mappedDevices;
+}
+
+function getMappedPaths(paths: object[]) {
+  const mappedPaths = Object.keys(paths).map(
+    (pathId: any, pathIndex: number) => {
+      const pathItem: { [index: string]: any } = paths[pathId];
+      const devices: object[] = getMappedDevices(pathItem["devices"]);
+
+      return {
+        key: pathIndex.toString(),
+        pathId: pathId,
+        pathName: pathItem.path_name,
+        informationSystems: pathItem.information_systems.join(","),
+        subComponent: (
+          <Table
+            columns={subColumns}
+            dataSource={devices}
+            pagination={false}
+            bordered
+          />
+        ),
+      };
+    },
+  );
+
+  return mappedPaths;
+}
+
+function getMappedApplicationGroups(applicationGroups: {
+  [index: string]: any;
+}) {
+  const mappedApplicationGroups = Object.keys(applicationGroups).map(
+    (groupId: any) => {
+      const groupItem: { [index: string]: any } = applicationGroups[groupId];
+      const paths: object[] = getMappedPaths(groupItem["paths"]);
+      return {
+        applicationGroupName:
+          applicationGroups[groupId]["application_group_name"],
+        applicationGroupId: groupId,
+        paths: paths,
+      };
+    },
+  );
+
+  return mappedApplicationGroups;
+}
+
 export default function ApplicationGroups() {
   const [messageApi, contextHolder] = message.useMessage();
   const [applicationGroups, setApplicationGroups] = useState<{
@@ -30,90 +132,8 @@ export default function ApplicationGroups() {
       });
   }, []);
 
-  const columns: ColumnItem[] = [
-    {
-      title: "path name",
-      dataIndex: "pathName",
-      width: "50%",
-      editable: true,
-    },
-    {
-      title: "information systems",
-      dataIndex: "informationSystems",
-      width: "50%",
-      editable: true,
-    },
-  ];
-
-  //name model os type
-  const subColumns: SubColumnGroup[] = [
-    {
-      title: "Devices",
-      children: [
-        {
-          title: "device name",
-          dataIndex: "deviceName",
-        },
-        {
-          title: "model",
-          dataIndex: "model",
-        },
-        {
-          title: "operating system",
-          dataIndex: "os",
-        },
-        {
-          title: "type",
-          dataIndex: "type",
-        },
-      ],
-    },
-  ];
-
-  //items for description component
-  const groups: object[] = Object.keys(applicationGroups).map(
-    (groupId: string) => {
-      const groupItem: { [index: string]: any } = applicationGroups[groupId];
-      const paths: object[] = Object.keys(groupItem["paths"]).map(
-        (pathId: string, index: number) => {
-          const pathItem: { [index: string]: any } =
-            applicationGroups[groupId]["paths"][pathId];
-          const devices: object[] = Object.keys(pathItem["devices"]).map(
-            (deviceId: string, deviceIndex: number) => {
-              const deviceItem: { [index: string]: any } =
-                pathItem["devices"][deviceId];
-              return {
-                key: index.toString() + "_device" + deviceIndex.toString(),
-                deviceName: deviceItem["name"],
-                model: deviceItem["model"],
-                os: deviceItem["os"],
-                type: deviceItem["type"],
-              };
-            },
-          );
-          return {
-            key: index.toString(),
-            pathId: pathId,
-            pathName: pathItem.path_name,
-            informationSystems: pathItem.information_systems.join(","),
-            subComponent: (
-              <Table
-                columns={subColumns}
-                dataSource={devices}
-                pagination={false}
-              />
-            ),
-          };
-        },
-      );
-      return {
-        applicationGroupName:
-          applicationGroups[groupId]["application_group_name"],
-        applicationGroupId: groupId,
-        paths: paths,
-      };
-    },
-  );
+  const mappedApplicationGroups: object[] =
+    getMappedApplicationGroups(applicationGroups);
 
   const onGroupNameChange = (newName: string, groupId: number) => {
     let formData: object = {
@@ -144,8 +164,8 @@ export default function ApplicationGroups() {
     <CustomLayout>
       {contextHolder}
       <div style={{ padding: "20px" }}>
-        {groups.length > 0 ? (
-          groups.map((group: { [index: string]: any }) => (
+        {mappedApplicationGroups.length > 0 ? (
+          mappedApplicationGroups.map((group: { [index: string]: any }) => (
             <div style={{ marginBottom: "50px" }}>
               <EditableTable
                 data={group["paths"]}

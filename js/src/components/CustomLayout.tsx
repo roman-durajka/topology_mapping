@@ -37,6 +37,9 @@ const CustomLayout: React.FC<InterfaceLayout> = ({ children, modals }) => {
               <Link to="/business-process">Business Process</Link>
             </Menu.Item>
             <Menu.Item key="3">
+              <Link to="/risk-management">Risk Management</Link>
+            </Menu.Item>
+            <Menu.Item key="4">
               <Link to="/devices">Devices</Link>
             </Menu.Item>
           </Space>

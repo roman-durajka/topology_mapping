@@ -6,7 +6,9 @@ let ILLEGAL_ATTRIBUTES = [
   "px",
   "py",
   "icon",
-  "asset-values",
+  "confidentalityValues",
+  "integrityValues",
+  "availabilityValues",
   "id",
 ];
 

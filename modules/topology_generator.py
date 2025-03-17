@@ -2,7 +2,7 @@ from modules.entities import RelationsContainer, Interface, Relation
 import json
 
 
-def save_path_to_db(path: RelationsContainer, starting_index: int, color: str, asset_value: int, path_name: str, group_id: int, topology_db_client):
+def save_path_to_db(path: RelationsContainer, starting_index: int, color: str, confidentality_value: int, integrity_value: int, availability_value: int, path_name: str, group_id: int, topology_db_client):
     path_relations = []
 
     for relation in path:
@@ -12,7 +12,9 @@ def save_path_to_db(path: RelationsContainer, starting_index: int, color: str, a
         relation_to_add = {"path_id": starting_index,
                            "relation_id": relation_id,
                            "color": color,
-                           "asset_value": asset_value,
+                           "confidentality_value": confidentality_value,
+                           "integrity_value": integrity_value,
+                           "availability_value": availability_value,
                            "name": path_name,
                            "application_group_id": group_id}
 
@@ -35,7 +37,9 @@ def load_paths_from_db(topology_db_client, librenms_db_client) -> list:
     for path_id in path_ids:
         path_container = RelationsContainer()
         color = ""
-        asset_value = 0
+        confidentality_value = 0
+        integrity_value = 0
+        availability_value = 0
         path_name = ""
         for path_record in paths_records:
             if path_record["path_id"] == path_id:
@@ -44,8 +48,14 @@ def load_paths_from_db(topology_db_client, librenms_db_client) -> list:
                 if not color:
                     color = path_record["color"]
 
-                if asset_value == 0:
-                    asset_value = path_record["asset_value"]
+                if confidentality_value == 0:
+                    confidentality_value = path_record["confidentality_value"]
+
+                if integrity_value == 0:
+                    integrity_value = path_record["integrity_value"]
+
+                if availability_value == 0:
+                    availability_value = path_record["availability_value"]
 
                 if not path_name:
                     path_name = path_record["name"]
@@ -84,7 +94,7 @@ def load_paths_from_db(topology_db_client, librenms_db_client) -> list:
                 relation = Relation(source_interface, target_interface)
                 path_container.add(relation)
 
-        paths.append({"path": path_container, "starting_index": path_id, "color": color, "asset_value": asset_value, "name": path_name})
+        paths.append({"path": path_container, "starting_index": path_id, "color": color, "confidentality_value": confidentality_value, "integrity_value": integrity_value, "availability_value": availability_value, "name": path_name})
     return paths
 
 
@@ -107,8 +117,12 @@ def generate_js_data_json(devices: list, relations: RelationsContainer) -> dict:
                          "os": device.os,
                          "model": device.model,
                          "asset": device.asset,
-                         "asset-value": 0,
-                         "asset-values": [0]}
+                         "confidentalityValue": 0,
+                         "confidentalityValues": [0],
+                         "integrityValue": 0,
+                         "integrityValues": [0],
+                         "availabilityValue": 0,
+                         "availabilityValues": [0]}
 
         interfaces = {}
         for key, value in device.interfaces.items():

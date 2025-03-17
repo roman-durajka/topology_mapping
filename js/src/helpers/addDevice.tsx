@@ -11,8 +11,12 @@ const addDeviceFormSubmit = (
   const formData = {
     ...data,
     icon: data.type,
-    "asset-value": 0,
-    "asset-values": [0],
+    confidentalityValue: 0,
+    confidentalityValues: [0],
+    integrityValue: 0,
+    integrityValues: [0],
+    availabilityValue: 0,
+    availabilityValues: [0],
     id: connector.getNodeStartingIndex(),
   };
   const responseData: Promise<Response> = request({
