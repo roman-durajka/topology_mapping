@@ -39,7 +39,6 @@ export const addPathFormObject = [
 ];
 
 //form object when adding device
-
 export const addDeviceFormObject = [
   {
     label: "Device name",
