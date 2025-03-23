@@ -126,7 +126,7 @@ const getSchemeUploadButtonProps = (refresh: React.Dispatch<React.SetStateAction
         });
       } else {
         notification.error({
-          message: "Error procesing uploaded file",
+          message: "Error processing uploaded file",
           description: info.file.error.message,
           placement: "top",
           duration: 0,

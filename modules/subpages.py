@@ -561,7 +561,7 @@ class Devices:
 
     def get_devices(self):
         """
-        Returns all data about devices needed by subpage `devices`.Devices()
+        Returns all data about devices needed by subpage Devices.
 
         :return: dict
         """
@@ -1051,7 +1051,7 @@ class Devices:
         # delete device data from table `devices`
         self.librenms_db_client.remove_data([("device_id", device_id)], "devices")
 
-        # delete device `topology` DB
+        # delete device from `topology` DB
         self.__purge_device_from_topology(device_id)
 
     def __delete_row_arp_table(self, data: dict) -> None:
